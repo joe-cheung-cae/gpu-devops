@@ -1,0 +1,32 @@
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG CMAKE_VERSION=3.30.3
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl \
+      gdb \
+      git \
+      gnupg \
+      ninja-build \
+      pkg-config \
+      python3 \
+      python3-pip \
+      rsync \
+      software-properties-common \
+      unzip \
+      wget && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO /tmp/cmake.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh" && \
+    sh /tmp/cmake.sh --skip-license --prefix=/usr/local && \
+    rm -f /tmp/cmake.sh
+
+RUN python3 -m pip install --no-cache-dir conan
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

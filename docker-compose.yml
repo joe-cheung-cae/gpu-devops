@@ -1,0 +1,17 @@
+services:
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine-v17.10.1
+    container_name: gitlab-runner
+    restart: unless-stopped
+    environment:
+      RUNNER_CONFIG_DIR: /etc/gitlab-runner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./runner/config:/etc/gitlab-runner
+      - ./runner/cache:/cache
+    healthcheck:
+      test: ["CMD-SHELL", "gitlab-runner --version >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

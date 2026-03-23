@@ -1,0 +1,35 @@
+stages:
+  - verify
+  - build
+
+default:
+  image: registry.example.com/devops/cuda-builder:cuda12.4-cmake3.30-ubuntu22.04
+  tags:
+    - gpu
+    - cuda
+    - cuda-12
+
+gpu-smoke:
+  stage: verify
+  script:
+    - nvidia-smi
+    - nvcc --version
+    - cmake --version
+
+cuda-cmake-build:
+  stage: build
+  script:
+    - cmake -S examples/cuda-smoke -B build -G Ninja
+    - cmake --build build
+
+multi-gpu-smoke:
+  stage: verify
+  tags:
+    - gpu-multi
+    - cuda
+    - cuda-12
+  variables:
+    GPU_COUNT: "2"
+  script:
+    - echo "Requested GPU count: ${GPU_COUNT}"
+    - nvidia-smi
