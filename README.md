@@ -9,6 +9,11 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 
 The first release targets a single host with NVIDIA GPUs and shared Runner usage across multiple projects.
 
+## Tutorials
+
+- Chinese guide: [docs/tutorial.zh-CN.md](/home/joe/repo/gpu-devops/docs/tutorial.zh-CN.md)
+- English guide: [docs/tutorial.en.md](/home/joe/repo/gpu-devops/docs/tutorial.en.md)
+
 ## Platform contract
 
 - Projects consume the published builder image directly from `.gitlab-ci.yml`
@@ -64,6 +69,12 @@ Projects should pin to a published immutable tag rather than `latest`.
 ## Project usage
 
 See [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) for a complete example.
+
+Additional reference docs:
+
+- [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
+- [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
+- [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
 
 ## Limitations
 
