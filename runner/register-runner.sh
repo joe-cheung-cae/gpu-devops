@@ -17,12 +17,12 @@ MODE="${1:-gpu}"
 case "${MODE}" in
   gpu)
     DESCRIPTION="${RUNNER_DESCRIPTION_PREFIX:-shared-gpu}-gpu"
-    TAGS="${RUNNER_TAG_LIST:-gpu,cuda,cuda-12}"
+    TAGS="${RUNNER_TAG_LIST:-gpu,cuda,cuda-11}"
     LIMIT="${RUNNER_GPU_CONCURRENCY:-2}"
     ;;
   multi)
     DESCRIPTION="${RUNNER_DESCRIPTION_PREFIX:-shared-gpu}-multi"
-    TAGS="${RUNNER_MULTI_TAG_LIST:-gpu-multi,cuda,cuda-12}"
+    TAGS="${RUNNER_MULTI_TAG_LIST:-gpu-multi,cuda,cuda-11}"
     LIMIT="${RUNNER_MULTI_GPU_CONCURRENCY:-1}"
     ;;
   *)
@@ -36,7 +36,7 @@ mkdir -p "${ROOT_DIR}/runner/config" "${ROOT_DIR}/runner/cache"
 docker run --rm -it \
   -v "${ROOT_DIR}/runner/config:/etc/gitlab-runner" \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  gitlab/gitlab-runner:alpine-v17.10.1 register \
+  gitlab/gitlab-runner:alpine-v16.10.1 register \
   --non-interactive \
   --url "${GITLAB_URL}" \
   --registration-token "${RUNNER_REGISTRATION_TOKEN}" \

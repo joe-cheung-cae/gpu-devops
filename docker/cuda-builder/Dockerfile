@@ -1,7 +1,13 @@
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+FROM nvidia/cuda:11.7.1-devel-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG CMAKE_VERSION=3.30.3
+ARG CMAKE_VERSION=3.26.0
+ARG http_proxy
+ARG https_proxy
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG no_proxy
+ARG NO_PROXY
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

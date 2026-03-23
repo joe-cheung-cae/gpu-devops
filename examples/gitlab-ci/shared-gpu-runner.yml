@@ -3,11 +3,11 @@ stages:
   - build
 
 default:
-  image: registry.example.com/devops/cuda-builder:cuda12.4-cmake3.30-ubuntu22.04
+  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu22.04
   tags:
     - gpu
     - cuda
-    - cuda-12
+    - cuda-11
 
 gpu-smoke:
   stage: verify
@@ -27,7 +27,7 @@ multi-gpu-smoke:
   tags:
     - gpu-multi
     - cuda
-    - cuda-12
+    - cuda-11
   variables:
     GPU_COUNT: "2"
   script:
