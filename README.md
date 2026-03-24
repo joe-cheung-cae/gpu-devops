@@ -15,6 +15,8 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
 
 - Chinese guide: [docs/tutorial.zh-CN.md](/home/joe/repo/gpu-devops/docs/tutorial.zh-CN.md)
 - English guide: [docs/tutorial.en.md](/home/joe/repo/gpu-devops/docs/tutorial.en.md)
+- Step-by-step usage guide: [docs/usage.en.md](/home/joe/repo/gpu-devops/docs/usage.en.md)
+- 中文步骤指南: [docs/usage.zh-CN.md](/home/joe/repo/gpu-devops/docs/usage.zh-CN.md)
 
 ## Platform contract
 
