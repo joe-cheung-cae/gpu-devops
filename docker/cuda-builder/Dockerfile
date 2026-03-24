@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.7.1-devel-ubuntu22.04
+FROM nvidia/cuda:11.7.1-devel-centos7
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CMAKE_VERSION=3.26.0
@@ -9,29 +9,47 @@ ARG HTTPS_PROXY
 ARG no_proxy
 ARG NO_PROXY
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
+RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    yum install -y \
       ca-certificates \
+      centos-release-scl \
       curl \
+      gcc \
+      gcc-c++ \
       gdb \
       git \
-      gnupg \
-      ninja-build \
-      pkg-config \
-      python3 \
-      python3-pip \
+      make \
       rsync \
-      software-properties-common \
       unzip \
-      wget && \
-    rm -rf /var/lib/apt/lists/*
+      wget \
+      which && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-SCLo-*.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/rh/|baseurl=http://vault.centos.org/7.9.2009/sclo/\$basearch/rh/|g' /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo && \
+    sed -i 's|^# baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/sclo/|baseurl=http://vault.centos.org/7.9.2009/sclo/\$basearch/sclo/|g' /etc/yum.repos.d/CentOS-SCLo-scl.repo && \
+    yum install -y \
+      rh-python38 \
+      rh-python38-python-pip && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+RUN ln -sf /opt/rh/rh-python38/root/usr/bin/python3 /usr/local/bin/python3 && \
+    ln -sf /opt/rh/rh-python38/root/usr/bin/pip3 /usr/local/bin/pip3
 
 RUN wget -qO /tmp/cmake.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh" && \
     sh /tmp/cmake.sh --skip-license --prefix=/usr/local && \
     rm -f /tmp/cmake.sh
 
-RUN python3 -m pip install --no-cache-dir conan
+RUN python3 -m pip install --no-cache-dir \
+      conan \
+      ninja \
+      'urllib3<2'
+
+RUN ln -sf /opt/rh/rh-python38/root/usr/local/bin/conan /usr/local/bin/conan && \
+    ln -sf /opt/rh/rh-python38/root/usr/local/bin/ninja /usr/local/bin/ninja
 
 WORKDIR /workspace
 
