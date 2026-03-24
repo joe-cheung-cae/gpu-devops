@@ -68,4 +68,14 @@ assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfi
 assert_contains "${all_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 
+no_cache_log="${TMP_DIR}/no-cache.log"
+run_with_mock_docker "${ENV_FILE}" "${no_cache_log}" --platform centos7 --no-cache
+assert_contains "${no_cache_log}" "--no-cache"
+
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "http_proxy=\"\${http_proxy}\""
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "HTTP_PROXY=\"\${HTTP_PROXY}\""
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "https_proxy=\"\${https_proxy}\""
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "HTTPS_PROXY=\"\${HTTPS_PROXY}\""
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "echo \"proxy=\${http_proxy}\" >> /etc/yum.conf"
+
 echo "build builder image tests passed"

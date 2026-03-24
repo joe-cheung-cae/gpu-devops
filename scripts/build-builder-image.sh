@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
 SELECTED_PLATFORM=""
 BUILD_ALL=0
+NO_CACHE=0
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -20,9 +21,13 @@ while [[ $# -gt 0 ]]; do
       BUILD_ALL=1
       shift
       ;;
+    --no-cache)
+      NO_CACHE=1
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/build-builder-image.sh [--env-file PATH] [--platform NAME | --all-platforms]
+Usage: scripts/build-builder-image.sh [--env-file PATH] [--platform NAME | --all-platforms] [--no-cache]
 
 Build one builder image for the default or selected platform, or all supported platforms.
 EOF
@@ -58,6 +63,7 @@ HTTP_PROXY_VALUE="${http_proxy:-${HTTP_PROXY:-}}"
 HTTPS_PROXY_VALUE="${https_proxy:-${HTTPS_PROXY:-}}"
 NO_PROXY_VALUE="${no_proxy:-${NO_PROXY:-}}"
 NETWORK_ARGS=()
+BUILD_ARGS=()
 
 if [[ -f "${DOCKER_DAEMON_CONFIG}" ]]; then
   if [[ -z "${HTTP_PROXY_VALUE}" ]]; then
@@ -74,6 +80,10 @@ fi
 if [[ "${HTTP_PROXY_VALUE}" == http://127.0.0.1:* ]] || [[ "${HTTP_PROXY_VALUE}" == http://localhost:* ]] || \
    [[ "${HTTPS_PROXY_VALUE}" == http://127.0.0.1:* ]] || [[ "${HTTPS_PROXY_VALUE}" == http://localhost:* ]]; then
   NETWORK_ARGS=(--network host)
+fi
+
+if [[ "${NO_CACHE}" -eq 1 ]]; then
+  BUILD_ARGS+=(--no-cache)
 fi
 
 platform_is_supported() {
@@ -117,6 +127,7 @@ build_platform() {
 
   docker build \
     "${NETWORK_ARGS[@]}" \
+    "${BUILD_ARGS[@]}" \
     ${HTTP_PROXY_VALUE:+--build-arg "http_proxy=${HTTP_PROXY_VALUE}"} \
     ${HTTPS_PROXY_VALUE:+--build-arg "https_proxy=${HTTPS_PROXY_VALUE}"} \
     ${HTTP_PROXY_VALUE:+--build-arg "HTTP_PROXY=${HTTP_PROXY_VALUE}"} \
