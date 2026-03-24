@@ -81,7 +81,9 @@ cp .env.example .env
 - `GITLAB_URL`：GitLab 地址
 - `RUNNER_REGISTRATION_TOKEN`：Runner 注册令牌
 - `RUNNER_DOCKER_IMAGE`：Runner 默认 job image
+- `RUNNER_SERVICE_IMAGE`：Runner 服务容器镜像
 - `BUILDER_IMAGE`：标准 builder 镜像 tag
+- `IMAGE_ARCHIVE_PATH`：离线镜像归档路径
 - `RUNNER_GPU_CONCURRENCY`：单卡 Runner 池并发
 - `RUNNER_MULTI_GPU_CONCURRENCY`：多卡 Runner 池并发
 
@@ -105,6 +107,20 @@ scripts/build-builder-image.sh
 - 构建 `docker/cuda-builder/Dockerfile`
 - 在你的环境中自动尝试复用 Docker daemon 代理配置
 - 当代理指向 `127.0.0.1` / `localhost` 时，自动用 `--network host` 兼容本机代理
+
+如果目标环境无法访问外网，可以在联网环境额外执行：
+
+```bash
+scripts/export-images.sh
+```
+
+该脚本会把 `BUILDER_IMAGE`、`RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
+
+```bash
+scripts/import-images.sh
+```
+
+即可一键导入部署所需镜像。
 
 镜像内默认包含：
 

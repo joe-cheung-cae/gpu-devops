@@ -1,6 +1,6 @@
 services:
   gitlab-runner:
-    image: gitlab/gitlab-runner:alpine-v16.10.1
+    image: ${RUNNER_SERVICE_IMAGE:-gitlab/gitlab-runner:alpine-v16.10.1}
     container_name: gitlab-runner
     restart: unless-stopped
     environment:

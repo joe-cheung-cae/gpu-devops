@@ -81,7 +81,9 @@ Then update the main fields:
 - `GITLAB_URL`: GitLab base URL
 - `RUNNER_REGISTRATION_TOKEN`: runner registration token
 - `RUNNER_DOCKER_IMAGE`: default image used by the runner
+- `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
 - `BUILDER_IMAGE`: standard builder image tag
+- `IMAGE_ARCHIVE_PATH`: offline image archive path
 - `RUNNER_GPU_CONCURRENCY`: concurrency for the default GPU pool
 - `RUNNER_MULTI_GPU_CONCURRENCY`: concurrency for the multi-GPU pool
 
@@ -105,6 +107,20 @@ The script will:
 - Build `docker/cuda-builder/Dockerfile`
 - Reuse Docker daemon proxy settings when available
 - Automatically switch to `--network host` when the proxy points to `127.0.0.1` or `localhost`
+
+If the destination host is air-gapped, also run:
+
+```bash
+scripts/export-images.sh
+```
+
+This exports `BUILDER_IMAGE`, `RUNNER_DOCKER_IMAGE`, and `RUNNER_SERVICE_IMAGE` into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
+
+```bash
+scripts/import-images.sh
+```
+
+to load the deployment images in one step.
 
 The image includes:
 

@@ -14,7 +14,14 @@
 cp .env.example .env
 scripts/verify-host.sh
 scripts/build-builder-image.sh
+scripts/export-images.sh
 scripts/compose.sh up -d
+```
+
+If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
+
+```bash
+scripts/import-images.sh
 ```
 
 ## Runner registration
@@ -37,8 +44,9 @@ Both registrations append to `runner/config/config.toml`.
 
 1. Build and publish a new builder image tag.
 2. Update `RUNNER_DOCKER_IMAGE` and `BUILDER_IMAGE` in `.env`.
-3. Restart the Runner service.
-4. Validate the smoke pipeline in a test project.
+3. Re-export the offline image bundle if air-gapped hosts depend on it.
+4. Restart the Runner service.
+5. Validate the smoke pipeline in a test project.
 
 ## Rollback
 

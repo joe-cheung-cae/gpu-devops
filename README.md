@@ -41,9 +41,10 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
 1. Copy [.env.example](/home/joe/repo/gpu-devops/.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
-4. Start the Runner service with `scripts/compose.sh up -d`.
-5. Register Runner entries with `runner/register-runner.sh`.
-6. Validate the deployment with `docs/self-check.md`.
+4. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
+5. Start the Runner service with `scripts/compose.sh up -d`.
+6. Register Runner entries with `runner/register-runner.sh`.
+7. Validate the deployment with `docs/self-check.md`.
 
 ## Shared tag policy
 
@@ -65,6 +66,10 @@ The standard builder image tag is:
 `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-centos7`
 
 Projects should pin to a published immutable tag rather than `latest`.
+
+## Offline image bundle
+
+For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing `BUILDER_IMAGE`, `RUNNER_DOCKER_IMAGE`, and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
 
 ## Project usage
 
