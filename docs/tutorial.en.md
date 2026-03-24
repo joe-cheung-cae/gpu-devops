@@ -202,6 +202,8 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source tree inside that workspace, and `CUDA_CXX_BUILD_ROOT` stores output per platform.
 
+For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
+
 The main runner container image is:
 
 - `gitlab/gitlab-runner:alpine-v16.10.1`

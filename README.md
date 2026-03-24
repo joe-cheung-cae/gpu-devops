@@ -68,6 +68,8 @@ Local project build examples:
 
 The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, and build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`.
 
+For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
+
 ## Shared tag policy
 
 - `gpu`: default shared GPU jobs

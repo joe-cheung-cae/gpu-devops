@@ -202,6 +202,8 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 当前宿主机目录会挂载到容器内的 `/workspace`。`CUDA_CXX_PROJECT_DIR` 用来指定这个工作区里的源码目录，`CUDA_CXX_BUILD_ROOT` 按平台保存构建产物。
 
+如果你想直接参考一个已经设置了 `CUDA_CXX_CMAKE_ARGS` 和 `CUDA_CXX_BUILD_ARGS` 的 `.env` 示例，可以看 [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example)。
+
 Runner 主容器使用镜像：
 
 - `gitlab/gitlab-runner:alpine-v16.10.1`
