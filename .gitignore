@@ -3,4 +3,7 @@
 runner/config/
 runner/cache/
 docker/cuda-builder/build/
+artifacts/*.tar
+artifacts/*.tar.gz
+artifacts/*.images.txt
 *.log
