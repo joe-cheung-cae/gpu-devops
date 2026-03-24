@@ -11,7 +11,7 @@
 
 平台提供以下能力：
 
-- 标准 CUDA 构建镜像：`cuda11.7-cmake3.26-ubuntu22.04`
+- 标准 CUDA 构建镜像：`cuda11.7-cmake3.26-centos7`
 - GitLab Docker Runner 部署脚本
 - 默认 GPU Runner 池和多卡 GPU Runner 池
 - 宿主机校验、自检文档、最小示例流水线
@@ -41,7 +41,7 @@
 4. 已安装 NVIDIA Container Toolkit，并且 Docker 能识别 `nvidia` runtime
 5. 宿主机可以访问：
    - Docker 镜像仓库
-   - Ubuntu 软件源
+   - CentOS Vault 或企业内部 YUM 镜像
    - GitHub Release
 
 先执行宿主机自检：
@@ -56,6 +56,17 @@ scripts/verify-host.sh
 - `docker compose version` 或 `docker-compose --version` 正常输出
 - `nvidia-smi` 正常输出 GPU 信息
 - `docker info` 中能看到 `nvidia` runtime
+
+## 3.1 CentOS 7 基线注意事项
+
+当前 builder 镜像基于 `nvidia/cuda:11.7.1-devel-centos7`，因此有几个必须知道的现实约束：
+
+- CentOS 7 已经 EOL，默认公共 mirror 不可靠
+- Dockerfile 会自动把基础 YUM 源和 SCLo 源切到 `vault.centos.org`
+- Python 3 不是来自系统默认仓库，而是来自 `rh-python38`
+- `conan` 在 CentOS 7 上需要兼容旧 OpenSSL，因此镜像里显式限制了 `urllib3<2`
+
+如果你的公司有内部 RPM/YUM 镜像，建议后续把 Dockerfile 中的 public vault 地址切换到内部源。
 
 ## 4. 环境变量配置
 
@@ -200,7 +211,7 @@ runner/register-runner.sh multi
 
 ```yaml
 default:
-  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu22.04
+  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7
   tags:
     - gpu
     - cuda
@@ -292,7 +303,23 @@ cmake --build /tmp/cuda-smoke-build
 - 是否能单独执行：
 
 ```bash
-docker pull nvidia/cuda:11.7.1-devel-ubuntu22.04
+docker pull nvidia/cuda:11.7.1-devel-centos7
+
+### 11.1.1 CentOS 7 特殊说明
+
+CentOS 7 已经进入 EOL，默认 `mirrorlist.centos.org` 不再稳定可用，因此当前 Dockerfile 会在构建时自动把基础 Yum 源切到 `vault.centos.org`。
+
+如果你在企业网络里还有内部 YUM 镜像，建议后续改成内部源，减少对公网 vault 的依赖。
+
+### 11.1.2 CentOS 7 兼容性建议
+
+CentOS 7 可以满足当前 CUDA 11.7 + CMake 3.26 的平台目标，但它并不适合作为长期演进基线。建议你在后续版本规划里明确：
+
+- 是否继续保留 CentOS 7 兼容性
+- 是否迁移到 Rocky Linux / AlmaLinux
+- 是否迁移到受支持的 Ubuntu LTS 基线
+
+如果未来需要更新的 Python、OpenSSL 或 Conan 生态，CentOS 7 的维护成本会越来越高。
 ```
 
 ### 11.2 构建卡在下载 CMake

@@ -62,7 +62,7 @@ Multi-GPU jobs should use `gpu-multi`, `cuda`, `cuda-11`. The initial implementa
 
 The standard builder image tag is:
 
-`<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-ubuntu22.04`
+`<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-centos7`
 
 Projects should pin to a published immutable tag rather than `latest`.
 

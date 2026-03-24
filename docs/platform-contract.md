@@ -3,8 +3,17 @@
 ## CUDA baseline
 
 - Major version: CUDA 11
-- Initial image baseline: `11.7.1-devel-ubuntu22.04`
+- Initial image baseline: `11.7.1-devel-centos7`
 - Host systems may run a newer driver as long as it remains compatible with CUDA 11.7 job containers
+
+## CentOS 7 notes
+
+- The builder image is based on CentOS 7, which is already end-of-life.
+- The Dockerfile rewrites CentOS base repositories and SCL repositories to `vault.centos.org` so builds can still complete.
+- Python 3 is provided through `rh-python38` from SCL, not from the default CentOS 7 base packages.
+- `conan` is pinned to a dependency set that remains compatible with CentOS 7 OpenSSL, including `urllib3<2`.
+- If your organization has an internal YUM mirror, prefer switching to that mirror instead of relying on the public CentOS vault.
+- For long-term maintenance, plan a future migration to a newer enterprise Linux base such as Rocky Linux, AlmaLinux, or a supported Ubuntu LTS image.
 
 ## Toolchain baseline
 

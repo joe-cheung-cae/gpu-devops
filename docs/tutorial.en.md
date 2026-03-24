@@ -11,7 +11,7 @@ The current repository targets a single Docker host with NVIDIA GPUs and shared 
 
 The platform includes:
 
-- A standard CUDA builder image: `cuda11.7-cmake3.26-ubuntu22.04`
+- A standard CUDA builder image: `cuda11.7-cmake3.26-centos7`
 - Docker-based GitLab Runner deployment assets
 - A default GPU runner pool and a multi-GPU runner pool
 - Host verification, self-check documentation, and example pipelines
@@ -41,7 +41,7 @@ Before deployment, the host should provide:
 4. NVIDIA Container Toolkit with `nvidia` runtime available to Docker
 5. Network access to:
    - container registries
-   - Ubuntu package repositories
+   - CentOS Vault or an internal YUM mirror
    - GitHub Releases
 
 Run the host verification script first:
@@ -56,6 +56,17 @@ Expected results:
 - `docker compose version` or `docker-compose --version` works
 - `nvidia-smi` prints GPU information
 - `docker info` exposes the `nvidia` runtime
+
+## 3.1 CentOS 7 baseline notes
+
+The current builder image is based on `nvidia/cuda:11.7.1-devel-centos7`, which introduces a few practical constraints:
+
+- CentOS 7 is already end-of-life, so its default public mirrors are not reliable
+- The Dockerfile rewrites both the base YUM repositories and the SCLo repositories to `vault.centos.org`
+- Python 3 is not sourced from the default CentOS 7 base packages; it is provided through `rh-python38`
+- `conan` must stay compatible with the older OpenSSL stack, so the image explicitly constrains `urllib3<2`
+
+If your organization provides an internal RPM/YUM mirror, it is better to replace the public vault URLs with the internal mirror later.
 
 ## 4. Configure environment variables
 
@@ -200,7 +211,7 @@ Minimal example:
 
 ```yaml
 default:
-  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu22.04
+  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7
   tags:
     - gpu
     - cuda
@@ -292,7 +303,23 @@ Check:
 - whether this command works:
 
 ```bash
-docker pull nvidia/cuda:11.7.1-devel-ubuntu22.04
+docker pull nvidia/cuda:11.7.1-devel-centos7
+
+### 11.1.1 CentOS 7 note
+
+CentOS 7 is end-of-life, so the default `mirrorlist.centos.org` flow is no longer reliable. The current Dockerfile automatically rewrites the base YUM repositories to `vault.centos.org` during build.
+
+If your environment provides an internal YUM mirror, it is better to switch to that mirror later instead of depending on the public CentOS vault.
+
+### 11.1.2 CentOS 7 compatibility guidance
+
+CentOS 7 can satisfy the current CUDA 11.7 + CMake 3.26 platform target, but it is not a good long-term evolution baseline. You should decide explicitly in a later platform iteration:
+
+- whether CentOS 7 compatibility still matters
+- whether to migrate to Rocky Linux or AlmaLinux
+- whether to migrate to a supported Ubuntu LTS base
+
+If future requirements need newer Python, OpenSSL, or Conan ecosystems, CentOS 7 will become increasingly expensive to maintain.
 ```
 
 ### 11.2 Build hangs while downloading CMake
