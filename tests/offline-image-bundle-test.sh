@@ -13,7 +13,7 @@ fail() {
 assert_contains() {
   local file="$1"
   local expected="$2"
-  if ! grep -Fq "${expected}" "${file}"; then
+  if ! grep -Fq -- "${expected}" "${file}"; then
     echo "Expected to find: ${expected}" >&2
     echo "In file: ${file}" >&2
     cat "${file}" >&2 || true
@@ -24,7 +24,7 @@ assert_contains() {
 assert_not_contains() {
   local file="$1"
   local unexpected="$2"
-  if grep -Fq "${unexpected}" "${file}"; then
+  if grep -Fq -- "${unexpected}" "${file}"; then
     echo "Did not expect to find: ${unexpected}" >&2
     echo "In file: ${file}" >&2
     cat "${file}" >&2 || true
@@ -42,6 +42,8 @@ run_export_test() {
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
   cat > "${test_dir}/.env" <<'EOF'
+BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
+BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
 BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 RUNNER_DOCKER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 RUNNER_SERVICE_IMAGE=registry.local/devops/gitlab-runner:alpine-v16.10.1
@@ -76,9 +78,13 @@ EOF
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.images.txt"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
+  assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/gitlab-runner:alpine-v16.10.1"
-  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
   assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
   assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/gitlab-runner:alpine-v16.10.1"
 }
 

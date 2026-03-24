@@ -3,17 +3,21 @@
 ## CUDA baseline
 
 - Major version: CUDA 11
-- Initial image baseline: `11.7.1-devel-centos7`
+- Builder image family: `cuda11.7-cmake3.26`
+- Supported platform keys:
+  - `centos7` -> `nvidia/cuda:11.7.1-devel-centos7`
+  - `rocky8` -> `nvidia/cuda:11.7.1-devel-rockylinux8`
+  - `ubuntu2204` -> `nvidia/cuda:11.7.1-devel-ubuntu22.04`
 - Host systems may run a newer driver as long as it remains compatible with CUDA 11.7 job containers
 
-## CentOS 7 notes
+## Platform notes
 
-- The builder image is based on CentOS 7, which is already end-of-life.
-- The Dockerfile rewrites CentOS base repositories and SCL repositories to `vault.centos.org` so builds can still complete.
-- Python 3 is provided through `rh-python38` from SCL, not from the default CentOS 7 base packages.
-- `conan` is pinned to a dependency set that remains compatible with CentOS 7 OpenSSL, including `urllib3<2`.
-- If your organization has an internal YUM mirror, prefer switching to that mirror instead of relying on the public CentOS vault.
-- For long-term maintenance, plan a future migration to a newer enterprise Linux base such as Rocky Linux, AlmaLinux, or a supported Ubuntu LTS image.
+- `centos7` is still supported for compatibility, but it is end-of-life.
+- The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
+- The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
+- `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
+- `ubuntu2204` uses the Ubuntu 22.04 CUDA image and installs toolchain packages with `apt`.
+- If your organization has an internal RPM/YUM mirror, prefer switching public repository references to internal mirrors.
 
 ## Toolchain baseline
 
@@ -23,6 +27,7 @@ The standard builder image includes:
 - `cmake`
 - `ninja`
 - `gcc/g++`
+- `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
 - `git`
 - `gdb`
 - `python3` and `pip`

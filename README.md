@@ -3,6 +3,7 @@
 This repository provides a shared GitLab CI/CD platform for CUDA and CMake based projects. It ships:
 
 - A standard CUDA builder image for project jobs
+- Multiple builder platform variants: `centos7`, `rocky8`, `ubuntu2204`
 - A Docker-based GitLab Runner deployment for GPU workloads
 - Registration and verification scripts
 - Example GitLab CI and a minimal CUDA/CMake smoke project
@@ -41,6 +42,8 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
 1. Copy [.env.example](/home/joe/repo/gpu-devops/.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
+   Single platform: `scripts/build-builder-image.sh --platform ubuntu2204`
+   All supported platforms: `scripts/build-builder-image.sh --all-platforms`
 4. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
 5. Start the Runner service with `scripts/compose.sh up -d`.
 6. Register Runner entries with `runner/register-runner.sh`.
@@ -61,15 +64,21 @@ Multi-GPU jobs should use `gpu-multi`, `cuda`, `cuda-11`. The initial implementa
 
 ## Publishing contract
 
-The standard builder image tag is:
+The builder image family is:
 
-`<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-centos7`
+`<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26`
+
+The default supported tags are:
+
+- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-centos7`
+- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-rocky8`
+- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-ubuntu2204`
 
 Projects should pin to a published immutable tag rather than `latest`.
 
 ## Offline image bundle
 
-For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing `BUILDER_IMAGE`, `RUNNER_DOCKER_IMAGE`, and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
+For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
 
 ## Project usage
 

@@ -21,17 +21,58 @@ load_image_bundle_env() {
     RUNNER_SERVICE_IMAGE="gitlab/gitlab-runner:alpine-v16.10.1"
   fi
 
+  if [[ -z "${BUILDER_DEFAULT_PLATFORM:-}" ]]; then
+    BUILDER_DEFAULT_PLATFORM="centos7"
+  fi
+
+  if [[ -z "${BUILDER_PLATFORMS:-}" ]]; then
+    BUILDER_PLATFORMS="centos7,rocky8,ubuntu2204"
+  fi
+
   if [[ -z "${IMAGE_ARCHIVE_PATH:-}" ]]; then
     IMAGE_ARCHIVE_PATH="${root_dir}/artifacts/offline-images.tar.gz"
   fi
 }
 
 require_export_image_bundle_env() {
-  : "${BUILDER_IMAGE:?Set BUILDER_IMAGE in .env}"
+  if [[ -z "${BUILDER_IMAGE:-}" ]] && [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
+    echo "Set BUILDER_IMAGE or BUILDER_IMAGE_FAMILY in .env" >&2
+    exit 1
+  fi
+
+  if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]] && [[ -n "${BUILDER_IMAGE:-}" ]]; then
+    BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE%-${BUILDER_DEFAULT_PLATFORM}}"
+  fi
+
+  if [[ -z "${BUILDER_IMAGE:-}" ]] && [[ -n "${BUILDER_IMAGE_FAMILY:-}" ]]; then
+    BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
+  fi
 
   if [[ -z "${RUNNER_DOCKER_IMAGE:-}" ]]; then
     RUNNER_DOCKER_IMAGE="${BUILDER_IMAGE}"
   fi
+}
+
+builder_export_images() {
+  local image platform
+
+  if [[ -n "${BUILDER_IMAGE_EXPORTS:-}" ]]; then
+    IFS=',' read -r -a images <<< "${BUILDER_IMAGE_EXPORTS}"
+    for image in "${images[@]}"; do
+      [[ -n "${image}" ]] && printf '%s\n' "${image}"
+    done
+    return 0
+  fi
+
+  if [[ -n "${BUILDER_IMAGE_FAMILY:-}" ]]; then
+    IFS=',' read -r -a platforms <<< "${BUILDER_PLATFORMS}"
+    for platform in "${platforms[@]}"; do
+      printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
+    done
+    return 0
+  fi
+
+  printf '%s\n' "${BUILDER_IMAGE}"
 }
 
 resolve_bundle_path() {
@@ -54,7 +95,15 @@ collect_bundle_images() {
   local image
   declare -A seen=()
 
-  for image in "${BUILDER_IMAGE}" "${RUNNER_DOCKER_IMAGE}" "${RUNNER_SERVICE_IMAGE}"; do
+  while IFS= read -r image; do
+    [[ -n "${image}" ]] || continue
+    if [[ -z "${seen["${image}"]+x}" ]]; then
+      printf '%s\n' "${image}"
+      seen["${image}"]=1
+    fi
+  done < <(builder_export_images)
+
+  for image in "${RUNNER_DOCKER_IMAGE}" "${RUNNER_SERVICE_IMAGE}"; do
     [[ -n "${image}" ]] || continue
     if [[ -z "${seen["${image}"]+x}" ]]; then
       printf '%s\n' "${image}"

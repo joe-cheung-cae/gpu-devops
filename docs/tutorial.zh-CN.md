@@ -11,7 +11,7 @@
 
 平台提供以下能力：
 
-- 标准 CUDA 构建镜像：`cuda11.7-cmake3.26-centos7`
+- CUDA 构建镜像家族：`cuda11.7-cmake3.26-{centos7|rocky8|ubuntu2204}`
 - GitLab Docker Runner 部署脚本
 - 默认 GPU Runner 池和多卡 GPU Runner 池
 - 宿主机校验、自检文档、最小示例流水线
@@ -41,7 +41,7 @@
 4. 已安装 NVIDIA Container Toolkit，并且 Docker 能识别 `nvidia` runtime
 5. 宿主机可以访问：
    - Docker 镜像仓库
-   - CentOS Vault 或企业内部 YUM 镜像
+   - CentOS Vault、Rocky Linux 镜像、Ubuntu 镜像或企业内部镜像
    - GitHub Release
 
 先执行宿主机自检：
@@ -57,16 +57,19 @@ scripts/verify-host.sh
 - `nvidia-smi` 正常输出 GPU 信息
 - `docker info` 中能看到 `nvidia` runtime
 
-## 3.1 CentOS 7 基线注意事项
+## 3.1 支持的 builder 平台
 
-当前 builder 镜像基于 `nvidia/cuda:11.7.1-devel-centos7`，因此有几个必须知道的现实约束：
+当前 builder 镜像家族支持：
 
-- CentOS 7 已经 EOL，默认公共 mirror 不可靠
-- Dockerfile 会自动把基础 YUM 源和 SCLo 源切到 `vault.centos.org`
-- Python 3 不是来自系统默认仓库，而是来自 `rh-python38`
-- `conan` 在 CentOS 7 上需要兼容旧 OpenSSL，因此镜像里显式限制了 `urllib3<2`
+- `centos7` -> `nvidia/cuda:11.7.1-devel-centos7`
+- `rocky8` -> `nvidia/cuda:11.7.1-devel-rockylinux8`
+- `ubuntu2204` -> `nvidia/cuda:11.7.1-devel-ubuntu22.04`
 
-如果你的公司有内部 RPM/YUM 镜像，建议后续把 Dockerfile 中的 public vault 地址切换到内部源。
+平台说明：
+
+- `centos7` 主要用于兼容存量环境，但已经 EOL，会把 YUM 源和 SCLo 源切到 `vault.centos.org`
+- `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
+- `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
 
@@ -79,6 +82,9 @@ cp .env.example .env
 然后按你的 GitLab 环境修改 `.env` 中的关键字段：
 
 - `GITLAB_URL`：GitLab 地址
+- `BUILDER_IMAGE_FAMILY`：多平台 builder 镜像前缀
+- `BUILDER_DEFAULT_PLATFORM`：默认平台 key
+- `BUILDER_PLATFORMS`：支持的平台列表，逗号分隔
 - `RUNNER_REGISTRATION_TOKEN`：Runner 注册令牌
 - `RUNNER_DOCKER_IMAGE`：Runner 默认 job image
 - `RUNNER_SERVICE_IMAGE`：Runner 服务容器镜像
@@ -99,12 +105,16 @@ cp .env.example .env
 
 ```bash
 scripts/build-builder-image.sh
+scripts/build-builder-image.sh --platform ubuntu2204
+scripts/build-builder-image.sh --all-platforms
 ```
 
 该脚本会：
 
 - 读取 `.env` 中的 `BUILDER_IMAGE`
-- 构建 `docker/cuda-builder/Dockerfile`
+- 构建 `docker/cuda-builder/` 下对应平台的 Dockerfile
+- 通过 `--platform <name>` 构建单个非默认平台
+- 通过 `--all-platforms` 一次构建 `BUILDER_PLATFORMS` 中的所有平台
 - 在你的环境中自动尝试复用 Docker daemon 代理配置
 - 当代理指向 `127.0.0.1` / `localhost` 时，自动用 `--network host` 兼容本机代理
 
@@ -114,7 +124,7 @@ scripts/build-builder-image.sh
 scripts/export-images.sh
 ```
 
-该脚本会把 `BUILDER_IMAGE`、`RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
+该脚本会把 `BUILDER_IMAGE_FAMILY` 和 `BUILDER_PLATFORMS` 推导出的全部 builder tags，以及 `RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
 
 ```bash
 scripts/import-images.sh
@@ -128,6 +138,7 @@ scripts/import-images.sh
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
+- 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
 - `git`
 - `gdb`
 - `python3`
@@ -140,6 +151,7 @@ scripts/import-images.sh
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so'
 ```
 
 期望结果：
@@ -147,6 +159,9 @@ docker run --rm "${BUILDER_IMAGE}" conan --version
 - `nvcc` 显示 `release 11.7`
 - `cmake` 显示 `3.26.0`
 - `conan` 能输出版本号
+- `mpicc` 显示 `Open MPI 4.1.6`
+- `mpicxx` 能解析到 C++ wrapper
+- `/opt/openmpi/lib` 下只有静态库，没有 `libmpi.so`
 
 ## 6. 启动 GitLab Runner 服务
 
@@ -234,6 +249,8 @@ default:
     - cuda-11
 ```
 
+如果项目需要其他发布平台，可以把镜像 tag 后缀改成 `rocky8` 或 `ubuntu2204`。
+
 完整示例参考：
 
 - [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml)
@@ -320,6 +337,9 @@ cmake --build /tmp/cuda-smoke-build
 
 ```bash
 docker pull nvidia/cuda:11.7.1-devel-centos7
+docker pull nvidia/cuda:11.7.1-devel-rockylinux8
+docker pull nvidia/cuda:11.7.1-devel-ubuntu22.04
+```
 
 ### 11.1.1 CentOS 7 特殊说明
 

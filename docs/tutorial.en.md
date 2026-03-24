@@ -11,7 +11,7 @@ The current repository targets a single Docker host with NVIDIA GPUs and shared 
 
 The platform includes:
 
-- A standard CUDA builder image: `cuda11.7-cmake3.26-centos7`
+- A CUDA builder image family: `cuda11.7-cmake3.26-{centos7|rocky8|ubuntu2204}`
 - Docker-based GitLab Runner deployment assets
 - A default GPU runner pool and a multi-GPU runner pool
 - Host verification, self-check documentation, and example pipelines
@@ -41,7 +41,7 @@ Before deployment, the host should provide:
 4. NVIDIA Container Toolkit with `nvidia` runtime available to Docker
 5. Network access to:
    - container registries
-   - CentOS Vault or an internal YUM mirror
+   - CentOS Vault, Rocky Linux mirrors, Ubuntu mirrors, or internal mirrors
    - GitHub Releases
 
 Run the host verification script first:
@@ -57,16 +57,19 @@ Expected results:
 - `nvidia-smi` prints GPU information
 - `docker info` exposes the `nvidia` runtime
 
-## 3.1 CentOS 7 baseline notes
+## 3.1 Supported builder platforms
 
-The current builder image is based on `nvidia/cuda:11.7.1-devel-centos7`, which introduces a few practical constraints:
+The builder family currently supports:
 
-- CentOS 7 is already end-of-life, so its default public mirrors are not reliable
-- The Dockerfile rewrites both the base YUM repositories and the SCLo repositories to `vault.centos.org`
-- Python 3 is not sourced from the default CentOS 7 base packages; it is provided through `rh-python38`
-- `conan` must stay compatible with the older OpenSSL stack, so the image explicitly constrains `urllib3<2`
+- `centos7` -> `nvidia/cuda:11.7.1-devel-centos7`
+- `rocky8` -> `nvidia/cuda:11.7.1-devel-rockylinux8`
+- `ubuntu2204` -> `nvidia/cuda:11.7.1-devel-ubuntu22.04`
 
-If your organization provides an internal RPM/YUM mirror, it is better to replace the public vault URLs with the internal mirror later.
+Platform-specific notes:
+
+- `centos7` remains available for compatibility, but it is end-of-life and rewrites YUM repositories to `vault.centos.org`
+- `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
+- `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
 
@@ -79,6 +82,9 @@ cp .env.example .env
 Then update the main fields:
 
 - `GITLAB_URL`: GitLab base URL
+- `BUILDER_IMAGE_FAMILY`: image family prefix used for all platform variants
+- `BUILDER_DEFAULT_PLATFORM`: platform tag used by `BUILDER_IMAGE` and the runner default image
+- `BUILDER_PLATFORMS`: comma-separated list of supported build variants
 - `RUNNER_REGISTRATION_TOKEN`: runner registration token
 - `RUNNER_DOCKER_IMAGE`: default image used by the runner
 - `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
@@ -99,12 +105,16 @@ Run:
 
 ```bash
 scripts/build-builder-image.sh
+scripts/build-builder-image.sh --platform ubuntu2204
+scripts/build-builder-image.sh --all-platforms
 ```
 
 The script will:
 
 - Read `BUILDER_IMAGE` from `.env`
-- Build `docker/cuda-builder/Dockerfile`
+- Build the platform Dockerfile under `docker/cuda-builder/`
+- Use `--platform <name>` to build one non-default target
+- Use `--all-platforms` to build every platform listed in `BUILDER_PLATFORMS`
 - Reuse Docker daemon proxy settings when available
 - Automatically switch to `--network host` when the proxy points to `127.0.0.1` or `localhost`
 
@@ -114,7 +124,7 @@ If the destination host is air-gapped, also run:
 scripts/export-images.sh
 ```
 
-This exports `BUILDER_IMAGE`, `RUNNER_DOCKER_IMAGE`, and `RUNNER_SERVICE_IMAGE` into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
+This exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
 
 ```bash
 scripts/import-images.sh
@@ -128,6 +138,7 @@ The image includes:
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
+- `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
 - `git`
 - `gdb`
 - `python3`
@@ -140,6 +151,7 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so'
 ```
 
 Expected:
@@ -147,6 +159,9 @@ Expected:
 - `nvcc` reports `release 11.7`
 - `cmake` reports `3.26.0`
 - `conan` reports a valid version
+- `mpicc` reports `Open MPI 4.1.6`
+- `mpicxx` resolves to the C++ compiler wrapper
+- OpenMPI is installed as static libraries only under `/opt/openmpi/lib`
 
 ## 6. Start the GitLab Runner service
 
@@ -234,6 +249,8 @@ default:
     - cuda-11
 ```
 
+Change the image suffix to `rocky8` or `ubuntu2204` when your project needs one of the other published builder variants.
+
 Full example:
 
 - [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml)
@@ -320,6 +337,9 @@ Check:
 
 ```bash
 docker pull nvidia/cuda:11.7.1-devel-centos7
+docker pull nvidia/cuda:11.7.1-devel-rockylinux8
+docker pull nvidia/cuda:11.7.1-devel-ubuntu22.04
+```
 
 ### 11.1.1 CentOS 7 note
 

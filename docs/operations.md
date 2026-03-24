@@ -14,6 +14,8 @@
 cp .env.example .env
 scripts/verify-host.sh
 scripts/build-builder-image.sh
+scripts/build-builder-image.sh --platform ubuntu2204
+scripts/build-builder-image.sh --all-platforms
 scripts/export-images.sh
 scripts/compose.sh up -d
 ```
@@ -43,7 +45,7 @@ Both registrations append to `runner/config/config.toml`.
 ## Upgrade path
 
 1. Build and publish a new builder image tag.
-2. Update `RUNNER_DOCKER_IMAGE` and `BUILDER_IMAGE` in `.env`.
+2. Update `BUILDER_IMAGE_FAMILY`, `BUILDER_DEFAULT_PLATFORM`, `BUILDER_PLATFORMS`, `RUNNER_DOCKER_IMAGE`, and `BUILDER_IMAGE` in `.env` if the platform matrix changes.
 3. Re-export the offline image bundle if air-gapped hosts depend on it.
 4. Restart the Runner service.
 5. Validate the smoke pipeline in a test project.

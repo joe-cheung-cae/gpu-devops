@@ -2,12 +2,18 @@ FROM nvidia/cuda:11.7.1-devel-centos7
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CMAKE_VERSION=3.26.0
+ARG OPENMPI_VERSION=4.1.6
 ARG http_proxy
 ARG https_proxy
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG no_proxy
 ARG NO_PROXY
+
+ENV OPENMPI_PREFIX=/opt/openmpi
+ENV PATH="${OPENMPI_PREFIX}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${OPENMPI_PREFIX}/lib:${LD_LIBRARY_PATH}"
+ENV PKG_CONFIG_PATH="${OPENMPI_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
     sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
@@ -20,6 +26,7 @@ RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && 
       gdb \
       git \
       make \
+      perl \
       rsync \
       unzip \
       wget \
@@ -42,6 +49,10 @@ RUN ln -sf /opt/rh/rh-python38/root/usr/bin/python3 /usr/local/bin/python3 && \
 RUN wget -qO /tmp/cmake.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh" && \
     sh /tmp/cmake.sh --skip-license --prefix=/usr/local && \
     rm -f /tmp/cmake.sh
+
+COPY docker/cuda-builder/install-openmpi.sh /usr/local/bin/install-openmpi.sh
+RUN chmod +x /usr/local/bin/install-openmpi.sh && \
+    OPENMPI_VERSION="${OPENMPI_VERSION}" OPENMPI_PREFIX="${OPENMPI_PREFIX}" /usr/local/bin/install-openmpi.sh
 
 RUN python3 -m pip install --no-cache-dir \
       conan \

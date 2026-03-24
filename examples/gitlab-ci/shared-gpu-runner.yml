@@ -9,6 +9,9 @@ default:
     - cuda
     - cuda-11
 
+# Change the image tag suffix to `rocky8` or `ubuntu2204` if your project
+# requires one of the other published builder variants.
+
 gpu-smoke:
   stage: verify
   script:

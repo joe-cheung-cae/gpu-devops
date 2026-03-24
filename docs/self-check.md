@@ -24,12 +24,19 @@ Run:
 ```bash
 cp .env.example .env
 scripts/build-builder-image.sh
+scripts/build-builder-image.sh --platform rocky8
+scripts/build-builder-image.sh --all-platforms
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so'
 ```
 
 Expected:
 
-- Docker builds `docker/cuda-builder/Dockerfile`
-- The resulting image matches `BUILDER_IMAGE`
+- The default build uses `docker/cuda-builder/centos7.Dockerfile`
+- The single-platform build uses the matching platform Dockerfile, for example `docker/cuda-builder/rocky8.Dockerfile`
+- The batch build covers `centos7`, `rocky8`, and `ubuntu2204`
+- The default resulting image matches `BUILDER_IMAGE`
+- OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
+- `/opt/openmpi/lib/libmpi.a` exists and `/opt/openmpi/lib/libmpi.so` does not
 
 ## 3. Start Runner service
 
