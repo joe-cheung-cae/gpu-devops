@@ -132,6 +132,17 @@ scripts/import-images.sh
 
 即可一键导入部署所需镜像。
 
+如果另一个项目目录不在当前仓库下面，但也需要同样的镜像和接入资产，可以执行：
+
+```bash
+scripts/export-project-bundle.sh
+scripts/import-project-bundle.sh --target-dir /path/to/other/project
+```
+
+默认会把这些文件安装到 `/path/to/other/project/.gpu-devops/`。
+
+导入脚本还会生成 `/path/to/other/project/.gpu-devops/.env`，让复制过去的 `compose.sh` 默认把目标项目根目录作为 `HOST_PROJECT_DIR`，并以 `CUDA_CXX_PROJECT_DIR=.` 作为源码根。
+
 镜像内默认包含：
 
 - `nvcc`

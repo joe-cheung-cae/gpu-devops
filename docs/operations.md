@@ -26,6 +26,17 @@ If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARC
 scripts/import-images.sh
 ```
 
+To move the same images and integration assets into another project directory outside this repository, run:
+
+```bash
+scripts/export-project-bundle.sh
+scripts/import-project-bundle.sh --target-dir /path/to/other/project
+```
+
+The imported files are installed under `/path/to/other/project/.gpu-devops/` by default.
+
+The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree.
+
 ## Runner registration
 
 Register the standard GPU pool:

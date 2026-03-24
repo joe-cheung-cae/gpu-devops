@@ -99,6 +99,31 @@ Projects should pin to a published immutable tag rather than `latest`.
 
 For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
 
+## Project integration bundle
+
+When another project lives outside this repository and still needs the same images plus ready-to-use integration assets, use:
+
+- `scripts/export-project-bundle.sh`
+- `scripts/import-project-bundle.sh --target-dir /path/to/other/project`
+
+The exported bundle contains:
+
+- the current offline image archive
+- `.env.example`
+- `docker-compose.yml`
+- `runner-compose.yml`
+- `examples/gitlab-ci/shared-gpu-runner.yml`
+- the compose wrapper scripts
+- the operator/tutorial docs
+
+Importing the bundle loads the images into Docker and installs those assets under `<target>/.gpu-devops/` by default, so the target project does not need to live under the current repository tree and does not risk overwriting its own root-level files.
+
+The importer also writes `<target>/.gpu-devops/.env` with target-safe defaults:
+
+- `HOST_PROJECT_DIR=<target project root>`
+- `CUDA_CXX_PROJECT_DIR=.`
+- `CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build`
+
 ## Project usage
 
 See [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) for a complete example.

@@ -4,7 +4,7 @@ services:
     profiles: ["centos7"]
     working_dir: /workspace
     volumes:
-      - ${PWD:-.}:/workspace
+      - ${HOST_PROJECT_DIR:-.}:/workspace
     environment:
       BUILD_PLATFORM: centos7
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
@@ -27,7 +27,7 @@ services:
     profiles: ["rocky8"]
     working_dir: /workspace
     volumes:
-      - ${PWD:-.}:/workspace
+      - ${HOST_PROJECT_DIR:-.}:/workspace
     environment:
       BUILD_PLATFORM: rocky8
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
@@ -50,7 +50,7 @@ services:
     profiles: ["ubuntu2204"]
     working_dir: /workspace
     volumes:
-      - ${PWD:-.}:/workspace
+      - ${HOST_PROJECT_DIR:-.}:/workspace
     environment:
       BUILD_PLATFORM: ubuntu2204
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}

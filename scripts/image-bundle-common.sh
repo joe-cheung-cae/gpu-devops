@@ -32,6 +32,10 @@ load_image_bundle_env() {
   if [[ -z "${IMAGE_ARCHIVE_PATH:-}" ]]; then
     IMAGE_ARCHIVE_PATH="${root_dir}/artifacts/offline-images.tar.gz"
   fi
+
+  if [[ -z "${PROJECT_BUNDLE_PATH:-}" ]]; then
+    PROJECT_BUNDLE_PATH="${root_dir}/artifacts/project-integration-bundle.tar.gz"
+  fi
 }
 
 require_export_image_bundle_env() {
@@ -91,6 +95,11 @@ default_archive_path() {
   resolve_bundle_path "${root_dir}" "${IMAGE_ARCHIVE_PATH}"
 }
 
+default_project_bundle_path() {
+  local root_dir="$1"
+  resolve_bundle_path "${root_dir}" "${PROJECT_BUNDLE_PATH}"
+}
+
 collect_bundle_images() {
   local image
   declare -A seen=()
@@ -110,4 +119,18 @@ collect_bundle_images() {
       seen["${image}"]=1
     fi
   done
+}
+
+project_bundle_assets() {
+  cat <<'EOF'
+.env.example
+docker-compose.yml
+runner-compose.yml
+examples/gitlab-ci/shared-gpu-runner.yml
+scripts/compose.sh
+scripts/runner-compose.sh
+docs/operations.md
+docs/tutorial.en.md
+docs/tutorial.zh-CN.md
+EOF
 }

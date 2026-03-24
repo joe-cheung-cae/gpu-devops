@@ -132,6 +132,17 @@ scripts/import-images.sh
 
 to load the deployment images in one step.
 
+If another project outside this repository needs the same images and integration assets, run:
+
+```bash
+scripts/export-project-bundle.sh
+scripts/import-project-bundle.sh --target-dir /path/to/other/project
+```
+
+The imported files land in `/path/to/other/project/.gpu-devops/` by default.
+
+The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR` and `CUDA_CXX_PROJECT_DIR=.`
+
 The image includes:
 
 - `nvcc`
