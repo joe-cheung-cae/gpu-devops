@@ -51,7 +51,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-The source path comes from `CUDA_CXX_PROJECT_DIR`. Build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`.
+The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, and build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`.
 
 ## Upgrade path
 

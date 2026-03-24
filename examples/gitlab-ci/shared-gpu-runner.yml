@@ -3,7 +3,7 @@ stages:
   - build
 
 default:
-  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+  image: tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
   tags:
     - gpu
     - cuda

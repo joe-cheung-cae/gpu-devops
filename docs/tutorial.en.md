@@ -189,7 +189,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-`CUDA_CXX_PROJECT_DIR` selects the source tree. `CUDA_CXX_BUILD_ROOT` stores output per platform.
+The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source tree inside that workspace, and `CUDA_CXX_BUILD_ROOT` stores output per platform.
 
 The main runner container image is:
 
@@ -256,7 +256,7 @@ Minimal example:
 
 ```yaml
 default:
-  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+  image: tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
   tags:
     - gpu
     - cuda

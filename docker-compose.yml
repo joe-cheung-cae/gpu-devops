@@ -1,13 +1,14 @@
 services:
   cuda-cxx-centos7:
-    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
     profiles: ["centos7"]
-    working_dir: /workspace/project
+    working_dir: /workspace
     volumes:
-      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
-      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+      - ${PWD:-.}:/workspace
     environment:
       BUILD_PLATFORM: centos7
+      CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
+      CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -15,19 +16,22 @@ services:
       - /bin/bash
       - -lc
       - >
-        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
+        rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
+        cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS
 
   cuda-cxx-rocky8:
-    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
     profiles: ["rocky8"]
-    working_dir: /workspace/project
+    working_dir: /workspace
     volumes:
-      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
-      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+      - ${PWD:-.}:/workspace
     environment:
       BUILD_PLATFORM: rocky8
+      CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
+      CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -35,19 +39,22 @@ services:
       - /bin/bash
       - -lc
       - >
-        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
+        rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
+        cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS
 
   cuda-cxx-ubuntu2204:
-    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
     profiles: ["ubuntu2204"]
-    working_dir: /workspace/project
+    working_dir: /workspace
     volumes:
-      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
-      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+      - ${PWD:-.}:/workspace
     environment:
       BUILD_PLATFORM: ubuntu2204
+      CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
+      CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -55,6 +62,8 @@ services:
       - /bin/bash
       - -lc
       - >
-        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
+        rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
+        cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS

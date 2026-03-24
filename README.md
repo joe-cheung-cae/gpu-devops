@@ -66,7 +66,7 @@ Local project build examples:
 - Multiple platforms: `scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204`
 - Profile-based selection: `docker compose --profile centos7 --profile rocky8 -f docker-compose.yml up`
 
-The build Compose file mounts `CUDA_CXX_PROJECT_DIR` and writes output into `CUDA_CXX_BUILD_ROOT/<platform>`.
+The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, and build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`.
 
 ## Shared tag policy
 
@@ -85,13 +85,13 @@ Multi-GPU jobs should use `gpu-multi`, `cuda`, `cuda-11`. The initial implementa
 
 The builder image family is:
 
-`<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26`
+`tf-particles/devops/cuda-builder:cuda11.7-cmake3.26`
 
 The default supported tags are:
 
-- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-centos7`
-- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-rocky8`
-- `<registry>/<namespace>/cuda-builder:cuda11.7-cmake3.26-ubuntu2204`
+- `tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7`
+- `tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-rocky8`
+- `tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204`
 
 Projects should pin to a published immutable tag rather than `latest`.
 

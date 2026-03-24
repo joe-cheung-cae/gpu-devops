@@ -189,7 +189,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-`CUDA_CXX_PROJECT_DIR` 用来指定源码目录，`CUDA_CXX_BUILD_ROOT` 按平台保存构建产物。
+当前宿主机目录会挂载到容器内的 `/workspace`。`CUDA_CXX_PROJECT_DIR` 用来指定这个工作区里的源码目录，`CUDA_CXX_BUILD_ROOT` 按平台保存构建产物。
 
 Runner 主容器使用镜像：
 
@@ -256,7 +256,7 @@ runner/register-runner.sh multi
 
 ```yaml
 default:
-  image: registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+  image: tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
   tags:
     - gpu
     - cuda

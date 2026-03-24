@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGES=(
-  "registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
-  "registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
-  "registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
-)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${ROOT_DIR}/.env"
 
-for image in "${IMAGES[@]}"; do
+if [[ -f "${ENV_FILE}" ]]; then
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
+fi
+
+BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}"
+BUILDER_PLATFORMS="${BUILDER_PLATFORMS:-centos7,rocky8,ubuntu2204}"
+
+IFS=',' read -r -a PLATFORMS <<< "${BUILDER_PLATFORMS}"
+
+for platform in "${PLATFORMS[@]}"; do
+  image="${BUILDER_IMAGE_FAMILY}-${platform}"
   echo "Verifying OpenMPI in ${image}"
   docker run --rm "${image}" sh -lc '
     set -e
