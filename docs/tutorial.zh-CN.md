@@ -168,14 +168,28 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 执行：
 
 ```bash
-scripts/compose.sh up -d
-scripts/compose.sh ps
+scripts/runner-compose.sh up -d
+scripts/runner-compose.sh ps
 ```
 
 Compose 入口脚本会自动选择：
 
 - `docker compose`
 - 或 `docker-compose`
+
+仓库现在提供两个 Compose 入口：
+
+- `scripts/runner-compose.sh`：用于 `runner-compose.yml` 中的 GitLab Runner 服务
+- `scripts/compose.sh`：用于 `docker-compose.yml` 中的本地 CUDA/C++ 项目构建
+
+本地构建示例：
+
+```bash
+scripts/compose.sh run --rm cuda-cxx-centos7
+scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
+```
+
+`CUDA_CXX_PROJECT_DIR` 用来指定源码目录，`CUDA_CXX_BUILD_ROOT` 按平台保存构建产物。
 
 Runner 主容器使用镜像：
 

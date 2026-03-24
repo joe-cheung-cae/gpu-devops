@@ -4,7 +4,8 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 
 - A standard CUDA builder image for project jobs
 - Multiple builder platform variants: `centos7`, `rocky8`, `ubuntu2204`
-- A Docker-based GitLab Runner deployment for GPU workloads
+- A Docker Compose based GitLab Runner deployment for GPU workloads
+- A Docker Compose based local CUDA/C++ build workflow for one or more builder platforms
 - Registration and verification scripts
 - Example GitLab CI and a minimal CUDA/CMake smoke project
 
@@ -45,9 +46,27 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
    Single platform: `scripts/build-builder-image.sh --platform ubuntu2204`
    All supported platforms: `scripts/build-builder-image.sh --all-platforms`
 4. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
-5. Start the Runner service with `scripts/compose.sh up -d`.
+5. Start the Runner service with `scripts/runner-compose.sh up -d`.
 6. Register Runner entries with `runner/register-runner.sh`.
 7. Validate the deployment with `docs/self-check.md`.
+
+## Compose files
+
+- [runner-compose.yml](/home/joe/repo/gpu-devops/runner-compose.yml): Runner deployment only. It defines the `gitlab-runner` service used for registration and steady-state operation.
+- [docker-compose.yml](/home/joe/repo/gpu-devops/docker-compose.yml): local CUDA/C++ project build only. It runs one build container per supported builder platform.
+
+Wrapper scripts:
+
+- [runner-compose.sh](/home/joe/repo/gpu-devops/scripts/runner-compose.sh) targets `runner-compose.yml`
+- [compose.sh](/home/joe/repo/gpu-devops/scripts/compose.sh) targets `docker-compose.yml`
+
+Local project build examples:
+
+- Single platform: `scripts/compose.sh run --rm cuda-cxx-centos7`
+- Multiple platforms: `scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204`
+- Profile-based selection: `docker compose --profile centos7 --profile rocky8 -f docker-compose.yml up`
+
+The build Compose file mounts `CUDA_CXX_PROJECT_DIR` and writes output into `CUDA_CXX_BUILD_ROOT/<platform>`.
 
 ## Shared tag policy
 

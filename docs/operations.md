@@ -17,7 +17,7 @@ scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 scripts/export-images.sh
-scripts/compose.sh up -d
+scripts/runner-compose.sh up -d
 ```
 
 If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
@@ -41,6 +41,17 @@ runner/register-runner.sh multi
 ```
 
 Both registrations append to `runner/config/config.toml`.
+
+## Local project build
+
+Use `docker-compose.yml` when you want to compile a CUDA/C++ project locally with one or more builder platforms instead of deploying GitLab Runner:
+
+```bash
+scripts/compose.sh run --rm cuda-cxx-centos7
+scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
+```
+
+The source path comes from `CUDA_CXX_PROJECT_DIR`. Build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`.
 
 ## Upgrade path
 

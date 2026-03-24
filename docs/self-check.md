@@ -43,14 +43,28 @@ Expected:
 Run:
 
 ```bash
-scripts/compose.sh up -d
-scripts/compose.sh ps
+scripts/runner-compose.sh up -d
+scripts/runner-compose.sh ps
 ```
 
 Expected:
 
 - `gitlab-runner` container is up
 - Health status becomes healthy
+
+## 3.1 Validate local project build Compose
+
+Run:
+
+```bash
+scripts/compose.sh run --rm cuda-cxx-centos7
+```
+
+Expected:
+
+- The sample CUDA/C++ project configures successfully
+- The sample CUDA/C++ project builds successfully
+- Build output is written under `${CUDA_CXX_BUILD_ROOT}/centos7`
 
 ## 4. Register Runner entries
 

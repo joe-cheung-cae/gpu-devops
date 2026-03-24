@@ -1,17 +1,60 @@
 services:
-  gitlab-runner:
-    image: ${RUNNER_SERVICE_IMAGE:-gitlab/gitlab-runner:alpine-v16.10.1}
-    container_name: gitlab-runner
-    restart: unless-stopped
-    environment:
-      RUNNER_CONFIG_DIR: /etc/gitlab-runner
+  cuda-cxx-centos7:
+    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
+    profiles: ["centos7"]
+    working_dir: /workspace/project
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./runner/config:/etc/gitlab-runner
-      - ./runner/cache:/cache
-    healthcheck:
-      test: ["CMD-SHELL", "gitlab-runner --version >/dev/null 2>&1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
+      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+    environment:
+      BUILD_PLATFORM: centos7
+      CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
+      CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
+      CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
+        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS
+
+  cuda-cxx-rocky8:
+    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
+    profiles: ["rocky8"]
+    working_dir: /workspace/project
+    volumes:
+      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
+      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+    environment:
+      BUILD_PLATFORM: rocky8
+      CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
+      CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
+      CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
+        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS
+
+  cuda-cxx-ubuntu2204:
+    image: ${BUILDER_IMAGE_FAMILY:-registry.example.com/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
+    profiles: ["ubuntu2204"]
+    working_dir: /workspace/project
+    volumes:
+      - ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}:/workspace/project
+      - ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}:/workspace/out
+    environment:
+      BUILD_PLATFORM: ubuntu2204
+      CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
+      CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
+      CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        cmake -S /workspace/project -B /workspace/out/$$BUILD_PLATFORM
+        -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
+        cmake --build /workspace/out/$$BUILD_PLATFORM $$CUDA_CXX_BUILD_ARGS

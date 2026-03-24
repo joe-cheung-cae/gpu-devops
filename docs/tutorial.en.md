@@ -168,14 +168,28 @@ Expected:
 Run:
 
 ```bash
-scripts/compose.sh up -d
-scripts/compose.sh ps
+scripts/runner-compose.sh up -d
+scripts/runner-compose.sh ps
 ```
 
 The wrapper script automatically uses:
 
 - `docker compose`
 - or `docker-compose`
+
+The repository now has two Compose entry points:
+
+- `scripts/runner-compose.sh` for the GitLab Runner service in `runner-compose.yml`
+- `scripts/compose.sh` for local CUDA/C++ project builds in `docker-compose.yml`
+
+Example local builds:
+
+```bash
+scripts/compose.sh run --rm cuda-cxx-centos7
+scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
+```
+
+`CUDA_CXX_PROJECT_DIR` selects the source tree. `CUDA_CXX_BUILD_ROOT` stores output per platform.
 
 The main runner container image is:
 

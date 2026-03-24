@@ -6,4 +6,5 @@ docker/cuda-builder/build/
 artifacts/*.tar
 artifacts/*.tar.gz
 artifacts/*.images.txt
+artifacts/cuda-cxx-build/
 *.log
