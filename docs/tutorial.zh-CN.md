@@ -143,6 +143,16 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 导入脚本还会生成 `/path/to/other/project/.gpu-devops/.env`，让复制过去的 `compose.sh` 默认把目标项目根目录作为 `HOST_PROJECT_DIR`，并以 `CUDA_CXX_PROJECT_DIR=.` 作为源码根。
 
+如果你只想处理其中一类内容，也可以加 `--mode`：
+
+```bash
+scripts/export-project-bundle.sh --mode images
+scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+
+scripts/export-project-bundle.sh --mode assets
+scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+```
+
 镜像内默认包含：
 
 - `nvcc`

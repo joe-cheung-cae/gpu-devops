@@ -134,3 +134,24 @@ docs/tutorial.en.md
 docs/tutorial.zh-CN.md
 EOF
 }
+
+normalize_bundle_mode() {
+  local mode="${1:-all}"
+
+  case "${mode}" in
+    all)
+      printf 'all\n'
+      ;;
+    images|image)
+      printf 'images\n'
+      ;;
+    assets|asset|files|file)
+      printf 'assets\n'
+      ;;
+    *)
+      echo "Unsupported bundle mode: ${mode}" >&2
+      echo "Expected one of: all, images, assets" >&2
+      exit 1
+      ;;
+  esac
+}

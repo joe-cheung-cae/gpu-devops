@@ -129,3 +129,13 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 ```
 
 The target project receives `.gpu-devops/` with the Compose files, wrapper scripts, docs, example CI config, and a generated `.env`.
+
+If you only want images or only want files, use:
+
+```bash
+scripts/export-project-bundle.sh --mode images
+scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+
+scripts/export-project-bundle.sh --mode assets
+scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+```

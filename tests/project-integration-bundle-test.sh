@@ -21,6 +21,17 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local file="$1"
+  local unexpected="$2"
+  if grep -Fq -- "${unexpected}" "${file}"; then
+    echo "Did not expect to find: ${unexpected}" >&2
+    echo "In file: ${file}" >&2
+    cat "${file}" >&2 || true
+    fail "unexpected content present"
+  fi
+}
+
 assert_file_exists() {
   local path="$1"
   [[ -f "${path}" ]] || fail "expected file to exist: ${path}"
@@ -31,11 +42,15 @@ assert_executable() {
   [[ -x "${path}" ]] || fail "expected file to be executable: ${path}"
 }
 
-run_export_test() {
-  local test_dir="${TMP_DIR}/export"
-  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+assert_not_exists() {
+  local path="$1"
+  [[ ! -e "${path}" ]] || fail "expected path to be absent: ${path}"
+}
 
-  cat > "${test_dir}/.env" <<'EOF'
+write_export_env() {
+  local env_path="$1"
+
+  cat > "${env_path}" <<'EOF'
 BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
 BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
@@ -43,8 +58,12 @@ RUNNER_DOCKER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos
 RUNNER_SERVICE_IMAGE=registry.local/devops/gitlab-runner:alpine-v16.10.1
 PROJECT_BUNDLE_PATH=artifacts/project-integration-bundle.tar.gz
 EOF
+}
 
-  cat > "${test_dir}/bin/docker" <<'EOF'
+write_export_docker_mock() {
+  local docker_path="$1"
+
+  cat > "${docker_path}" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 LOG_FILE="${TEST_LOG_FILE:?}"
@@ -63,42 +82,85 @@ case "${1:-}" in
 esac
 exit 0
 EOF
-  chmod +x "${test_dir}/bin/docker"
+  chmod +x "${docker_path}"
+}
+
+run_export_test() {
+  local mode="$1"
+  local test_dir="${TMP_DIR}/export-${mode}"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  write_export_env "${test_dir}/.env"
+  write_export_docker_mock "${test_dir}/bin/docker"
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz"
+  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
   tar -xzf "${test_dir}/bundle.tar.gz" -C "${test_dir}"
-  assert_file_exists "${test_dir}/assets/.env.example"
-  assert_file_exists "${test_dir}/assets/docker-compose.yml"
-  assert_file_exists "${test_dir}/assets/runner-compose.yml"
-  assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
-  assert_file_exists "${test_dir}/assets/scripts/compose.sh"
-  assert_file_exists "${test_dir}/images/offline-images.tar.gz"
-  assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
-  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+
+  case "${mode}" in
+    all)
+      assert_file_exists "${test_dir}/assets/.env.example"
+      assert_file_exists "${test_dir}/assets/docker-compose.yml"
+      assert_file_exists "${test_dir}/assets/runner-compose.yml"
+      assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
+      assert_file_exists "${test_dir}/assets/scripts/compose.sh"
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz"
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
+      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+      ;;
+    images)
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz"
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
+      assert_not_exists "${test_dir}/assets"
+      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+      ;;
+    assets)
+      assert_file_exists "${test_dir}/assets/.env.example"
+      assert_file_exists "${test_dir}/assets/docker-compose.yml"
+      assert_file_exists "${test_dir}/assets/runner-compose.yml"
+      assert_not_exists "${test_dir}/images"
+      ;;
+  esac
+
+  assert_contains "${test_dir}/bundle-manifest.txt" "bundle_mode=${mode}"
 }
 
-run_import_test() {
-  local test_dir="${TMP_DIR}/import"
-  local target_dir="${TMP_DIR}/external-project"
-  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+write_import_env() {
+  local env_path="$1"
 
-  cat > "${test_dir}/.env" <<'EOF'
+  cat > "${env_path}" <<'EOF'
 PROJECT_BUNDLE_PATH=artifacts/project-integration-bundle.tar.gz
 EOF
+}
 
-  mkdir -p "${test_dir}/bundle/images" "${test_dir}/bundle/assets/examples/gitlab-ci" "${test_dir}/bundle/assets/scripts"
-  printf 'fake-image-data' | gzip -c > "${test_dir}/bundle/images/offline-images.tar.gz"
-  cp "${ROOT_DIR}/docker-compose.yml" "${test_dir}/bundle/assets/docker-compose.yml"
-  cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${test_dir}/bundle/assets/examples/gitlab-ci/shared-gpu-runner.yml"
-  cp "${ROOT_DIR}/scripts/compose.sh" "${test_dir}/bundle/assets/scripts/compose.sh"
-  chmod +x "${test_dir}/bundle/assets/scripts/compose.sh"
-  tar -czf "${test_dir}/bundle.tar.gz" -C "${test_dir}/bundle" .
+write_import_bundle() {
+  local bundle_root="$1"
+  local mode="$2"
 
-  cat > "${test_dir}/bin/docker" <<'EOF'
+  mkdir -p "${bundle_root}"
+
+  if [[ "${mode}" == "all" || "${mode}" == "images" ]]; then
+    mkdir -p "${bundle_root}/images"
+    printf 'fake-image-data' | gzip -c > "${bundle_root}/images/offline-images.tar.gz"
+  fi
+
+  if [[ "${mode}" == "all" || "${mode}" == "assets" ]]; then
+    mkdir -p "${bundle_root}/assets/examples/gitlab-ci" "${bundle_root}/assets/scripts"
+    cp "${ROOT_DIR}/docker-compose.yml" "${bundle_root}/assets/docker-compose.yml"
+    cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
+    cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
+    chmod +x "${bundle_root}/assets/scripts/compose.sh"
+  fi
+}
+
+write_import_docker_mocks() {
+  local docker_path="$1"
+  local docker_compose_path="$2"
+
+  cat > "${docker_path}" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 LOG_FILE="${TEST_LOG_FILE:?}"
@@ -109,39 +171,78 @@ fi
 cat >/dev/null
 exit 0
 EOF
-  cat > "${test_dir}/bin/docker-compose" <<'EOF'
+  cat > "${docker_compose_path}" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 exit 0
 EOF
-  chmod +x "${test_dir}/bin/docker"
-  chmod +x "${test_dir}/bin/docker-compose"
-
-  TEST_LOG_FILE="${test_dir}/logs/docker.log" \
-  PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-project-bundle.sh" \
-    --env-file "${test_dir}/.env" \
-    --input "${test_dir}/bundle.tar.gz" \
-    --target-dir "${target_dir}"
-
-  assert_contains "${test_dir}/logs/docker.log" "load"
-  assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
-  assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
-  assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
-  assert_file_exists "${target_dir}/.gpu-devops/.env"
-  assert_executable "${target_dir}/.gpu-devops/scripts/compose.sh"
-  assert_contains "${target_dir}/.gpu-devops/.env" "HOST_PROJECT_DIR=${target_dir}"
-  assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_PROJECT_DIR=."
-  assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build"
-
-  TEST_LOG_FILE="${test_dir}/logs/docker.log" \
-  PATH="${test_dir}/bin:${PATH}" \
-  "${target_dir}/.gpu-devops/scripts/compose.sh" config
-
-  assert_contains "${test_dir}/logs/docker.log" "compose --env-file ${target_dir}/.gpu-devops/.env -f ${target_dir}/.gpu-devops/docker-compose.yml config"
+  chmod +x "${docker_path}" "${docker_compose_path}"
 }
 
-run_export_test
-run_import_test
+run_import_test() {
+  local mode="$1"
+  local test_dir="${TMP_DIR}/import-${mode}"
+  local target_dir="${TMP_DIR}/external-project-${mode}"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  write_import_env "${test_dir}/.env"
+  write_import_bundle "${test_dir}/bundle" "${mode}"
+  tar -czf "${test_dir}/bundle.tar.gz" -C "${test_dir}/bundle" .
+
+  write_import_docker_mocks "${test_dir}/bin/docker" "${test_dir}/bin/docker-compose"
+
+  if [[ "${mode}" == "images" ]]; then
+    TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+    PATH="${test_dir}/bin:${PATH}" \
+    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+      --env-file "${test_dir}/.env" \
+      --input "${test_dir}/bundle.tar.gz" \
+      --mode "${mode}"
+  else
+    TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+    PATH="${test_dir}/bin:${PATH}" \
+    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+      --env-file "${test_dir}/.env" \
+      --input "${test_dir}/bundle.tar.gz" \
+      --target-dir "${target_dir}" \
+      --mode "${mode}"
+  fi
+
+  case "${mode}" in
+    all)
+      assert_contains "${test_dir}/logs/docker.log" "load"
+      assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
+      assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/.env"
+      assert_executable "${target_dir}/.gpu-devops/scripts/compose.sh"
+      assert_contains "${target_dir}/.gpu-devops/.env" "HOST_PROJECT_DIR=${target_dir}"
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_PROJECT_DIR=."
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build"
+
+      TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+      PATH="${test_dir}/bin:${PATH}" \
+      "${target_dir}/.gpu-devops/scripts/compose.sh" config
+
+      assert_contains "${test_dir}/logs/docker.log" "compose --env-file ${target_dir}/.gpu-devops/.env -f ${target_dir}/.gpu-devops/docker-compose.yml config"
+      ;;
+    images)
+      assert_contains "${test_dir}/logs/docker.log" "load"
+      assert_not_exists "${target_dir}"
+      ;;
+    assets)
+      assert_not_exists "${test_dir}/logs/docker.log"
+      assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
+      assert_file_exists "${target_dir}/.gpu-devops/.env"
+      ;;
+  esac
+}
+
+run_export_test all
+run_export_test images
+run_export_test assets
+run_import_test all
+run_import_test images
+run_import_test assets
 
 echo "project integration bundle tests passed"

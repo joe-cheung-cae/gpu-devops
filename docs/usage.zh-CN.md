@@ -129,3 +129,13 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 ```
 
 目标项目会收到 `.gpu-devops/` 目录，其中包含 Compose 文件、包装脚本、文档、示例 CI 配置，以及自动生成的 `.env`。
+
+如果你只想导镜像或只想导文件，可以执行：
+
+```bash
+scripts/export-project-bundle.sh --mode images
+scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+
+scripts/export-project-bundle.sh --mode assets
+scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+```

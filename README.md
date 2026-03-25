@@ -105,12 +105,25 @@ For air-gapped deployment, `scripts/export-images.sh` writes a compressed archiv
 
 ## Project integration bundle
 
-When another project lives outside this repository and still needs the same images plus ready-to-use integration assets, use:
+When another project lives outside this repository and still needs exported images, ready-to-use integration assets, or both, use:
 
 - `scripts/export-project-bundle.sh`
 - `scripts/import-project-bundle.sh --target-dir /path/to/other/project`
 
-The exported bundle contains:
+The project bundle scripts now support three modes:
+
+- `--mode all`: export/import images and assets together
+- `--mode images`: export/import images only
+- `--mode assets`: export/import files only
+
+Typical examples:
+
+- `scripts/export-project-bundle.sh --mode images`
+- `scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz`
+- `scripts/export-project-bundle.sh --mode assets`
+- `scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project`
+
+In `all` mode, the exported bundle contains:
 
 - the current offline image archive
 - `.env.example`
@@ -120,9 +133,9 @@ The exported bundle contains:
 - the compose wrapper scripts
 - the operator/tutorial docs
 
-Importing the bundle loads the images into Docker and installs those assets under `<target>/.gpu-devops/` by default, so the target project does not need to live under the current repository tree and does not risk overwriting its own root-level files.
+Importing the bundle in `all` mode loads the images into Docker and installs those assets under `<target>/.gpu-devops/` by default, so the target project does not need to live under the current repository tree and does not risk overwriting its own root-level files.
 
-The importer also writes `<target>/.gpu-devops/.env` with target-safe defaults:
+When assets are imported, the importer also writes `<target>/.gpu-devops/.env` with target-safe defaults:
 
 - `HOST_PROJECT_DIR=<target project root>`
 - `CUDA_CXX_PROJECT_DIR=.`

@@ -10,6 +10,7 @@ ENV_FILE="${ROOT_DIR}/.env"
 INPUT_OVERRIDE=""
 TARGET_DIR=""
 ASSETS_SUBDIR=".gpu-devops"
+MODE="all"
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -29,11 +30,15 @@ while [[ $# -gt 0 ]]; do
       ASSETS_SUBDIR="${2:?Missing value for --assets-subdir}"
       shift 2
       ;;
+    --mode)
+      MODE="${2:?Missing value for --mode}"
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/import-project-bundle.sh --target-dir PATH [--env-file PATH] [--input PATH] [--assets-subdir DIR]
+Usage: scripts/import-project-bundle.sh [--target-dir PATH] [--env-file PATH] [--input PATH] [--assets-subdir DIR] [--mode all|images|assets]
 
-Loads the bundled images into Docker and installs integration assets into any target project directory.
+Imports bundled images, integration assets, or both.
 EOF
       exit 0
       ;;
@@ -44,10 +49,7 @@ EOF
   esac
 done
 
-if [[ -z "${TARGET_DIR}" ]]; then
-  echo "Set --target-dir to the destination project directory." >&2
-  exit 1
-fi
+MODE="$(normalize_bundle_mode "${MODE}")"
 
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 
@@ -62,27 +64,38 @@ if [[ ! -f "${ARCHIVE_PATH}" ]]; then
   exit 1
 fi
 
-mkdir -p "$(dirname "${TARGET_DIR}")"
-TARGET_DIR="$(cd "$(dirname "${TARGET_DIR}")" && pwd)/$(basename "${TARGET_DIR}")"
-ASSETS_DEST="${TARGET_DIR}/${ASSETS_SUBDIR}"
-
 STAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
 
-mkdir -p "${TARGET_DIR}"
 tar -xzf "${ARCHIVE_PATH}" -C "${STAGE_DIR}"
 
-if [[ ! -f "${STAGE_DIR}/images/offline-images.tar.gz" ]]; then
-  echo "Bundle is missing images/offline-images.tar.gz" >&2
-  exit 1
+if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
+  if [[ ! -f "${STAGE_DIR}/images/offline-images.tar.gz" ]]; then
+    echo "Bundle is missing images/offline-images.tar.gz" >&2
+    exit 1
+  fi
+
+  gzip -dc "${STAGE_DIR}/images/offline-images.tar.gz" | docker load
 fi
 
-gzip -dc "${STAGE_DIR}/images/offline-images.tar.gz" | docker load
+if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
+  if [[ -z "${TARGET_DIR}" ]]; then
+    echo "Set --target-dir to the destination project directory when importing assets." >&2
+    exit 1
+  fi
+  if [[ ! -d "${STAGE_DIR}/assets" ]]; then
+    echo "Bundle is missing assets/" >&2
+    exit 1
+  fi
 
-mkdir -p "${ASSETS_DEST}"
-cp -R "${STAGE_DIR}/assets/." "${ASSETS_DEST}/"
+  mkdir -p "$(dirname "${TARGET_DIR}")"
+  TARGET_DIR="$(cd "$(dirname "${TARGET_DIR}")" && pwd)/$(basename "${TARGET_DIR}")"
+  ASSETS_DEST="${TARGET_DIR}/${ASSETS_SUBDIR}"
 
-cat > "${ASSETS_DEST}/.env" <<EOF
+  mkdir -p "${TARGET_DIR}" "${ASSETS_DEST}"
+  cp -R "${STAGE_DIR}/assets/." "${ASSETS_DEST}/"
+
+  cat > "${ASSETS_DEST}/.env" <<EOF
 HOST_PROJECT_DIR=${TARGET_DIR}
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=${ASSETS_SUBDIR}/artifacts/cuda-cxx-build
@@ -90,6 +103,15 @@ CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
 EOF
+fi
 
-echo "Imported project images from ${ARCHIVE_PATH}"
-echo "Installed integration assets to ${ASSETS_DEST}"
+echo "Imported project bundle from ${ARCHIVE_PATH}"
+echo "Bundle mode: ${MODE}"
+
+if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
+  echo "Imported bundled images into Docker"
+fi
+
+if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
+  echo "Installed integration assets to ${ASSETS_DEST}"
+fi

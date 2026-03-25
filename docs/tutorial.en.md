@@ -143,6 +143,16 @@ The imported files land in `/path/to/other/project/.gpu-devops/` by default.
 
 The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR` and `CUDA_CXX_PROJECT_DIR=.`
 
+If you only need one side of that bundle flow, use `--mode`:
+
+```bash
+scripts/export-project-bundle.sh --mode images
+scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+
+scripts/export-project-bundle.sh --mode assets
+scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+```
+
 The image includes:
 
 - `nvcc`

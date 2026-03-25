@@ -8,6 +8,7 @@ source "${ROOT_DIR}/scripts/image-bundle-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
+MODE="all"
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -19,11 +20,15 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_OVERRIDE="${2:?Missing value for --output}"
       shift 2
       ;;
+    --mode)
+      MODE="${2:?Missing value for --mode}"
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/export-project-bundle.sh [--env-file PATH] [--output PATH]
+Usage: scripts/export-project-bundle.sh [--env-file PATH] [--output PATH] [--mode all|images|assets]
 
-Exports the configured images and integration assets into one portable bundle.
+Exports images, integration assets, or both into one portable bundle.
 EOF
       exit 0
       ;;
@@ -34,8 +39,9 @@ EOF
   esac
 done
 
+MODE="$(normalize_bundle_mode "${MODE}")"
+
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
-require_export_image_bundle_env
 
 if [[ -n "${OUTPUT_OVERRIDE}" ]]; then
   ARCHIVE_PATH="$(resolve_bundle_path "${ROOT_DIR}" "${OUTPUT_OVERRIDE}")"
@@ -43,40 +49,53 @@ else
   ARCHIVE_PATH="$(default_project_bundle_path "${ROOT_DIR}")"
 fi
 
-mapfile -t IMAGES < <(collect_bundle_images)
-mapfile -t ASSETS < <(project_bundle_assets)
-
 STAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
 
-mkdir -p "${STAGE_DIR}/images" "${STAGE_DIR}/assets"
+mkdir -p "${STAGE_DIR}"
 
-for image in "${IMAGES[@]}"; do
-  if ! docker image inspect "${image}" >/dev/null 2>&1; then
-    docker pull "${image}"
-  fi
-done
+IMAGES=()
+ASSETS=()
 
-docker save "${IMAGES[@]}" | gzip -c > "${STAGE_DIR}/images/offline-images.tar.gz"
-printf '%s\n' "${IMAGES[@]}" > "${STAGE_DIR}/images/offline-images.tar.gz.images.txt"
+if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
+  require_export_image_bundle_env
+  mapfile -t IMAGES < <(collect_bundle_images)
+  mkdir -p "${STAGE_DIR}/images"
 
-for asset in "${ASSETS[@]}"; do
-  mkdir -p "${STAGE_DIR}/assets/$(dirname "${asset}")"
-  cp "${ROOT_DIR}/${asset}" "${STAGE_DIR}/assets/${asset}"
-done
+  for image in "${IMAGES[@]}"; do
+    if ! docker image inspect "${image}" >/dev/null 2>&1; then
+      docker pull "${image}"
+    fi
+  done
+
+  docker save "${IMAGES[@]}" | gzip -c > "${STAGE_DIR}/images/offline-images.tar.gz"
+  printf '%s\n' "${IMAGES[@]}" > "${STAGE_DIR}/images/offline-images.tar.gz.images.txt"
+fi
+
+if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
+  mapfile -t ASSETS < <(project_bundle_assets)
+  mkdir -p "${STAGE_DIR}/assets"
+
+  for asset in "${ASSETS[@]}"; do
+    mkdir -p "${STAGE_DIR}/assets/$(dirname "${asset}")"
+    cp "${ROOT_DIR}/${asset}" "${STAGE_DIR}/assets/${asset}"
+  done
+fi
 
 cat > "${STAGE_DIR}/bundle-manifest.txt" <<EOF
 bundle_type=project_integration
-builder_image_family=${BUILDER_IMAGE_FAMILY}
-builder_platforms=${BUILDER_PLATFORMS}
-runner_docker_image=${RUNNER_DOCKER_IMAGE}
-runner_service_image=${RUNNER_SERVICE_IMAGE}
-assets_root=assets
-images_archive=images/offline-images.tar.gz
+bundle_mode=${MODE}
+builder_image_family=${BUILDER_IMAGE_FAMILY:-}
+builder_platforms=${BUILDER_PLATFORMS:-}
+runner_docker_image=${RUNNER_DOCKER_IMAGE:-}
+runner_service_image=${RUNNER_SERVICE_IMAGE:-}
+assets_root=$( [[ "${MODE}" == "all" || "${MODE}" == "assets" ]] && printf 'assets' )
+images_archive=$( [[ "${MODE}" == "all" || "${MODE}" == "images" ]] && printf 'images/offline-images.tar.gz' )
 EOF
 
 mkdir -p "$(dirname "${ARCHIVE_PATH}")"
 tar -czf "${ARCHIVE_PATH}" -C "${STAGE_DIR}" .
 
 echo "Exported project integration bundle to ${ARCHIVE_PATH}"
+echo "Bundle mode: ${MODE}"
 echo "Bundle includes ${#IMAGES[@]} image(s) and ${#ASSETS[@]} asset file(s)"

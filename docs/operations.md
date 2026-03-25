@@ -37,6 +37,18 @@ The imported files are installed under `/path/to/other/project/.gpu-devops/` by 
 
 The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree.
 
+The project bundle scripts also support partial flows:
+
+```bash
+scripts/export-project-bundle.sh --mode images
+scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+
+scripts/export-project-bundle.sh --mode assets
+scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+```
+
+`--mode images` does not require `--target-dir`. `--mode assets` skips Docker image import and only installs the copied files.
+
 ## Runner registration
 
 Register the standard GPU pool:
