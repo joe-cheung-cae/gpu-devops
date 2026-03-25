@@ -69,6 +69,7 @@ Platform-specific notes:
 
 - `centos7` remains available for compatibility, but it is end-of-life and rewrites YUM repositories to `vault.centos.org`
 - `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
+- `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -117,6 +118,7 @@ The script will:
 - Use `--all-platforms` to build every platform listed in `BUILDER_PLATFORMS`
 - Reuse Docker daemon proxy settings when available
 - Automatically switch to `--network host` when the proxy points to `127.0.0.1` or `localhost`
+- Pass the same proxy inputs to every builder platform; `centos7` then maps that input to `yum` internally
 
 If the destination host is air-gapped, also run:
 

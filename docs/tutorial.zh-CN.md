@@ -69,6 +69,7 @@ scripts/verify-host.sh
 
 - `centos7` 主要用于兼容存量环境，但已经 EOL，会把 YUM 源和 SCLo 源切到 `vault.centos.org`
 - `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
+- `centos7` 和其他平台一样接收统一的代理构建参数，但只会在装包阶段把它转换成临时的 `yum.conf` 代理配置
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -117,6 +118,7 @@ scripts/build-builder-image.sh --all-platforms
 - 通过 `--all-platforms` 一次构建 `BUILDER_PLATFORMS` 中的所有平台
 - 在你的环境中自动尝试复用 Docker daemon 代理配置
 - 当代理指向 `127.0.0.1` / `localhost` 时，自动用 `--network host` 兼容本机代理
+- 对三个 builder 平台传入统一的代理输入；`centos7` 会在内部把它映射到 `yum`
 
 如果目标环境无法访问外网，可以在联网环境额外执行：
 

@@ -78,6 +78,8 @@ If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_
 
 The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, and build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`.
 
+Proxy handling is aligned across `centos7`, `rocky8`, and `ubuntu2204`: the build wrapper passes the same proxy inputs to every platform. `centos7` additionally maps that input into a temporary `yum.conf` proxy entry so legacy package installation still works without baking proxy environment variables into the final image.
+
 ## Upgrade path
 
 1. Build and publish a new builder image tag.

@@ -35,6 +35,7 @@ Expected:
 - The single-platform build uses the matching platform Dockerfile, for example `docker/cuda-builder/rocky8.Dockerfile`
 - The batch build covers `centos7`, `rocky8`, and `ubuntu2204`
 - The default resulting image matches `BUILDER_IMAGE`
+- If proxy settings are present, all builder platforms consume the same proxy input and `centos7` still completes its `yum` steps
 - OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
 - `/opt/openmpi/lib/libmpi.a` exists and `/opt/openmpi/lib/libmpi.so` does not
 
