@@ -10,19 +10,13 @@ ARG HTTPS_PROXY
 ARG no_proxy
 ARG NO_PROXY
 
-ENV http_proxy="${http_proxy}" \
-    https_proxy="${https_proxy}" \
-    HTTP_PROXY="${HTTP_PROXY}" \
-    HTTPS_PROXY="${HTTPS_PROXY}" \
-    no_proxy="${no_proxy}" \
-    NO_PROXY="${NO_PROXY}"
-
 ENV OPENMPI_PREFIX=/opt/openmpi
 ENV PATH="${OPENMPI_PREFIX}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${OPENMPI_PREFIX}/lib:${LD_LIBRARY_PATH}"
 ENV PKG_CONFIG_PATH="${OPENMPI_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-RUN if [ -n "${http_proxy}" ]; then echo "proxy=${http_proxy}" >> /etc/yum.conf; fi && \
+RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
+    if [ -n "${YUM_PROXY}" ]; then echo "proxy=${YUM_PROXY}" >> /etc/yum.conf; fi && \
     sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
     sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
     yum install -y \
