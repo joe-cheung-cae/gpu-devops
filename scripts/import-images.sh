@@ -42,15 +42,6 @@ else
   ARCHIVE_PATH="$(default_archive_path "${ROOT_DIR}")"
 fi
 
-if [[ ! -f "${ARCHIVE_PATH}" ]]; then
-  echo "Image archive not found: ${ARCHIVE_PATH}" >&2
-  exit 1
-fi
-
-if [[ "${ARCHIVE_PATH}" == *.gz ]]; then
-  gzip -dc "${ARCHIVE_PATH}" | docker load
-else
-  docker load -i "${ARCHIVE_PATH}"
-fi
+import_image_archive "${ARCHIVE_PATH}"
 
 echo "Imported image bundle from ${ARCHIVE_PATH}"

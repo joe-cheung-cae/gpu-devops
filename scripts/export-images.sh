@@ -45,16 +45,8 @@ fi
 
 mapfile -t IMAGES < <(collect_bundle_images)
 
-mkdir -p "$(dirname "${ARCHIVE_PATH}")"
-
-for image in "${IMAGES[@]}"; do
-  if ! docker image inspect "${image}" >/dev/null 2>&1; then
-    docker pull "${image}"
-  fi
-done
-
-docker save "${IMAGES[@]}" | gzip -c > "${ARCHIVE_PATH}"
-printf '%s\n' "${IMAGES[@]}" > "${ARCHIVE_PATH}.images.txt"
+ensure_bundle_images_available "${IMAGES[@]}"
+export_images_archive "${ARCHIVE_PATH}" "${IMAGES[@]}"
 
 echo "Exported ${#IMAGES[@]} image(s) to ${ARCHIVE_PATH}"
 echo "Image list written to ${ARCHIVE_PATH}.images.txt"

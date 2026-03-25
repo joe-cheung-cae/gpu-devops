@@ -105,6 +105,8 @@ All three builder Dockerfiles accept the same proxy build arguments from `script
 
 For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
 
+The image-only scripts and the project bundle scripts now share the same underlying image export/import implementation, so the difference between them is output format and installed assets, not a separate Docker save/load path.
+
 ## Project integration bundle
 
 When another project lives outside this repository and still needs exported images, ready-to-use integration assets, or both, use:

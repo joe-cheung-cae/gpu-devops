@@ -121,6 +121,41 @@ collect_bundle_images() {
   done
 }
 
+ensure_bundle_images_available() {
+  local image
+
+  for image in "$@"; do
+    if ! docker image inspect "${image}" >/dev/null 2>&1; then
+      docker pull "${image}"
+    fi
+  done
+}
+
+export_images_archive() {
+  local archive_path="$1"
+  shift
+  local images=("$@")
+
+  mkdir -p "$(dirname "${archive_path}")"
+  docker save "${images[@]}" | gzip -c > "${archive_path}"
+  printf '%s\n' "${images[@]}" > "${archive_path}.images.txt"
+}
+
+import_image_archive() {
+  local archive_path="$1"
+
+  if [[ ! -f "${archive_path}" ]]; then
+    echo "Image archive not found: ${archive_path}" >&2
+    exit 1
+  fi
+
+  if [[ "${archive_path}" == *.gz ]]; then
+    gzip -dc "${archive_path}" | docker load
+  else
+    docker load -i "${archive_path}"
+  fi
+}
+
 project_bundle_assets() {
   cat <<'EOF'
 .env.example

@@ -26,6 +26,8 @@ If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARC
 scripts/import-images.sh
 ```
 
+These image-only scripts share the same image export/import implementation as the project bundle scripts. The main difference is that they produce and consume the plain offline image archive directly.
+
 To move the same images and integration assets into another project directory outside this repository, run:
 
 ```bash

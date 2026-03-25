@@ -70,12 +70,7 @@ trap 'rm -rf "${STAGE_DIR}"' EXIT
 tar -xzf "${ARCHIVE_PATH}" -C "${STAGE_DIR}"
 
 if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
-  if [[ ! -f "${STAGE_DIR}/images/offline-images.tar.gz" ]]; then
-    echo "Bundle is missing images/offline-images.tar.gz" >&2
-    exit 1
-  fi
-
-  gzip -dc "${STAGE_DIR}/images/offline-images.tar.gz" | docker load
+  import_image_archive "${STAGE_DIR}/images/offline-images.tar.gz"
 fi
 
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then

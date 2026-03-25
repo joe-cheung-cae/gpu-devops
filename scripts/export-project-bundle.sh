@@ -61,15 +61,8 @@ if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
   require_export_image_bundle_env
   mapfile -t IMAGES < <(collect_bundle_images)
   mkdir -p "${STAGE_DIR}/images"
-
-  for image in "${IMAGES[@]}"; do
-    if ! docker image inspect "${image}" >/dev/null 2>&1; then
-      docker pull "${image}"
-    fi
-  done
-
-  docker save "${IMAGES[@]}" | gzip -c > "${STAGE_DIR}/images/offline-images.tar.gz"
-  printf '%s\n' "${IMAGES[@]}" > "${STAGE_DIR}/images/offline-images.tar.gz.images.txt"
+  ensure_bundle_images_available "${IMAGES[@]}"
+  export_images_archive "${STAGE_DIR}/images/offline-images.tar.gz" "${IMAGES[@]}"
 fi
 
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
