@@ -12,6 +12,7 @@ fi
 : "${RUNNER_REGISTRATION_TOKEN:?Set RUNNER_REGISTRATION_TOKEN in .env}"
 : "${RUNNER_DOCKER_IMAGE:?Set RUNNER_DOCKER_IMAGE in .env}"
 RUNNER_SERVICE_IMAGE="${RUNNER_SERVICE_IMAGE:-gitlab/gitlab-runner:alpine-v16.10.1}"
+RUNNER_REGISTRATION_CONTAINER_NAME="${RUNNER_REGISTRATION_CONTAINER_NAME:-gitlab-runner-devops-docker}"
 
 MODE="${1:-gpu}"
 
@@ -35,6 +36,7 @@ esac
 mkdir -p "${ROOT_DIR}/runner/config" "${ROOT_DIR}/runner/cache"
 
 docker run --rm -it \
+  --name "${RUNNER_REGISTRATION_CONTAINER_NAME}" \
   -v "${ROOT_DIR}/runner/config:/etc/gitlab-runner" \
   -v /var/run/docker.sock:/var/run/docker.sock \
   "${RUNNER_SERVICE_IMAGE}" register \
