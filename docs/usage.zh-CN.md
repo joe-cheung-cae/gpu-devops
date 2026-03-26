@@ -106,6 +106,8 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 可以直接参考 [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml)。
 
+如果同一个项目还需要 Linux 物理机编译或 Windows 编译，可以继续参考混合 Runner 组织说明：[gitlab-ci-multi-environment.md](/home/joe/repo/gpu-devops/docs/gitlab-ci-multi-environment.md)。
+
 基础配置示例：
 
 ```yaml

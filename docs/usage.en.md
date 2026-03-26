@@ -106,6 +106,8 @@ Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`.
 
 Start from [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml).
 
+If the same project also needs Linux physical-machine jobs or Windows jobs, see the mixed-runner organization guide: [gitlab-ci-multi-environment.md](/home/joe/repo/gpu-devops/docs/gitlab-ci-multi-environment.md).
+
 Use the published builder image:
 
 ```yaml
