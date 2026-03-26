@@ -120,7 +120,9 @@ Both `h5engine-sph` and `h5engine-dem` are rebuilt from the bundled tarballs aft
 
 ## Offline image bundle
 
-For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. Copy that archive to the target host and load it with `scripts/import-images.sh`.
+For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import-images.sh`.
+
+By default, `scripts/import-images.sh` verifies the SHA256 sidecar before calling `docker load`. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
 
 The image-only scripts and the project bundle scripts now share the same underlying image export/import implementation, so the difference between them is output format and installed assets, not a separate Docker save/load path.
 
@@ -143,6 +145,8 @@ Typical examples:
 - `scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz`
 - `scripts/export-project-bundle.sh --mode assets`
 - `scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project`
+
+Every exported project bundle also produces `<bundle>.sha256`, and the import script verifies it by default before unpacking. In `all` and `images` mode, the nested `images/offline-images.tar.gz` is verified the same way. Use `--skip-hash-check` only when you explicitly need to bypass those checks.
 
 In `all` mode, the exported bundle contains:
 

@@ -139,3 +139,5 @@ scripts/import-project-bundle.sh --mode images --input artifacts/project-integra
 scripts/export-project-bundle.sh --mode assets
 scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
+
+Both image bundles and project bundles now generate a sibling `.sha256` file. The import scripts verify that hash by default before loading or unpacking the bundle. Use `--skip-hash-check` only when you intentionally want to bypass integrity checking.

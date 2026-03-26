@@ -139,3 +139,5 @@ scripts/import-project-bundle.sh --mode images --input artifacts/project-integra
 scripts/export-project-bundle.sh --mode assets
 scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
+
+现在无论是镜像归档还是 project bundle，导出时都会生成同名的 `.sha256` 文件。导入脚本默认会先校验这个 hash，再执行导入或解包；只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。

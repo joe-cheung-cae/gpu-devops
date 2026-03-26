@@ -47,6 +47,14 @@ assert_not_exists() {
   [[ ! -e "${path}" ]] || fail "expected path to be absent: ${path}"
 }
 
+assert_equals() {
+  local expected="$1"
+  local actual="$2"
+  if [[ "${expected}" != "${actual}" ]]; then
+    fail "expected '${expected}', got '${actual}'"
+  fi
+}
+
 write_export_env() {
   local env_path="$1"
 
@@ -98,6 +106,7 @@ run_export_test() {
   "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
+  assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
   tar -xzf "${test_dir}/bundle.tar.gz" -C "${test_dir}"
 
   case "${mode}" in
@@ -109,11 +118,13 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/compose.sh"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
       assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
       ;;
     images)
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
+      assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
       assert_not_exists "${test_dir}/assets"
       assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
       ;;
@@ -145,6 +156,10 @@ write_import_bundle() {
   if [[ "${mode}" == "all" || "${mode}" == "images" ]]; then
     mkdir -p "${bundle_root}/images"
     printf 'fake-image-data' | gzip -c > "${bundle_root}/images/offline-images.tar.gz"
+    (
+      cd "${bundle_root}/images"
+      sha256sum offline-images.tar.gz > offline-images.tar.gz.sha256
+    )
   fi
 
   if [[ "${mode}" == "all" || "${mode}" == "assets" ]]; then
@@ -188,6 +203,10 @@ run_import_test() {
   write_import_env "${test_dir}/.env"
   write_import_bundle "${test_dir}/bundle" "${mode}"
   tar -czf "${test_dir}/bundle.tar.gz" -C "${test_dir}/bundle" .
+  (
+    cd "${test_dir}"
+    sha256sum bundle.tar.gz > bundle.tar.gz.sha256
+  )
 
   write_import_docker_mocks "${test_dir}/bin/docker" "${test_dir}/bin/docker-compose"
 
@@ -238,11 +257,51 @@ run_import_test() {
   esac
 }
 
+run_import_hash_failure_test() {
+  local mode="$1"
+  local test_dir="${TMP_DIR}/import-hash-failure-${mode}"
+  local target_dir="${TMP_DIR}/external-project-hash-failure-${mode}"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  write_import_env "${test_dir}/.env"
+  write_import_bundle "${test_dir}/bundle" "${mode}"
+  tar -czf "${test_dir}/bundle.tar.gz" -C "${test_dir}/bundle" .
+  printf '0000000000000000000000000000000000000000000000000000000000000000  bundle.tar.gz\n' > "${test_dir}/bundle.tar.gz.sha256"
+
+  write_import_docker_mocks "${test_dir}/bin/docker" "${test_dir}/bin/docker-compose"
+
+  set +e
+  if [[ "${mode}" == "images" ]]; then
+    TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+    PATH="${test_dir}/bin:${PATH}" \
+    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+      --env-file "${test_dir}/.env" \
+      --input "${test_dir}/bundle.tar.gz" \
+      --mode "${mode}" >"${test_dir}/stdout.log" 2>"${test_dir}/stderr.log"
+  else
+    TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+    PATH="${test_dir}/bin:${PATH}" \
+    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+      --env-file "${test_dir}/.env" \
+      --input "${test_dir}/bundle.tar.gz" \
+      --target-dir "${target_dir}" \
+      --mode "${mode}" >"${test_dir}/stdout.log" 2>"${test_dir}/stderr.log"
+  fi
+  local status=$?
+  set -e
+
+  assert_equals "1" "${status}"
+  assert_contains "${test_dir}/stderr.log" "SHA256 verification failed"
+  assert_not_exists "${target_dir}"
+}
+
 run_export_test all
 run_export_test images
 run_export_test assets
 run_import_test all
 run_import_test images
 run_import_test assets
+run_import_hash_failure_test all
+run_import_hash_failure_test images
 
 echo "project integration bundle tests passed"

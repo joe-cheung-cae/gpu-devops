@@ -11,6 +11,7 @@ INPUT_OVERRIDE=""
 TARGET_DIR=""
 ASSETS_SUBDIR=".gpu-devops"
 MODE="all"
+SKIP_HASH_CHECK="false"
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -34,9 +35,13 @@ while [[ $# -gt 0 ]]; do
       MODE="${2:?Missing value for --mode}"
       shift 2
       ;;
+    --skip-hash-check)
+      SKIP_HASH_CHECK="true"
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/import-project-bundle.sh [--target-dir PATH] [--env-file PATH] [--input PATH] [--assets-subdir DIR] [--mode all|images|assets]
+Usage: scripts/import-project-bundle.sh [--target-dir PATH] [--env-file PATH] [--input PATH] [--assets-subdir DIR] [--mode all|images|assets] [--skip-hash-check]
 
 Imports bundled images, integration assets, or both.
 EOF
@@ -64,13 +69,17 @@ if [[ ! -f "${ARCHIVE_PATH}" ]]; then
   exit 1
 fi
 
+if [[ "${SKIP_HASH_CHECK}" != "true" ]]; then
+  verify_bundle_sha256 "${ARCHIVE_PATH}"
+fi
+
 STAGE_DIR="$(mktemp -d)"
 trap 'rm -rf "${STAGE_DIR}"' EXIT
 
 tar -xzf "${ARCHIVE_PATH}" -C "${STAGE_DIR}"
 
 if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
-  import_image_archive "${STAGE_DIR}/images/offline-images.tar.gz"
+  import_image_archive "${STAGE_DIR}/images/offline-images.tar.gz" "${SKIP_HASH_CHECK}"
 fi
 
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then

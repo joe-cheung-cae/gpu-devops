@@ -8,6 +8,7 @@ source "${ROOT_DIR}/scripts/image-bundle-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 INPUT_OVERRIDE=""
+SKIP_HASH_CHECK="false"
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -19,9 +20,13 @@ while [[ $# -gt 0 ]]; do
       INPUT_OVERRIDE="${2:?Missing value for --input}"
       shift 2
       ;;
+    --skip-hash-check)
+      SKIP_HASH_CHECK="true"
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/import-images.sh [--env-file PATH] [--input PATH]
+Usage: scripts/import-images.sh [--env-file PATH] [--input PATH] [--skip-hash-check]
 
 Loads a compressed offline image bundle into the local Docker daemon.
 EOF
@@ -42,6 +47,6 @@ else
   ARCHIVE_PATH="$(default_archive_path "${ROOT_DIR}")"
 fi
 
-import_image_archive "${ARCHIVE_PATH}"
+import_image_archive "${ARCHIVE_PATH}" "${SKIP_HASH_CHECK}"
 
 echo "Imported image bundle from ${ARCHIVE_PATH}"

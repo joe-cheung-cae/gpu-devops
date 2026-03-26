@@ -139,6 +139,8 @@ scripts/import-images.sh
 
 to load the deployment images in one step.
 
+The export also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
+
 If another project outside this repository needs the same images and integration assets, run:
 
 ```bash
@@ -159,6 +161,8 @@ scripts/import-project-bundle.sh --mode images --input artifacts/project-integra
 scripts/export-project-bundle.sh --mode assets
 scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
+
+Each exported project bundle also produces a sibling `.sha256` file. The importer verifies that file by default before unpacking, and in `all` or `images` mode it also verifies the nested `images/offline-images.tar.gz`. Use `--skip-hash-check` only when you explicitly need to bypass those checks.
 
 The image includes:
 

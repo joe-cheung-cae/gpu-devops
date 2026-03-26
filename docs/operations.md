@@ -26,6 +26,8 @@ If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARC
 scripts/import-images.sh
 ```
 
+`scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
+
 These image-only scripts share the same image export/import implementation as the project bundle scripts. The main difference is that they produce and consume the plain offline image archive directly.
 
 To move the same images and integration assets into another project directory outside this repository, run:
@@ -50,6 +52,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 ```
 
 `--mode images` does not require `--target-dir`. `--mode assets` skips Docker image import and only installs the copied files.
+
+Each exported project bundle also produces a sibling `.sha256` file, and the importer verifies it by default before unpacking. In `all` and `images` mode, the nested image archive is verified as well. Use `--skip-hash-check` only if you need to bypass those checks deliberately.
 
 ## Runner registration
 

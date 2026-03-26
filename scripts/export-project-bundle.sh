@@ -88,6 +88,7 @@ EOF
 
 mkdir -p "$(dirname "${ARCHIVE_PATH}")"
 tar -czf "${ARCHIVE_PATH}" -C "${STAGE_DIR}" .
+write_bundle_sha256 "${ARCHIVE_PATH}"
 
 echo "Exported project integration bundle to ${ARCHIVE_PATH}"
 echo "Bundle mode: ${MODE}"

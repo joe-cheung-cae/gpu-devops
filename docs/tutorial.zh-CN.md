@@ -139,6 +139,8 @@ scripts/import-images.sh
 
 即可一键导入部署所需镜像。
 
+导出时还会额外生成 `${IMAGE_ARCHIVE_PATH}.sha256`。`scripts/import-images.sh` 默认会先校验这个 hash，再执行导入；只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。
+
 如果另一个项目目录不在当前仓库下面，但也需要同样的镜像和接入资产，可以执行：
 
 ```bash
@@ -159,6 +161,8 @@ scripts/import-project-bundle.sh --mode images --input artifacts/project-integra
 scripts/export-project-bundle.sh --mode assets
 scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
+
+每个 project bundle 也会额外生成同名的 `.sha256` 文件。导入时默认会先校验外层 bundle，在 `all` 和 `images` 模式下还会继续校验内部的 `images/offline-images.tar.gz`。只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。
 
 镜像内默认包含：
 
