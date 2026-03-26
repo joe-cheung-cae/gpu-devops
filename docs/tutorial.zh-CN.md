@@ -73,6 +73,7 @@ scripts/verify-host.sh
 - 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
 - 三个平台都会把 Project Chrono 克隆到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
 - 三个平台都会从 `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` 构建 HDF5 `1.14.1-2`，并安装到 `${HOME}/deps/hdf5-install`
+- 三个平台都会把 `h5engine-sph` 和 `h5engine-dem` 解压到 `${HOME}/deps`，再用已安装的 HDF5 头文件和动态库刷新各自的 `third/hdf5/include/linux`、`third/hdf5/lib/linux` 后以 `Release` 重新构建
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -168,6 +169,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
 - `Project Chrono`，固定到 commit `3eb56218b`
 - 带 zlib 压缩支持的 `HDF5 1.14.1-2`
+- 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-sph`
+- 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-dem`
 - `git`
 - `gdb`
 - `python3`
@@ -182,6 +185,8 @@ docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
 ```
 
 期望结果：
@@ -197,6 +202,10 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/li
 - `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` 不应再依赖动态 `libstdc++.so` 或 `libgcc_s.so`
 - `${HOME}/deps/hdf5-install` 下能找到 `libhdf5.so`
 - `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so` 应能看到 `libz.so` 依赖，并且 `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` 能正常执行
+- `${HOME}/deps/h5engine-sph` 下能找到重编译后的 `build/h5Engine/libh5Engine.so`
+- `${HOME}/deps/h5engine-dem` 下能找到重编译后的 `build/h5Engine/libh5Engine.so`
+- `ldd ${HOME}/deps/h5engine-*/build/h5Engine/libh5Engine.so` 应解析到各自 `third/hdf5/lib/linux/libhdf5.so`
+- `${HOME}/deps/h5engine-*/build/testHdf5` 能正常执行
 
 ## 6. 启动 GitLab Runner 服务
 

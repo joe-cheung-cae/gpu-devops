@@ -16,6 +16,8 @@ The shared builder images include a pinned math and simulation baseline:
 - Eigen3 `3.4.0`, installed from source to `/usr/local`
 - Project Chrono at commit `3eb56218b`, cloned into `${HOME}/deps/chrono` and installed to `${HOME}/deps/chrono-install`
 - HDF5 `1.14.1-2`, built from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and installed to `${HOME}/deps/hdf5-install`
+- `h5engine-sph`, unpacked to `${HOME}/deps/h5engine-sph` and rebuilt against the installed HDF5 runtime
+- `h5engine-dem`, unpacked to `${HOME}/deps/h5engine-dem` and rebuilt against the installed HDF5 runtime
 
 ## Tutorials
 
@@ -110,6 +112,8 @@ All three builder Dockerfiles accept the same proxy build arguments from `script
 Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine` is explicitly linked with `-static-libgcc -static-libstdc++`, so `libChronoEngine.so` does not retain dynamic `libstdc++.so` or `libgcc_s.so` dependencies.
 
 HDF5 is built from the repo-local `CMake-hdf5-1.14.1-2.tar.gz` archive with zlib enabled and installed to `${HOME}/deps/hdf5-install`. The runtime validation command is `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so`.
+
+Both `h5engine-sph` and `h5engine-dem` are rebuilt from the bundled tarballs after HDF5 installation. During image build, each package refreshes `third/hdf5/include/linux` and `third/hdf5/lib/linux` from `${HOME}/deps/hdf5-install`, then runs `cmake .. -DCMAKE_BUILD_TYPE=Release`, `make -j6`, `ldd ./build/h5Engine/libh5Engine.so`, and `./build/testHdf5`.
 
 ## Offline image bundle
 

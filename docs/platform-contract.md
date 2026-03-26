@@ -18,6 +18,7 @@
 - All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
 - All builder platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`.
 - All builder platforms build HDF5 `1.14.1-2` from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and install it to `${HOME}/deps/hdf5-install`.
+- All builder platforms unpack `h5engine-sph` and `h5engine-dem` under `${HOME}/deps`, replace the bundled Linux HDF5 headers and shared libraries with `${HOME}/deps/hdf5-install`, and rebuild them in `Release`.
 - Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`.
 - HDF5 is configured with zlib support enabled, so the platform requires the matching zlib development package during image build.
 - `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
@@ -37,6 +38,8 @@ The standard builder image includes:
 - `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
 - `Project Chrono` at commit `3eb56218b`
 - `HDF5 1.14.1-2` with zlib compression support
+- `h5engine-sph` rebuilt against the installed HDF5 runtime
+- `h5engine-dem` rebuilt against the installed HDF5 runtime
 - `git`
 - `gdb`
 - `python3` and `pip`

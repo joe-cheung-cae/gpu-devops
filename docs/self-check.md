@@ -28,6 +28,8 @@ scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
 ```
 
 Expected:
@@ -44,6 +46,8 @@ Expected:
 - `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
 - HDF5 is installed under `${HOME}/deps/hdf5-install`
 - `${HOME}/deps/hdf5-install/lib/libhdf5.so` exists, `ldd` prints successfully, and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` works
+- `${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-sph/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-sph/build/testHdf5` succeeds
+- `${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-dem/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-dem/build/testHdf5` succeeds
 
 ## 3. Start Runner service
 

@@ -70,6 +70,13 @@ RUN chmod +x /usr/local/bin/install-hdf5.sh && \
     CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
     /usr/local/bin/install-hdf5.sh
 
+COPY docker/cuda-builder/deps/h5engine-sph.tar.gz /tmp/h5engine-sph.tar.gz
+COPY docker/cuda-builder/deps/h5engine-dem.tar.gz /tmp/h5engine-dem.tar.gz
+COPY docker/cuda-builder/install-h5engine.sh /usr/local/bin/install-h5engine.sh
+RUN chmod +x /usr/local/bin/install-h5engine.sh && \
+    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
+    /usr/local/bin/install-h5engine.sh
+
 RUN python3 -m pip install --no-cache-dir \
       conan \
       ninja
