@@ -11,6 +11,8 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 
 The first release targets a single host with NVIDIA GPUs and shared Runner usage across multiple projects.
 
+The shared builder images include a pinned linear algebra baseline with Eigen3 `3.4.0`, installed from source so all supported platforms expose the same version and CMake discovery layout.
+
 ## Tutorials
 
 - Chinese guide: [docs/tutorial.zh-CN.md](/home/joe/repo/gpu-devops/docs/tutorial.zh-CN.md)

@@ -68,6 +68,16 @@ assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfi
 assert_contains "${all_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG EIGEN3_VERSION=3.4.0'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ARG EIGEN3_VERSION=3.4.0'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'ARG EIGEN3_VERSION=3.4.0'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'install-eigen3.sh'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'install-eigen3.sh'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'install-eigen3.sh'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_VERSION:=3.4.0'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_PREFIX:=/usr/local'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/${ARCHIVE}'
+
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG http_proxy'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG HTTP_PROXY'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'YUM_PROXY="${http_proxy:-${HTTP_PROXY}}"'

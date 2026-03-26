@@ -70,6 +70,7 @@ scripts/verify-host.sh
 - `centos7` 主要用于兼容存量环境，但已经 EOL，会把 YUM 源和 SCLo 源切到 `vault.centos.org`
 - `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
 - `centos7` 和其他平台一样接收统一的代理构建参数，但只会在装包阶段把它转换成临时的 `yum.conf` 代理配置
+- 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -161,6 +162,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
+- `Eigen3 3.4.0`
 - 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
 - `git`
 - `gdb`
@@ -174,7 +176,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core'
 ```
 
 期望结果：
@@ -184,6 +186,7 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 - `conan` 能输出版本号
 - `mpicc` 显示 `Open MPI 4.1.6`
 - `mpicxx` 能解析到 C++ wrapper
+- `/usr/local/include/eigen3` 下能找到 `Eigen/Core`
 - `/opt/openmpi/lib` 下只有静态库，没有 `libmpi.so`
 
 ## 6. 启动 GitLab Runner 服务

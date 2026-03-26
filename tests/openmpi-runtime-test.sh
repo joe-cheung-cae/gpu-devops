@@ -16,7 +16,7 @@ IFS=',' read -r -a PLATFORMS <<< "${BUILDER_PLATFORMS}"
 
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"
-  echo "Verifying OpenMPI in ${image}"
+  echo "Verifying toolchain in ${image}"
   docker run --rm "${image}" sh -lc '
     set -e
     command -v mpicc >/dev/null
@@ -26,7 +26,27 @@ for platform in "${PLATFORMS[@]}"; do
     mpicxx --showme:command | grep -F "g++"
     test -f /opt/openmpi/lib/libmpi.a
     test ! -e /opt/openmpi/lib/libmpi.so
+    test -f /usr/local/include/eigen3/Eigen/Core
+    workdir="$(mktemp -d)"
+    cat > "${workdir}/CMakeLists.txt" <<'"'"'EOF'"'"'
+cmake_minimum_required(VERSION 3.16)
+project(eigen_smoke LANGUAGES CXX)
+find_package(Eigen3 3.4 REQUIRED NO_MODULE)
+add_executable(eigen_smoke main.cpp)
+target_link_libraries(eigen_smoke PRIVATE Eigen3::Eigen)
+target_compile_features(eigen_smoke PRIVATE cxx_std_11)
+EOF
+    cat > "${workdir}/main.cpp" <<'"'"'EOF'"'"'
+#include <Eigen/Core>
+int main() {
+  Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
+  return static_cast<int>(m(0, 0) - 1.0f);
+}
+EOF
+    cmake -S "${workdir}" -B "${workdir}/build"
+    cmake --build "${workdir}/build" --parallel 1
+    rm -rf "${workdir}"
   '
 done
 
-echo "openmpi runtime tests passed"
+echo "toolchain runtime tests passed"

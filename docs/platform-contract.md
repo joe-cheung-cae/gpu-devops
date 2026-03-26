@@ -15,6 +15,7 @@
 - `centos7` is still supported for compatibility, but it is end-of-life.
 - The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
+- All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
 - `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
 - `ubuntu2204` uses the Ubuntu 22.04 CUDA image and installs toolchain packages with `apt`.
 - If your organization has an internal RPM/YUM mirror, prefer switching public repository references to internal mirrors.
@@ -27,6 +28,7 @@ The standard builder image includes:
 - `cmake`
 - `ninja`
 - `gcc/g++`
+- `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
 - `git`
 - `gdb`

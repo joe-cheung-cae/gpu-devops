@@ -70,6 +70,7 @@ Platform-specific notes:
 - `centos7` remains available for compatibility, but it is end-of-life and rewrites YUM repositories to `vault.centos.org`
 - `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
 - `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
+- all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -161,6 +162,7 @@ The image includes:
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
+- `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
 - `git`
 - `gdb`
@@ -174,7 +176,7 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core'
 ```
 
 Expected:
@@ -184,6 +186,7 @@ Expected:
 - `conan` reports a valid version
 - `mpicc` reports `Open MPI 4.1.6`
 - `mpicxx` resolves to the C++ compiler wrapper
+- `Eigen/Core` exists under `/usr/local/include/eigen3`
 - OpenMPI is installed as static libraries only under `/opt/openmpi/lib`
 
 ## 6. Start the GitLab Runner service
