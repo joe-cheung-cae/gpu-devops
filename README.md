@@ -15,6 +15,7 @@ The shared builder images include a pinned math and simulation baseline:
 
 - Eigen3 `3.4.0`, installed from source to `/usr/local`
 - Project Chrono at commit `3eb56218b`, cloned into `${HOME}/deps/chrono` and installed to `${HOME}/deps/chrono-install`
+- HDF5 `1.14.1-2`, built from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and installed to `${HOME}/deps/hdf5-install`
 
 ## Tutorials
 
@@ -107,6 +108,8 @@ Projects should pin to a published immutable tag rather than `latest`.
 All three builder Dockerfiles accept the same proxy build arguments from `scripts/build-builder-image.sh`. The `centos7` variant does not persist those proxy variables into the final image, but it does translate them into a temporary `yum.conf` proxy entry during package installation.
 
 Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine` is explicitly linked with `-static-libgcc -static-libstdc++`, so `libChronoEngine.so` does not retain dynamic `libstdc++.so` or `libgcc_s.so` dependencies.
+
+HDF5 is built from the repo-local `CMake-hdf5-1.14.1-2.tar.gz` archive with zlib enabled and installed to `${HOME}/deps/hdf5-install`. The runtime validation command is `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so`.
 
 ## Offline image bundle
 

@@ -36,6 +36,7 @@ RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
       rsync \
       unzip \
       wget \
+      zlib-devel \
       which && \
     yum clean all && \
     rm -rf /var/cache/yum
@@ -76,6 +77,12 @@ RUN chmod +x /usr/local/bin/install-chrono.sh && \
     CHRONO_GIT_REF="${CHRONO_GIT_REF}" \
     CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
     /usr/local/bin/install-chrono.sh
+
+COPY docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz /tmp/CMake-hdf5-1.14.1-2.tar.gz
+COPY docker/cuda-builder/install-hdf5.sh /usr/local/bin/install-hdf5.sh
+RUN chmod +x /usr/local/bin/install-hdf5.sh && \
+    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
+    /usr/local/bin/install-hdf5.sh
 
 RUN python3 -m pip install --no-cache-dir \
       conan \

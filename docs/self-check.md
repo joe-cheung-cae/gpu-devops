@@ -27,6 +27,7 @@ scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 ```
 
 Expected:
@@ -41,6 +42,8 @@ Expected:
 - `/opt/openmpi/lib/libmpi.a` exists and `/opt/openmpi/lib/libmpi.so` does not
 - Chrono source exists under `${HOME}/deps/chrono`
 - `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
+- HDF5 is installed under `${HOME}/deps/hdf5-install`
+- `${HOME}/deps/hdf5-install/lib/libhdf5.so` exists, `ldd` prints successfully, and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` works
 
 ## 3. Start Runner service
 

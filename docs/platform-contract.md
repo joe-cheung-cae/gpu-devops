@@ -17,7 +17,9 @@
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
 - All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
 - All builder platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`.
+- All builder platforms build HDF5 `1.14.1-2` from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and install it to `${HOME}/deps/hdf5-install`.
 - Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`.
+- HDF5 is configured with zlib support enabled, so the platform requires the matching zlib development package during image build.
 - `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
 - `rocky8` uses `gcc-toolset-11` for the Chrono build so static `libstdc++` and `libgcc` linking works consistently.
 - `ubuntu2204` uses the Ubuntu 22.04 CUDA image and installs toolchain packages with `apt`.
@@ -34,6 +36,7 @@ The standard builder image includes:
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
 - `Project Chrono` at commit `3eb56218b`
+- `HDF5 1.14.1-2` with zlib compression support
 - `git`
 - `gdb`
 - `python3` and `pip`

@@ -72,6 +72,7 @@ Platform-specific notes:
 - `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
 - all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
 - all three platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
+- all three platforms build HDF5 `1.14.1-2` from `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` and install it to `${HOME}/deps/hdf5-install`
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -166,6 +167,7 @@ The image includes:
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
 - `Project Chrono` at commit `3eb56218b`
+- `HDF5 1.14.1-2` with zlib compression support
 - `git`
 - `gdb`
 - `python3`
@@ -179,6 +181,7 @@ docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 ```
 
 Expected:
@@ -192,6 +195,8 @@ Expected:
 - OpenMPI is installed as static libraries only under `/opt/openmpi/lib`
 - Chrono is installed under `${HOME}/deps/chrono-install`
 - `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` does not show dynamic `libstdc++.so` or `libgcc_s.so`
+- HDF5 is installed under `${HOME}/deps/hdf5-install`
+- `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so` shows a `libz.so` dependency and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` succeeds
 
 ## 6. Start the GitLab Runner service
 
