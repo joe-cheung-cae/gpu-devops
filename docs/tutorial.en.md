@@ -94,6 +94,7 @@ Then update the main fields:
 - `RUNNER_REGISTRATION_TOKEN`: runner registration token
 - `RUNNER_DOCKER_IMAGE`: default image used by the runner
 - `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
+- `RUNNER_CONTAINER_NAME`: long-running container name used by `runner-compose.yml`
 - `RUNNER_REGISTRATION_CONTAINER_NAME`: temporary container name used by `runner/register-runner.sh`
 - `BUILDER_IMAGE`: standard builder image tag
 - `IMAGE_ARCHIVE_PATH`: offline image archive path

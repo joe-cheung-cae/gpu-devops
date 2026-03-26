@@ -94,6 +94,7 @@ cp .env.example .env
 - `RUNNER_REGISTRATION_TOKEN`：Runner 注册令牌
 - `RUNNER_DOCKER_IMAGE`：Runner 默认 job image
 - `RUNNER_SERVICE_IMAGE`：Runner 服务容器镜像
+- `RUNNER_CONTAINER_NAME`：`runner-compose.yml` 中长期运行的 Runner 服务容器名称
 - `RUNNER_REGISTRATION_CONTAINER_NAME`：`runner/register-runner.sh` 注册时使用的临时容器名称
 - `BUILDER_IMAGE`：标准 builder 镜像 tag
 - `IMAGE_ARCHIVE_PATH`：离线镜像归档路径

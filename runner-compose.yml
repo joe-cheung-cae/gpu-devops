@@ -1,7 +1,7 @@
 services:
   gitlab-runner:
     image: ${RUNNER_SERVICE_IMAGE:-gitlab/gitlab-runner:alpine-v16.10.1}
-    container_name: gitlab-runner
+    container_name: ${RUNNER_CONTAINER_NAME:-gitlab-runner-devops-docker}
     restart: unless-stopped
     environment:
       RUNNER_CONFIG_DIR: /etc/gitlab-runner

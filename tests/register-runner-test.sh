@@ -68,7 +68,7 @@ run_default_name_test() {
     TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh gpu
   )
 
-  assert_contains "${test_dir}/docker.log" "run --rm -it --name gitlab-runner-devops-docker"
+  assert_contains "${test_dir}/docker.log" "run --rm -it --name gitlab-runner-devops-register"
 }
 
 run_override_name_test() {
