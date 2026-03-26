@@ -11,7 +11,10 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 
 The first release targets a single host with NVIDIA GPUs and shared Runner usage across multiple projects.
 
-The shared builder images include a pinned linear algebra baseline with Eigen3 `3.4.0`, installed from source so all supported platforms expose the same version and CMake discovery layout.
+The shared builder images include a pinned math and simulation baseline:
+
+- Eigen3 `3.4.0`, installed from source to `/usr/local`
+- Project Chrono at commit `3eb56218b`, cloned into `${HOME}/deps/chrono` and installed to `${HOME}/deps/chrono-install`
 
 ## Tutorials
 
@@ -102,6 +105,8 @@ The default supported tags are:
 Projects should pin to a published immutable tag rather than `latest`.
 
 All three builder Dockerfiles accept the same proxy build arguments from `scripts/build-builder-image.sh`. The `centos7` variant does not persist those proxy variables into the final image, but it does translate them into a temporary `yum.conf` proxy entry during package installation.
+
+Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine` is explicitly linked with `-static-libgcc -static-libstdc++`, so `libChronoEngine.so` does not retain dynamic `libstdc++.so` or `libgcc_s.so` dependencies.
 
 ## Offline image bundle
 

@@ -1,0 +1,7 @@
+.git
+artifacts
+deps
+.env
+task_plan.md
+findings.md
+progress.md

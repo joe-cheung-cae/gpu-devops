@@ -26,7 +26,7 @@ cp .env.example .env
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 ```
 
 Expected:
@@ -39,6 +39,8 @@ Expected:
 - Eigen3 `3.4.0` is installed under `/usr/local/include/eigen3`
 - OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
 - `/opt/openmpi/lib/libmpi.a` exists and `/opt/openmpi/lib/libmpi.so` does not
+- Chrono source exists under `${HOME}/deps/chrono`
+- `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
 
 ## 3. Start Runner service
 

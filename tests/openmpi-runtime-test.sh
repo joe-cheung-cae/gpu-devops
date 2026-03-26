@@ -10,9 +10,9 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}"
-BUILDER_PLATFORMS="${BUILDER_PLATFORMS:-centos7,rocky8,ubuntu2204}"
+TEST_PLATFORMS="${BUILDER_TEST_PLATFORMS:-${BUILDER_PLATFORMS:-centos7,rocky8,ubuntu2204}}"
 
-IFS=',' read -r -a PLATFORMS <<< "${BUILDER_PLATFORMS}"
+IFS=',' read -r -a PLATFORMS <<< "${TEST_PLATFORMS}"
 
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"

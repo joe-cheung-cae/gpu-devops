@@ -71,6 +71,7 @@ scripts/verify-host.sh
 - `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
 - `centos7` 和其他平台一样接收统一的代理构建参数，但只会在装包阶段把它转换成临时的 `yum.conf` 代理配置
 - 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
+- 三个平台都会把 Project Chrono 克隆到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -164,6 +165,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - `gcc/g++`
 - `Eigen3 3.4.0`
 - 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
+- `Project Chrono`，固定到 commit `3eb56218b`
 - `git`
 - `gdb`
 - `python3`
@@ -176,7 +178,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 ```
 
 期望结果：
@@ -188,6 +190,8 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 - `mpicxx` 能解析到 C++ wrapper
 - `/usr/local/include/eigen3` 下能找到 `Eigen/Core`
 - `/opt/openmpi/lib` 下只有静态库，没有 `libmpi.so`
+- `${HOME}/deps/chrono-install` 下能找到 `libChronoEngine.so`
+- `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` 不应再依赖动态 `libstdc++.so` 或 `libgcc_s.so`
 
 ## 6. 启动 GitLab Runner 服务
 

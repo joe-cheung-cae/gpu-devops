@@ -71,6 +71,7 @@ Platform-specific notes:
 - `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
 - `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
 - all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
+- all three platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -164,6 +165,7 @@ The image includes:
 - `gcc/g++`
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
+- `Project Chrono` at commit `3eb56218b`
 - `git`
 - `gdb`
 - `python3`
@@ -176,7 +178,7 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 ```
 
 Expected:
@@ -188,6 +190,8 @@ Expected:
 - `mpicxx` resolves to the C++ compiler wrapper
 - `Eigen/Core` exists under `/usr/local/include/eigen3`
 - OpenMPI is installed as static libraries only under `/opt/openmpi/lib`
+- Chrono is installed under `${HOME}/deps/chrono-install`
+- `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` does not show dynamic `libstdc++.so` or `libgcc_s.so`
 
 ## 6. Start the GitLab Runner service
 
