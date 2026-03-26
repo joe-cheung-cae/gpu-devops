@@ -175,6 +175,7 @@ Additional reference docs:
 - [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
 - [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
 - [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
+- [docs/project-devops-capability-assessment.md](/home/joe/repo/gpu-devops/docs/project-devops-capability-assessment.md)
 
 ## Limitations
 
