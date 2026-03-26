@@ -74,6 +74,7 @@ scripts/verify-host.sh
 - 三个平台都会把 Project Chrono 克隆到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
 - 三个平台都会从 `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` 构建 HDF5 `1.14.1-2`，并安装到 `${HOME}/deps/hdf5-install`
 - 三个平台都会把 `h5engine-sph` 和 `h5engine-dem` 解压到 `${HOME}/deps`，再用已安装的 HDF5 头文件和动态库刷新各自的 `third/hdf5/include/linux`、`third/hdf5/lib/linux` 后以 `Release` 重新构建
+- 三个平台都会把 `muparserx` 克隆到 `${HOME}/deps/muparserx`，强制切到 `master`，在 `${HOME}/deps/muparserx/build` 中构建，并安装到 `${HOME}/deps/muparserx-install`
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -171,6 +172,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - 带 zlib 压缩支持的 `HDF5 1.14.1-2`
 - 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-sph`
 - 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-dem`
+- 来自 `master` 分支的 `muparserx`
 - `git`
 - `gdb`
 - `python3`
@@ -187,6 +189,7 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 期望结果：
@@ -206,6 +209,10 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/bu
 - `${HOME}/deps/h5engine-dem` 下能找到重编译后的 `build/h5Engine/libh5Engine.so`
 - `ldd ${HOME}/deps/h5engine-*/build/h5Engine/libh5Engine.so` 应解析到各自 `third/hdf5/lib/linux/libhdf5.so`
 - `${HOME}/deps/h5engine-*/build/testHdf5` 能正常执行
+- `${HOME}/deps/muparserx` 下能找到源码仓库
+- `${HOME}/deps/muparserx` 当前分支应为 `master`
+- `ldd ${HOME}/deps/muparserx/build/libmuparserx.so` 能正常执行
+- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` 应存在
 
 ## 6. 启动 GitLab Runner 服务
 

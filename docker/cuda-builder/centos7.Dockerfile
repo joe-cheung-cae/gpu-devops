@@ -91,6 +91,11 @@ RUN chmod +x /usr/local/bin/install-h5engine.sh && \
     CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
     /usr/local/bin/install-h5engine.sh
 
+COPY docker/cuda-builder/install-muparserx.sh /usr/local/bin/install-muparserx.sh
+RUN chmod +x /usr/local/bin/install-muparserx.sh && \
+    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
+    /usr/local/bin/install-muparserx.sh
+
 RUN python3 -m pip install --no-cache-dir \
       conan \
       ninja \

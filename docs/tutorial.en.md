@@ -74,6 +74,7 @@ Platform-specific notes:
 - all three platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
 - all three platforms build HDF5 `1.14.1-2` from `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` and install it to `${HOME}/deps/hdf5-install`
 - all three platforms unpack `h5engine-sph` and `h5engine-dem` into `${HOME}/deps`, refresh `third/hdf5/include/linux` and `third/hdf5/lib/linux` from the installed HDF5 tree, and rebuild them in `Release`
+- all three platforms clone `muparserx` into `${HOME}/deps/muparserx`, force checkout `master`, build it in `${HOME}/deps/muparserx/build`, and install it to `${HOME}/deps/muparserx-install`
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -171,6 +172,7 @@ The image includes:
 - `HDF5 1.14.1-2` with zlib compression support
 - `h5engine-sph` rebuilt against `${HOME}/deps/hdf5-install`
 - `h5engine-dem` rebuilt against `${HOME}/deps/hdf5-install`
+- `muparserx` from the `master` branch
 - `git`
 - `gdb`
 - `python3`
@@ -187,6 +189,7 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -206,6 +209,10 @@ Expected:
 - `h5engine-dem` is installed under `${HOME}/deps/h5engine-dem`
 - each `ldd ${HOME}/deps/h5engine-*/build/h5Engine/libh5Engine.so` resolves the package-local `third/hdf5/lib/linux/libhdf5.so`
 - each `${HOME}/deps/h5engine-*/build/testHdf5` succeeds
+- `muparserx` is cloned under `${HOME}/deps/muparserx`
+- `muparserx` stays on branch `master`
+- `ldd ${HOME}/deps/muparserx/build/libmuparserx.so` succeeds
+- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` exists
 
 ## 6. Start the GitLab Runner service
 

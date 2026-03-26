@@ -30,6 +30,7 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --sh
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -48,6 +49,9 @@ Expected:
 - `${HOME}/deps/hdf5-install/lib/libhdf5.so` exists, `ldd` prints successfully, and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` works
 - `${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-sph/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-sph/build/testHdf5` succeeds
 - `${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-dem/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-dem/build/testHdf5` succeeds
+- `${HOME}/deps/muparserx` exists as a git clone on branch `master`
+- `${HOME}/deps/muparserx/build/libmuparserx.so` exists and `ldd` prints successfully
+- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` exists
 
 ## 3. Start Runner service
 

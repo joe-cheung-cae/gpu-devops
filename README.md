@@ -18,6 +18,7 @@ The shared builder images include a pinned math and simulation baseline:
 - HDF5 `1.14.1-2`, built from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and installed to `${HOME}/deps/hdf5-install`
 - `h5engine-sph`, unpacked to `${HOME}/deps/h5engine-sph` and rebuilt against the installed HDF5 runtime
 - `h5engine-dem`, unpacked to `${HOME}/deps/h5engine-dem` and rebuilt against the installed HDF5 runtime
+- `muparserx`, cloned from `master` into `${HOME}/deps/muparserx` and installed to `${HOME}/deps/muparserx-install`
 
 ## Tutorials
 
@@ -114,6 +115,8 @@ Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine
 HDF5 is built from the repo-local `CMake-hdf5-1.14.1-2.tar.gz` archive with zlib enabled and installed to `${HOME}/deps/hdf5-install`. The runtime validation command is `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so`.
 
 Both `h5engine-sph` and `h5engine-dem` are rebuilt from the bundled tarballs after HDF5 installation. During image build, each package refreshes `third/hdf5/include/linux` and `third/hdf5/lib/linux` from `${HOME}/deps/hdf5-install`, then runs `cmake .. -DCMAKE_BUILD_TYPE=Release`, `make -j6`, `ldd ./build/h5Engine/libh5Engine.so`, and `./build/testHdf5`.
+
+`muparserx` is cloned directly from `https://github.com/joe-cheung-cae/muparserx.git`, reset to `master`, configured in `${HOME}/deps/muparserx/build`, and installed to `${HOME}/deps/muparserx-install`. The runtime validation command is `ldd ${HOME}/deps/muparserx/build/libmuparserx.so`.
 
 ## Offline image bundle
 
