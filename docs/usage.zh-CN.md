@@ -65,10 +65,27 @@ scripts/export-project-bundle.sh --mode assets --output artifacts/project-operat
 
 ### 步骤 4：在离线机器导入资产
 
-如有需要，先导入 operator toolkit：
+如果离线机器上仍保留当前仓库代码，可以先导入 operator toolkit：
 
 ```bash
 scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+如果离线机器上没有仓库 checkout，则先手工解压 toolkit：
+
+```bash
+mkdir -p /path/to/project/.gpu-devops
+tmpdir="$(mktemp -d)"
+tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
+cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
+cat > /path/to/project/.gpu-devops/.env <<'EOF'
+HOST_PROJECT_DIR=/path/to/project
+CUDA_CXX_PROJECT_DIR=.
+CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_CMAKE_GENERATOR=Ninja
+CUDA_CXX_CMAKE_ARGS=
+CUDA_CXX_BUILD_ARGS=
+EOF
 ```
 
 然后导入镜像归档：
@@ -77,7 +94,13 @@ scripts/import-project-bundle.sh --mode assets --input artifacts/project-operato
 scripts/import-images.sh --input artifacts/offline-images.tar.gz
 ```
 
-如果导入了 toolkit，后续命令请在 `/path/to/project/.gpu-devops/` 目录下执行。
+如果你是手工解压 toolkit，则应执行：
+
+```bash
+.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+```
+
+如果导入或解压了 toolkit，后续命令请在 `/path/to/project/.gpu-devops/` 目录下执行。
 
 ### 步骤 5：启动 Runner 服务
 

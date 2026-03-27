@@ -171,14 +171,38 @@ scripts/import-images.sh
    - 可选：`runner/register-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
 
-如果离线机器上不保留完整仓库，可以先额外导出并导入 operator toolkit：
+如果离线机器上仍保留完整仓库代码，可以先额外导出并导入 operator toolkit：
 
 ```bash
 scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
-之后改在 `/path/to/project/.gpu-devops/` 下继续执行。
+如果离线机器上没有仓库 checkout，则导出同一个 toolkit 归档后手工解压：
+
+```bash
+mkdir -p /path/to/project/.gpu-devops
+tmpdir="$(mktemp -d)"
+tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
+cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
+cat > /path/to/project/.gpu-devops/.env <<'EOF'
+HOST_PROJECT_DIR=/path/to/project
+CUDA_CXX_PROJECT_DIR=.
+CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_CMAKE_GENERATOR=Ninja
+CUDA_CXX_CMAKE_ARGS=
+CUDA_CXX_BUILD_ARGS=
+EOF
+```
+
+之后改在 `/path/to/project/.gpu-devops/` 下继续执行：
+
+```bash
+.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/runner-compose.sh up -d
+.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
+```
 
 如果另一个项目目录不在当前仓库下面，但也需要同样的镜像和接入资产，可以执行：
 
@@ -506,6 +530,131 @@ docker run --rm --gpus all "${BUILDER_IMAGE}" nvidia-smi
 - Runner 是否是 shared runner
 - `RUNNER_RUN_UNTAGGED` 是否被关闭
 - GitLab 项目是否允许使用 shared runner
+
+### 11.5 `scripts/verify-host.sh` 卡在 NVIDIA Container Toolkit runtime 检查
+
+如果 `scripts/verify-host.sh` 停在：
+
+```text
+[4/5] Checking NVIDIA Container Toolkit runtime
+```
+
+或者你手动执行：
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+```
+
+报错：
+
+```text
+could not select device driver "" with capabilities: [[gpu]]
+```
+
+这通常不是驱动没装，而是 Docker 还没有正确接入 `nvidia-container-toolkit`。对当前仓库来说，这不是可忽略告警，因为：
+
+- `scripts/verify-host.sh` 要求 Docker runtime 中存在 `nvidia`
+- `runner/register-runner.sh` 注册时显式使用 `--docker-runtime nvidia`
+- `runner/config.template.toml` 也要求 `runtime = "nvidia"`
+
+建议检查：
+
+```bash
+docker info --format '{{json .Runtimes}}'
+command -v nvidia-ctk
+command -v nvidia-container-cli
+```
+
+如果 `nvidia` runtime 缺失，需要安装 `nvidia-container-toolkit` 并执行：
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+然后重新验证：
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+scripts/verify-host.sh
+```
+
+### 11.6 离线安装 `nvidia-container-toolkit` 时出现 `_apt` 权限提示
+
+如果你在离线机器上执行：
+
+```bash
+sudo apt install -y ./*.deb
+```
+
+看到类似提示：
+
+```text
+Download is performed unsandboxed as root ... couldn't be accessed by user '_apt'
+```
+
+这通常只是本地 `.deb` 所在目录对 `_apt` 用户不可读，并不一定代表安装失败。真正需要关注的是后续是否出现：
+
+- `Unable to correct problems`
+- `unmet dependencies`
+- `dpkg returned an error code`
+
+更稳的做法是把离线包放到 `_apt` 可访问目录，例如：
+
+```bash
+mkdir -p /tmp/offline-nvidia-toolkit
+cp ~/offline-nvidia-toolkit/*.deb /tmp/offline-nvidia-toolkit/
+chmod 755 /tmp/offline-nvidia-toolkit
+chmod 644 /tmp/offline-nvidia-toolkit/*.deb
+cd /tmp/offline-nvidia-toolkit
+sudo apt install -y ./*.deb
+```
+
+### 11.7 联网机器是 Ubuntu 22.04，离线机器是 Ubuntu 20.04 时如何准备 `nvidia-container-toolkit`
+
+最稳的方式不是直接在 `ubuntu2204` 宿主机上混装 `ubuntu2004` 包，而是在联网的 Ubuntu 22.04 上启动一个 `ubuntu:20.04` 容器来下载离线包。
+
+在联网机器执行：
+
+```bash
+mkdir -p ~/offline-nvidia-toolkit-ubuntu2004
+docker run --rm -it \
+  -v ~/offline-nvidia-toolkit-ubuntu2004:/out \
+  ubuntu:20.04 bash
+```
+
+进入容器后执行：
+
+```bash
+apt-get update
+apt-get install -y curl gnupg ca-certificates
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+  > /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+apt-get update
+apt-get install --download-only -y nvidia-container-toolkit
+cp /var/cache/apt/archives/*.deb /out/
+```
+
+随后在联网机器打包：
+
+```bash
+cd ~/offline-nvidia-toolkit-ubuntu2004
+tar -czf nvidia-container-toolkit-ubuntu2004-offline.tar.gz ./*.deb
+```
+
+把这个离线包复制到 Ubuntu 20.04 离线机器，再执行本节前面的本地 `.deb` 安装步骤。安装完成后继续：
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu20.04 nvidia-smi
+```
 
 ## 12. 参考文档
 

@@ -44,19 +44,45 @@ For a complete online-to-offline deployment workflow, use this order:
    - optional: `runner/register-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
 
-If the offline host does not keep a full checkout of this repository, export the operator toolkit on the online host:
+If the offline host keeps a full checkout of this repository, export the operator toolkit on the online host:
 
 ```bash
 scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 ```
 
-Then import it on the offline host:
+Then import it on the offline host with the repository script:
 
 ```bash
 scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
 Continue all later commands from `/path/to/project/.gpu-devops/`.
+
+If the offline host does not keep a full checkout, unpack the same toolkit archive manually:
+
+```bash
+mkdir -p /path/to/project/.gpu-devops
+tmpdir="$(mktemp -d)"
+tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
+cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
+cat > /path/to/project/.gpu-devops/.env <<'EOF'
+HOST_PROJECT_DIR=/path/to/project
+CUDA_CXX_PROJECT_DIR=.
+CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_CMAKE_GENERATOR=Ninja
+CUDA_CXX_CMAKE_ARGS=
+CUDA_CXX_BUILD_ARGS=
+EOF
+```
+
+Then continue from `/path/to/project/.gpu-devops/`:
+
+```bash
+.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/runner-compose.sh up -d
+.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
+```
 
 `scripts/prepare-runner-service-image.sh` gives `RUNNER_SERVICE_IMAGE` a controlled online preparation step before export. Its default `retag` mode pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point for later customization, run:
 

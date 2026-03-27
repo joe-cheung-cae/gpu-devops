@@ -171,14 +171,38 @@ For a complete connected-host to offline-host workflow, use this order:
    - optional: `runner/register-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
 
-If the offline host does not keep a full checkout of this repository, export and import the operator toolkit first:
+If the offline host keeps a full checkout of this repository, export and import the operator toolkit first:
 
 ```bash
 scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
-Then continue from `/path/to/project/.gpu-devops/`.
+If the offline host does not keep a repository checkout, export the same toolkit archive and unpack it manually:
+
+```bash
+mkdir -p /path/to/project/.gpu-devops
+tmpdir="$(mktemp -d)"
+tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
+cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
+cat > /path/to/project/.gpu-devops/.env <<'EOF'
+HOST_PROJECT_DIR=/path/to/project
+CUDA_CXX_PROJECT_DIR=.
+CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_CMAKE_GENERATOR=Ninja
+CUDA_CXX_CMAKE_ARGS=
+CUDA_CXX_BUILD_ARGS=
+EOF
+```
+
+Then continue from `/path/to/project/.gpu-devops/`:
+
+```bash
+.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/runner-compose.sh up -d
+.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
+```
 
 If another project outside this repository needs the same images and integration assets, run:
 
@@ -506,6 +530,131 @@ Check:
 - the runner is shared
 - `RUNNER_RUN_UNTAGGED` behavior matches your policy
 - the project is allowed to use shared runners
+
+### 11.5 `scripts/verify-host.sh` stops at the NVIDIA Container Toolkit runtime check
+
+If `scripts/verify-host.sh` stops at:
+
+```text
+[4/5] Checking NVIDIA Container Toolkit runtime
+```
+
+or if this command:
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+```
+
+fails with:
+
+```text
+could not select device driver "" with capabilities: [[gpu]]
+```
+
+the problem is usually not the driver itself. It usually means Docker has not been wired to `nvidia-container-toolkit` yet. For this repository, that is not optional because:
+
+- `scripts/verify-host.sh` expects `docker info` to expose the `nvidia` runtime
+- `runner/register-runner.sh` registers the runner with `--docker-runtime nvidia`
+- `runner/config.template.toml` also sets `runtime = "nvidia"`
+
+Check:
+
+```bash
+docker info --format '{{json .Runtimes}}'
+command -v nvidia-ctk
+command -v nvidia-container-cli
+```
+
+If the `nvidia` runtime is missing, install `nvidia-container-toolkit` and run:
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+Then verify again:
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
+scripts/verify-host.sh
+```
+
+### 11.6 Offline `nvidia-container-toolkit` install shows an `_apt` permission warning
+
+If you install local `.deb` files like this:
+
+```bash
+sudo apt install -y ./*.deb
+```
+
+and see a message like:
+
+```text
+Download is performed unsandboxed as root ... couldn't be accessed by user '_apt'
+```
+
+that is usually only a directory permission warning. It does not automatically mean the install failed. The real failures to watch for are:
+
+- `Unable to correct problems`
+- `unmet dependencies`
+- `dpkg returned an error code`
+
+The safer approach is to place the offline packages in a directory readable by `_apt`, for example:
+
+```bash
+mkdir -p /tmp/offline-nvidia-toolkit
+cp ~/offline-nvidia-toolkit/*.deb /tmp/offline-nvidia-toolkit/
+chmod 755 /tmp/offline-nvidia-toolkit
+chmod 644 /tmp/offline-nvidia-toolkit/*.deb
+cd /tmp/offline-nvidia-toolkit
+sudo apt install -y ./*.deb
+```
+
+### 11.7 The online host is Ubuntu 22.04 but the offline host is Ubuntu 20.04
+
+The most reliable approach is not to mix `ubuntu2004` packages directly on the `ubuntu2204` host. Instead, run an `ubuntu:20.04` container on the online machine and collect the offline `.deb` packages there.
+
+On the connected host:
+
+```bash
+mkdir -p ~/offline-nvidia-toolkit-ubuntu2004
+docker run --rm -it \
+  -v ~/offline-nvidia-toolkit-ubuntu2004:/out \
+  ubuntu:20.04 bash
+```
+
+Inside that container:
+
+```bash
+apt-get update
+apt-get install -y curl gnupg ca-certificates
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+  > /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+apt-get update
+apt-get install --download-only -y nvidia-container-toolkit
+cp /var/cache/apt/archives/*.deb /out/
+```
+
+Back on the online host, package the collected files:
+
+```bash
+cd ~/offline-nvidia-toolkit-ubuntu2004
+tar -czf nvidia-container-toolkit-ubuntu2004-offline.tar.gz ./*.deb
+```
+
+Copy that archive to the Ubuntu 20.04 offline host, install the `.deb` packages there, then continue with:
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu20.04 nvidia-smi
+```
 
 ## 12. Reference documents
 

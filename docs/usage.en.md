@@ -65,10 +65,27 @@ scripts/export-project-bundle.sh --mode assets --output artifacts/project-operat
 
 ### Step 4: Import assets on the offline host
 
-If needed, import the operator toolkit first:
+If the offline host still has a checkout of this repository, import the operator toolkit first:
 
 ```bash
 scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+If the offline host does not have a repository checkout, unpack the toolkit archive manually:
+
+```bash
+mkdir -p /path/to/project/.gpu-devops
+tmpdir="$(mktemp -d)"
+tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
+cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
+cat > /path/to/project/.gpu-devops/.env <<'EOF'
+HOST_PROJECT_DIR=/path/to/project
+CUDA_CXX_PROJECT_DIR=.
+CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_CMAKE_GENERATOR=Ninja
+CUDA_CXX_CMAKE_ARGS=
+CUDA_CXX_BUILD_ARGS=
+EOF
 ```
 
 Then import the image archive:
@@ -77,7 +94,13 @@ Then import the image archive:
 scripts/import-images.sh --input artifacts/offline-images.tar.gz
 ```
 
-If you imported the toolkit, run later commands from `/path/to/project/.gpu-devops/`.
+If you unpacked the toolkit manually, run:
+
+```bash
+.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+```
+
+If you imported or unpacked the toolkit, run later commands from `/path/to/project/.gpu-devops/`.
 
 ### Step 5: Start the Runner service
 
