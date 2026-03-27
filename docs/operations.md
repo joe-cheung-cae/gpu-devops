@@ -16,6 +16,7 @@ scripts/verify-host.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
+scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
 scripts/runner-compose.sh up -d
 ```
@@ -26,9 +27,17 @@ If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARC
 scripts/import-images.sh
 ```
 
+`scripts/prepare-runner-service-image.sh` gives `RUNNER_SERVICE_IMAGE` a controlled online preparation step before export. Its default `retag` mode pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point for later customization, run:
+
+```bash
+scripts/prepare-runner-service-image.sh --mode build
+```
+
 `scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
 
 These image-only scripts share the same image export/import implementation as the project bundle scripts. The main difference is that they produce and consume the plain offline image archive directly.
+
+On an offline host, `scripts/runner-compose.sh up -d` assumes `RUNNER_SERVICE_IMAGE` is already present locally because `runner-compose.yml` only runs the service image and does not build it.
 
 To move the same images and integration assets into another project directory outside this repository, run:
 
@@ -89,10 +98,11 @@ Proxy handling is aligned across `centos7`, `rocky8`, and `ubuntu2204`: the buil
 ## Upgrade path
 
 1. Build and publish a new builder image tag.
-2. Update `BUILDER_IMAGE_FAMILY`, `BUILDER_DEFAULT_PLATFORM`, `BUILDER_PLATFORMS`, `RUNNER_DOCKER_IMAGE`, and `BUILDER_IMAGE` in `.env` if the platform matrix changes.
-3. Re-export the offline image bundle if air-gapped hosts depend on it.
-4. Restart the Runner service.
-5. Validate the smoke pipeline in a test project.
+2. Prepare and publish the updated `RUNNER_SERVICE_IMAGE` with `scripts/prepare-runner-service-image.sh` if the Runner service image source or target changes.
+3. Update `BUILDER_IMAGE_FAMILY`, `BUILDER_DEFAULT_PLATFORM`, `BUILDER_PLATFORMS`, `RUNNER_DOCKER_IMAGE`, `RUNNER_SERVICE_IMAGE`, and `BUILDER_IMAGE` in `.env` if the platform matrix or published image names change.
+4. Re-export the offline image bundle if air-gapped hosts depend on it.
+5. Restart the Runner service.
+6. Validate the smoke pipeline in a test project.
 
 ## Rollback
 

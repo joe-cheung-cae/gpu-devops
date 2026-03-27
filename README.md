@@ -56,10 +56,11 @@ The shared builder images include a pinned math and simulation baseline:
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
    Single platform: `scripts/build-builder-image.sh --platform ubuntu2204`
    All supported platforms: `scripts/build-builder-image.sh --all-platforms`
-4. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
-5. Start the Runner service with `scripts/runner-compose.sh up -d`.
-6. Register Runner entries with `runner/register-runner.sh`.
-7. Validate the deployment with `docs/self-check.md`.
+4. Prepare the Runner service image with `scripts/prepare-runner-service-image.sh`.
+5. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
+6. Start the Runner service with `scripts/runner-compose.sh up -d`.
+7. Register Runner entries with `runner/register-runner.sh`.
+8. Validate the deployment with `docs/self-check.md`.
 
 ## Compose files
 
@@ -120,11 +121,25 @@ Both `h5engine-sph` and `h5engine-dem` are rebuilt from the bundled tarballs aft
 
 ## Offline image bundle
 
+The Runner service image is now treated as a first-class platform asset. In an online environment, prepare it before exporting:
+
+```bash
+scripts/prepare-runner-service-image.sh
+```
+
+By default this script pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a controlled local build entry point instead, use:
+
+```bash
+scripts/prepare-runner-service-image.sh --mode build
+```
+
 For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import-images.sh`.
 
 By default, `scripts/import-images.sh` verifies the SHA256 sidecar before calling `docker load`. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
 
 The image-only scripts and the project bundle scripts now share the same underlying image export/import implementation, so the difference between them is output format and installed assets, not a separate Docker save/load path.
+
+An offline host can only start `scripts/runner-compose.sh up -d` after `RUNNER_SERVICE_IMAGE` has already been imported into the local Docker daemon. `runner-compose.yml` does not build or pull that image by itself in an air-gapped environment.
 
 ## Project integration bundle
 

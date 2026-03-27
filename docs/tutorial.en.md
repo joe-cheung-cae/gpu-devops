@@ -94,6 +94,8 @@ Then update the main fields:
 - `RUNNER_REGISTRATION_TOKEN`: runner registration token
 - `RUNNER_DOCKER_IMAGE`: default image used by the runner
 - `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
+- `RUNNER_SERVICE_SOURCE_IMAGE`: upstream source consumed by `scripts/prepare-runner-service-image.sh`
+- `RUNNER_SERVICE_IMAGE_PREPARE_MODE`: `retag` or `build` for preparing `RUNNER_SERVICE_IMAGE`
 - `RUNNER_CONTAINER_NAME`: long-running container name used by `runner-compose.yml`
 - `RUNNER_REGISTRATION_CONTAINER_NAME`: temporary container name used by `runner/register-runner.sh`
 - `BUILDER_IMAGE`: standard builder image tag
@@ -130,10 +132,17 @@ The script will:
 If the destination host is air-gapped, also run:
 
 ```bash
+scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
 ```
 
-This exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
+`scripts/prepare-runner-service-image.sh` prepares `RUNNER_SERVICE_IMAGE` in an online environment before export. By default it pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point instead, run:
+
+```bash
+scripts/prepare-runner-service-image.sh --mode build
+```
+
+Then `scripts/export-images.sh` exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
 
 ```bash
 scripts/import-images.sh
@@ -142,6 +151,8 @@ scripts/import-images.sh
 to load the deployment images in one step.
 
 The export also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
+
+An offline host can only run `scripts/runner-compose.sh up -d` after `RUNNER_SERVICE_IMAGE` has been imported into the local Docker daemon. `runner-compose.yml` only consumes that image; it does not build it on the offline host.
 
 If another project outside this repository needs the same images and integration assets, run:
 
@@ -250,9 +261,7 @@ The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` se
 
 For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 
-The main runner container image is:
-
-- `gitlab/gitlab-runner:alpine-v16.10.1`
+The main runner container image is `RUNNER_SERVICE_IMAGE`, which should already exist locally before you start `runner-compose.yml` on an offline host.
 
 You can inspect logs with:
 

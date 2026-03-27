@@ -94,6 +94,8 @@ cp .env.example .env
 - `RUNNER_REGISTRATION_TOKEN`：Runner 注册令牌
 - `RUNNER_DOCKER_IMAGE`：Runner 默认 job image
 - `RUNNER_SERVICE_IMAGE`：Runner 服务容器镜像
+- `RUNNER_SERVICE_SOURCE_IMAGE`：`scripts/prepare-runner-service-image.sh` 使用的上游源镜像
+- `RUNNER_SERVICE_IMAGE_PREPARE_MODE`：准备 `RUNNER_SERVICE_IMAGE` 时使用 `retag` 或 `build`
 - `RUNNER_CONTAINER_NAME`：`runner-compose.yml` 中长期运行的 Runner 服务容器名称
 - `RUNNER_REGISTRATION_CONTAINER_NAME`：`runner/register-runner.sh` 注册时使用的临时容器名称
 - `BUILDER_IMAGE`：标准 builder 镜像 tag
@@ -130,10 +132,17 @@ scripts/build-builder-image.sh --all-platforms
 如果目标环境无法访问外网，可以在联网环境额外执行：
 
 ```bash
+scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
 ```
 
-该脚本会把 `BUILDER_IMAGE_FAMILY` 和 `BUILDER_PLATFORMS` 推导出的全部 builder tags，以及 `RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
+`scripts/prepare-runner-service-image.sh` 会先在联网环境准备好 `RUNNER_SERVICE_IMAGE`。默认行为是拉取 `RUNNER_SERVICE_SOURCE_IMAGE`，再重标记到 `RUNNER_SERVICE_IMAGE`。如果你想保留一个仓库内可定制的构建入口，也可以执行：
+
+```bash
+scripts/prepare-runner-service-image.sh --mode build
+```
+
+随后 `scripts/export-images.sh` 会把 `BUILDER_IMAGE_FAMILY` 和 `BUILDER_PLATFORMS` 推导出的全部 builder tags，以及 `RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
 
 ```bash
 scripts/import-images.sh
@@ -142,6 +151,8 @@ scripts/import-images.sh
 即可一键导入部署所需镜像。
 
 导出时还会额外生成 `${IMAGE_ARCHIVE_PATH}.sha256`。`scripts/import-images.sh` 默认会先校验这个 hash，再执行导入；只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。
+
+离线机器上只有在本地 Docker 已经导入 `RUNNER_SERVICE_IMAGE` 之后，才能执行 `scripts/runner-compose.sh up -d`。`runner-compose.yml` 本身只消费该镜像，不会在离线环境中帮你构建它。
 
 如果另一个项目目录不在当前仓库下面，但也需要同样的镜像和接入资产，可以执行：
 
@@ -250,9 +261,7 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 如果你想直接参考一个已经设置了 `CUDA_CXX_CMAKE_ARGS` 和 `CUDA_CXX_BUILD_ARGS` 的 `.env` 示例，可以看 [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example)。
 
-Runner 主容器使用镜像：
-
-- `gitlab/gitlab-runner:alpine-v16.10.1`
+Runner 主容器使用的是 `RUNNER_SERVICE_IMAGE`。在离线环境中启动前，应先确认这个镜像已经通过导入存在于本地 Docker。
 
 运行后可检查：
 

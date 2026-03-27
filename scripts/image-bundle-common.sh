@@ -21,6 +21,14 @@ load_image_bundle_env() {
     RUNNER_SERVICE_IMAGE="gitlab/gitlab-runner:alpine-v16.10.1"
   fi
 
+  if [[ -z "${RUNNER_SERVICE_SOURCE_IMAGE:-}" ]]; then
+    RUNNER_SERVICE_SOURCE_IMAGE="gitlab/gitlab-runner:alpine-v16.10.1"
+  fi
+
+  if [[ -z "${RUNNER_SERVICE_IMAGE_PREPARE_MODE:-}" ]]; then
+    RUNNER_SERVICE_IMAGE_PREPARE_MODE="retag"
+  fi
+
   if [[ -z "${BUILDER_DEFAULT_PLATFORM:-}" ]]; then
     BUILDER_DEFAULT_PLATFORM="centos7"
   fi
