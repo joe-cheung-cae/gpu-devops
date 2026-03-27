@@ -154,6 +154,32 @@ scripts/import-images.sh
 
 离线机器上只有在本地 Docker 已经导入 `RUNNER_SERVICE_IMAGE` 之后，才能执行 `scripts/runner-compose.sh up -d`。`runner-compose.yml` 本身只消费该镜像，不会在离线环境中帮你构建它。
 
+如果你要走一条完整的“联网构建、离线部署”路径，推荐顺序如下：
+
+1. 联网机器：
+   - `cp .env.example .env`
+   - 补齐 `GITLAB_URL`、`RUNNER_REGISTRATION_TOKEN` 和镜像名
+   - `scripts/verify-host.sh`
+   - `scripts/build-builder-image.sh --all-platforms`
+   - `scripts/prepare-runner-service-image.sh`
+   - `scripts/export-images.sh`
+2. 把 `artifacts/offline-images.tar.gz` 和 `artifacts/offline-images.tar.gz.sha256` 复制到离线机器。
+3. 离线机器：
+   - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
+   - `scripts/runner-compose.sh up -d`
+   - `runner/register-runner.sh gpu`
+   - 可选：`runner/register-runner.sh multi`
+   - `scripts/compose.sh run --rm cuda-cxx-centos7`
+
+如果离线机器上不保留完整仓库，可以先额外导出并导入 operator toolkit：
+
+```bash
+scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+之后改在 `/path/to/project/.gpu-devops/` 下继续执行。
+
 如果另一个项目目录不在当前仓库下面，但也需要同样的镜像和接入资产，可以执行：
 
 ```bash

@@ -154,6 +154,32 @@ The export also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh
 
 An offline host can only run `scripts/runner-compose.sh up -d` after `RUNNER_SERVICE_IMAGE` has been imported into the local Docker daemon. `runner-compose.yml` only consumes that image; it does not build it on the offline host.
 
+For a complete connected-host to offline-host workflow, use this order:
+
+1. Connected host:
+   - `cp .env.example .env`
+   - fill `GITLAB_URL`, `RUNNER_REGISTRATION_TOKEN`, and image names
+   - `scripts/verify-host.sh`
+   - `scripts/build-builder-image.sh --all-platforms`
+   - `scripts/prepare-runner-service-image.sh`
+   - `scripts/export-images.sh`
+2. Copy `artifacts/offline-images.tar.gz` and `artifacts/offline-images.tar.gz.sha256` to the offline host.
+3. Offline host:
+   - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
+   - `scripts/runner-compose.sh up -d`
+   - `runner/register-runner.sh gpu`
+   - optional: `runner/register-runner.sh multi`
+   - `scripts/compose.sh run --rm cuda-cxx-centos7`
+
+If the offline host does not keep a full checkout of this repository, export and import the operator toolkit first:
+
+```bash
+scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+Then continue from `/path/to/project/.gpu-devops/`.
+
 If another project outside this repository needs the same images and integration assets, run:
 
 ```bash

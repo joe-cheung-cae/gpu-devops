@@ -42,7 +42,44 @@ Build all supported platforms:
 scripts/build-builder-image.sh --all-platforms
 ```
 
-### Step 3: Start the Runner service
+### Step 3: Prepare the Runner service image and offline bundle
+
+In a connected environment, prepare the Runner service image before export:
+
+```bash
+scripts/prepare-runner-service-image.sh
+scripts/export-images.sh
+```
+
+This produces:
+
+- `artifacts/offline-images.tar.gz`
+- `artifacts/offline-images.tar.gz.images.txt`
+- `artifacts/offline-images.tar.gz.sha256`
+
+If the offline host does not keep a full clone of this repository, also export the operator toolkit:
+
+```bash
+scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+```
+
+### Step 4: Import assets on the offline host
+
+If needed, import the operator toolkit first:
+
+```bash
+scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+Then import the image archive:
+
+```bash
+scripts/import-images.sh --input artifacts/offline-images.tar.gz
+```
+
+If you imported the toolkit, run later commands from `/path/to/project/.gpu-devops/`.
+
+### Step 5: Start the Runner service
 
 ```bash
 scripts/runner-compose.sh up -d
@@ -51,7 +88,7 @@ scripts/runner-compose.sh ps
 
 The expected result is one healthy `gitlab-runner` container.
 
-### Step 4: Register runners in GitLab
+### Step 6: Register runners in GitLab
 
 Register the default single-GPU pool:
 
@@ -70,7 +107,7 @@ Default tags are:
 - single GPU: `gpu`, `cuda`, `cuda-11`
 - multi GPU: `gpu-multi`, `cuda`, `cuda-11`
 
-### Step 5: Validate the platform
+### Step 7: Validate the platform and local build environment
 
 ```bash
 scripts/compose.sh run --rm cuda-cxx-centos7

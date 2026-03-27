@@ -42,7 +42,44 @@ scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-### 步骤 3：启动 Runner 服务
+### 步骤 3：准备 Runner 服务镜像并导出离线包
+
+在联网环境中，先准备 Runner 服务镜像，再导出部署镜像：
+
+```bash
+scripts/prepare-runner-service-image.sh
+scripts/export-images.sh
+```
+
+会生成：
+
+- `artifacts/offline-images.tar.gz`
+- `artifacts/offline-images.tar.gz.images.txt`
+- `artifacts/offline-images.tar.gz.sha256`
+
+如果离线机器上不保留完整仓库代码，建议同时导出 operator toolkit：
+
+```bash
+scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+```
+
+### 步骤 4：在离线机器导入资产
+
+如有需要，先导入 operator toolkit：
+
+```bash
+scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+然后导入镜像归档：
+
+```bash
+scripts/import-images.sh --input artifacts/offline-images.tar.gz
+```
+
+如果导入了 toolkit，后续命令请在 `/path/to/project/.gpu-devops/` 目录下执行。
+
+### 步骤 5：启动 Runner 服务
 
 ```bash
 scripts/runner-compose.sh up -d
@@ -51,7 +88,7 @@ scripts/runner-compose.sh ps
 
 预期结果是 `gitlab-runner` 容器正常启动并保持运行。
 
-### 步骤 4：在 GitLab 中注册 Runner
+### 步骤 6：在 GitLab 中注册 Runner
 
 注册默认单卡 Runner 池：
 
@@ -70,7 +107,7 @@ runner/register-runner.sh multi
 - 单卡池：`gpu`、`cuda`、`cuda-11`
 - 多卡池：`gpu-multi`、`cuda`、`cuda-11`
 
-### 步骤 5：验证平台可用性
+### 步骤 7：验证平台与本地 build 环境可用性
 
 ```bash
 scripts/compose.sh run --rm cuda-cxx-centos7

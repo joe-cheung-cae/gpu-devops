@@ -5,6 +5,7 @@ runner/cache/
 docker/cuda-builder/build/
 artifacts/*.tar
 artifacts/*.tar.gz
+artifacts/*.tar.gz.sha256
 artifacts/*.images.txt
 artifacts/cuda-cxx-build/
 *.log

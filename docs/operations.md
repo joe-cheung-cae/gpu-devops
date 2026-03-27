@@ -27,6 +27,37 @@ If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARC
 scripts/import-images.sh
 ```
 
+For a complete online-to-offline deployment workflow, use this order:
+
+1. Online host:
+   - `cp .env.example .env`
+   - fill `GITLAB_URL`, `RUNNER_REGISTRATION_TOKEN`, and published image names
+   - `scripts/verify-host.sh`
+   - `scripts/build-builder-image.sh --all-platforms`
+   - `scripts/prepare-runner-service-image.sh`
+   - `scripts/export-images.sh`
+2. Transfer `IMAGE_ARCHIVE_PATH` and `${IMAGE_ARCHIVE_PATH}.sha256` to the offline host.
+3. Offline host:
+   - `scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"`
+   - `scripts/runner-compose.sh up -d`
+   - `runner/register-runner.sh gpu`
+   - optional: `runner/register-runner.sh multi`
+   - `scripts/compose.sh run --rm cuda-cxx-centos7`
+
+If the offline host does not keep a full checkout of this repository, export the operator toolkit on the online host:
+
+```bash
+scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+```
+
+Then import it on the offline host:
+
+```bash
+scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+```
+
+Continue all later commands from `/path/to/project/.gpu-devops/`.
+
 `scripts/prepare-runner-service-image.sh` gives `RUNNER_SERVICE_IMAGE` a controlled online preparation step before export. Its default `retag` mode pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point for later customization, run:
 
 ```bash
