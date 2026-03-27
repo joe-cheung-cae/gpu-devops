@@ -170,10 +170,22 @@ In `all` mode, the exported bundle contains:
 - `docker-compose.yml`
 - `runner-compose.yml`
 - `examples/gitlab-ci/shared-gpu-runner.yml`
-- the compose wrapper scripts
+- the full operator script toolkit, including image import/export and Runner image preparation
+- `runner/register-runner.sh` and `runner/config.template.toml`
+- `docker/cuda-builder/` and `docker/gitlab-runner/` so imported build and prepare scripts keep working
 - the operator/tutorial docs
 
 Importing the bundle in `all` mode loads the images into Docker and installs those assets under `<target>/.gpu-devops/` by default, so the target project does not need to live under the current repository tree and does not risk overwriting its own root-level files.
+
+That imported `.gpu-devops/` directory is now a functional operator toolkit. Beyond local project builds, it can also run:
+
+- `.gpu-devops/scripts/verify-host.sh`
+- `.gpu-devops/scripts/build-builder-image.sh --all-platforms`
+- `.gpu-devops/scripts/prepare-runner-service-image.sh`
+- `.gpu-devops/scripts/export-images.sh`
+- `.gpu-devops/scripts/import-images.sh`
+- `.gpu-devops/scripts/runner-compose.sh up -d`
+- `.gpu-devops/runner/register-runner.sh gpu`
 
 When assets are imported, the importer also writes `<target>/.gpu-devops/.env` with target-safe defaults:
 

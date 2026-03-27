@@ -165,6 +165,8 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 导入脚本还会生成 `/path/to/other/project/.gpu-devops/.env`，让复制过去的 `compose.sh` 默认把目标项目根目录作为 `HOST_PROJECT_DIR`，并以 `CUDA_CXX_PROJECT_DIR=.` 作为源码根。
 
+现在导入后的 `.gpu-devops/` 不再只是最小接入资产，而是一套可独立运行的 operator toolkit：除了 Compose 包装脚本外，还包含镜像导入导出、Runner 服务镜像准备、builder Dockerfile 与依赖资源、以及 `runner/` 下的注册资产。
+
 如果你只想处理其中一类内容，也可以加 `--mode`：
 
 ```bash

@@ -117,6 +117,17 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/compose.sh"
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
+      assert_file_exists "${test_dir}/assets/scripts/export-images.sh"
+      assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
+      assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-runner-service-image.sh"
+      assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
+      assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
+      assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
+      assert_file_exists "${test_dir}/assets/runner/config.template.toml"
+      assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
+      assert_file_exists "${test_dir}/assets/docker/cuda-builder/centos7.Dockerfile"
+      assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
@@ -134,6 +145,9 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/docker-compose.yml"
       assert_file_exists "${test_dir}/assets/runner-compose.yml"
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
+      assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
+      assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
+      assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
       assert_not_exists "${test_dir}/images"
       ;;
   esac
@@ -167,12 +181,31 @@ write_import_bundle() {
   fi
 
   if [[ "${mode}" == "all" || "${mode}" == "assets" ]]; then
-    mkdir -p "${bundle_root}/assets/examples/gitlab-ci" "${bundle_root}/assets/scripts"
+    mkdir -p \
+      "${bundle_root}/assets/examples/gitlab-ci" \
+      "${bundle_root}/assets/scripts" \
+      "${bundle_root}/assets/runner" \
+      "${bundle_root}/assets/docker/gitlab-runner" \
+      "${bundle_root}/assets/docker/cuda-builder/deps"
     cp "${ROOT_DIR}/docker-compose.yml" "${bundle_root}/assets/docker-compose.yml"
+    cp "${ROOT_DIR}/runner-compose.yml" "${bundle_root}/assets/runner-compose.yml"
+    cp "${ROOT_DIR}/.env.example" "${bundle_root}/assets/.env.example"
     cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
     cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
+    cp "${ROOT_DIR}/scripts/export-images.sh" "${bundle_root}/assets/scripts/export-images.sh"
+    cp "${ROOT_DIR}/scripts/import-images.sh" "${bundle_root}/assets/scripts/import-images.sh"
+    cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
+    cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
+    cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
+    cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
+    cp "${ROOT_DIR}/scripts/runner-compose.sh" "${bundle_root}/assets/scripts/runner-compose.sh"
     cp "${ROOT_DIR}/scripts/progress-common.sh" "${bundle_root}/assets/scripts/progress-common.sh"
-    chmod +x "${bundle_root}/assets/scripts/compose.sh"
+    cp "${ROOT_DIR}/runner/register-runner.sh" "${bundle_root}/assets/runner/register-runner.sh"
+    cp "${ROOT_DIR}/runner/config.template.toml" "${bundle_root}/assets/runner/config.template.toml"
+    cp "${ROOT_DIR}/docker/gitlab-runner/Dockerfile" "${bundle_root}/assets/docker/gitlab-runner/Dockerfile"
+    cp "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${bundle_root}/assets/docker/cuda-builder/centos7.Dockerfile"
+    cp "${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
+    chmod +x "${bundle_root}/assets/scripts/"*.sh "${bundle_root}/assets/runner/register-runner.sh"
   fi
 }
 
@@ -239,6 +272,17 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/export-images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/runner/config.template.toml"
+      assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"
+      assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/centos7.Dockerfile"
+      assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       assert_executable "${target_dir}/.gpu-devops/scripts/compose.sh"
       assert_contains "${target_dir}/.gpu-devops/.env" "HOST_PROJECT_DIR=${target_dir}"
@@ -250,6 +294,21 @@ run_import_test() {
       "${target_dir}/.gpu-devops/scripts/compose.sh" config
 
       assert_contains "${test_dir}/logs/docker.log" "compose --env-file ${target_dir}/.gpu-devops/.env -f ${target_dir}/.gpu-devops/docker-compose.yml config"
+
+      "${target_dir}/.gpu-devops/scripts/import-images.sh" --help > "${test_dir}/import-images-help.log"
+      "${target_dir}/.gpu-devops/scripts/export-images.sh" --help > "${test_dir}/export-images-help.log"
+      "${target_dir}/.gpu-devops/scripts/build-builder-image.sh" --help > "${test_dir}/build-builder-help.log"
+      "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh" --help > "${test_dir}/prepare-runner-help.log"
+      set +e
+      "${target_dir}/.gpu-devops/runner/register-runner.sh" invalid > "${test_dir}/register-runner-help.log" 2>&1
+      local register_status=$?
+      set -e
+      assert_equals "1" "${register_status}"
+      assert_contains "${test_dir}/import-images-help.log" "Usage: scripts/import-images.sh"
+      assert_contains "${test_dir}/export-images-help.log" "Usage: scripts/export-images.sh"
+      assert_contains "${test_dir}/build-builder-help.log" "Usage: scripts/build-builder-image.sh"
+      assert_contains "${test_dir}/prepare-runner-help.log" "Usage: scripts/prepare-runner-service-image.sh"
+      assert_contains "${test_dir}/register-runner-help.log" "Set GITLAB_URL in .env"
       ;;
     images)
       assert_contains "${test_dir}/logs/docker.log" "load"
@@ -259,6 +318,9 @@ run_import_test() {
       assert_not_exists "${test_dir}/logs/docker.log"
       assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       ;;
   esac

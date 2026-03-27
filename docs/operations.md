@@ -50,6 +50,14 @@ The imported files are installed under `/path/to/other/project/.gpu-devops/` by 
 
 The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree.
 
+The imported `.gpu-devops/` directory now behaves as a functional operator toolkit, not just a minimal project integration stub. It includes:
+
+- image import/export scripts
+- Runner service image preparation
+- builder image build scripts plus `docker/cuda-builder/`
+- Runner registration assets under `runner/`
+- the existing Compose wrappers and docs
+
 The project bundle scripts also support partial flows:
 
 ```bash

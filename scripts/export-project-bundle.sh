@@ -77,7 +77,11 @@ if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
 
   for asset in "${ASSETS[@]}"; do
     mkdir -p "${STAGE_DIR}/assets/$(dirname "${asset}")"
-    cp "${ROOT_DIR}/${asset}" "${STAGE_DIR}/assets/${asset}"
+    if [[ -d "${ROOT_DIR}/${asset}" ]]; then
+      cp -R "${ROOT_DIR}/${asset}" "${STAGE_DIR}/assets/${asset}"
+    else
+      cp "${ROOT_DIR}/${asset}" "${STAGE_DIR}/assets/${asset}"
+    fi
   done
 fi
 

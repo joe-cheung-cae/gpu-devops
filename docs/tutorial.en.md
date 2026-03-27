@@ -165,6 +165,8 @@ The imported files land in `/path/to/other/project/.gpu-devops/` by default.
 
 The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR` and `CUDA_CXX_PROJECT_DIR=.`
 
+That imported `.gpu-devops/` directory is now a reusable operator toolkit. Besides the local build wrappers, it also includes image import/export, Runner service image preparation, builder Dockerfiles plus bundled deps, and Runner registration assets.
+
 If you only need one side of that bundle flow, use `--mode`:
 
 ```bash
