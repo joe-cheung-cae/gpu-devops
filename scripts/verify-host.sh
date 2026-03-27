@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[1/5] Checking Docker"
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/progress-common.sh"
+
+progress_init 5
+progress_step "Checking Docker"
 docker --version
 
-echo "[2/5] Checking Compose"
+progress_step "Checking Compose"
 if docker compose version >/dev/null 2>&1; then
   docker compose version
 elif command -v docker-compose >/dev/null 2>&1; then
@@ -14,10 +18,10 @@ else
   exit 1
 fi
 
-echo "[3/5] Checking NVIDIA driver"
+progress_step "Checking NVIDIA driver"
 nvidia-smi
 
-echo "[4/5] Checking NVIDIA Container Toolkit runtime"
+progress_step "Checking NVIDIA Container Toolkit runtime"
 docker info --format '{{json .Runtimes}}' | grep -q nvidia
 
-echo "[5/5] Host verification passed"
+progress_done "Host verification passed"

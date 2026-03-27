@@ -103,7 +103,7 @@ run_export_test() {
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}"
+  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}" > "${test_dir}/stdout.log"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
@@ -116,6 +116,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/runner-compose.yml"
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/compose.sh"
+      assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
@@ -132,11 +133,14 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/.env.example"
       assert_file_exists "${test_dir}/assets/docker-compose.yml"
       assert_file_exists "${test_dir}/assets/runner-compose.yml"
+      assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_not_exists "${test_dir}/images"
       ;;
   esac
 
   assert_contains "${test_dir}/bundle-manifest.txt" "bundle_mode=${mode}"
+  assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
+  assert_contains "${test_dir}/stdout.log" "[5/5] Exported project integration bundle"
 }
 
 write_import_env() {
@@ -167,6 +171,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/docker-compose.yml" "${bundle_root}/assets/docker-compose.yml"
     cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
     cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
+    cp "${ROOT_DIR}/scripts/progress-common.sh" "${bundle_root}/assets/scripts/progress-common.sh"
     chmod +x "${bundle_root}/assets/scripts/compose.sh"
   fi
 }
@@ -216,7 +221,7 @@ run_import_test() {
     "${ROOT_DIR}/scripts/import-project-bundle.sh" \
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
-      --mode "${mode}"
+      --mode "${mode}" > "${test_dir}/stdout.log"
   else
     TEST_LOG_FILE="${test_dir}/logs/docker.log" \
     PATH="${test_dir}/bin:${PATH}" \
@@ -224,7 +229,7 @@ run_import_test() {
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
       --target-dir "${target_dir}" \
-      --mode "${mode}"
+      --mode "${mode}" > "${test_dir}/stdout.log"
   fi
 
   case "${mode}" in
@@ -233,6 +238,7 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       assert_executable "${target_dir}/.gpu-devops/scripts/compose.sh"
       assert_contains "${target_dir}/.gpu-devops/.env" "HOST_PROJECT_DIR=${target_dir}"
@@ -252,9 +258,13 @@ run_import_test() {
     assets)
       assert_not_exists "${test_dir}/logs/docker.log"
       assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       ;;
   esac
+
+  assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
+  assert_contains "${test_dir}/stdout.log" "[5/5] Imported project bundle"
 }
 
 run_import_hash_failure_test() {

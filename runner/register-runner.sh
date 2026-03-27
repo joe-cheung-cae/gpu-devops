@@ -3,6 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
+
+progress_init 4
+progress_step "Loading runner configuration"
+
 if [[ -f "${ROOT_DIR}/.env" ]]; then
   # shellcheck disable=SC1091
   source "${ROOT_DIR}/.env"
@@ -15,6 +21,7 @@ RUNNER_SERVICE_IMAGE="${RUNNER_SERVICE_IMAGE:-gitlab/gitlab-runner:alpine-v16.10
 RUNNER_REGISTRATION_CONTAINER_NAME="${RUNNER_REGISTRATION_CONTAINER_NAME:-gitlab-runner-devops-register}"
 
 MODE="${1:-gpu}"
+progress_step "Resolving runner mode ${MODE}"
 
 case "${MODE}" in
   gpu)
@@ -33,6 +40,7 @@ case "${MODE}" in
     ;;
 esac
 
+progress_step "Preparing runner configuration directories"
 mkdir -p "${ROOT_DIR}/runner/config" "${ROOT_DIR}/runner/cache"
 
 docker run --rm -it \
@@ -56,3 +64,5 @@ docker run --rm -it \
   --env "NVIDIA_DRIVER_CAPABILITIES=compute,utility" \
   --docker-volumes "/cache" \
   --docker-volumes "/var/run/docker.sock:/var/run/docker.sock"
+
+progress_done "Runner registration command completed"

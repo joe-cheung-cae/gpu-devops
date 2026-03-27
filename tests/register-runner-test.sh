@@ -54,26 +54,29 @@ EOF
 
 run_default_name_test() {
   local test_dir="${TMP_DIR}/default-name"
-  mkdir -p "${test_dir}/bin" "${test_dir}/runner"
+  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts"
 
   write_base_env "${test_dir}/.env"
   write_docker_mock "${test_dir}/bin/docker"
 
   cp "${ROOT_DIR}/runner/register-runner.sh" "${test_dir}/runner/register-runner.sh"
+  cp "${ROOT_DIR}/scripts/progress-common.sh" "${test_dir}/scripts/progress-common.sh"
   chmod +x "${test_dir}/runner/register-runner.sh"
 
   (
     cd "${test_dir}"
     mkdir -p runner/config runner/cache
-    TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh gpu
+    TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh gpu > "${test_dir}/stdout.log"
   )
 
   assert_contains "${test_dir}/docker.log" "run --rm -it --name gitlab-runner-devops-register"
+  assert_contains "${test_dir}/stdout.log" "[1/4] Loading runner configuration"
+  assert_contains "${test_dir}/stdout.log" "[4/4] Runner registration command completed"
 }
 
 run_override_name_test() {
   local test_dir="${TMP_DIR}/override-name"
-  mkdir -p "${test_dir}/bin" "${test_dir}/runner"
+  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts"
 
   write_base_env "${test_dir}/.env"
   cat >> "${test_dir}/.env" <<'EOF'
@@ -82,15 +85,17 @@ EOF
   write_docker_mock "${test_dir}/bin/docker"
 
   cp "${ROOT_DIR}/runner/register-runner.sh" "${test_dir}/runner/register-runner.sh"
+  cp "${ROOT_DIR}/scripts/progress-common.sh" "${test_dir}/scripts/progress-common.sh"
   chmod +x "${test_dir}/runner/register-runner.sh"
 
   (
     cd "${test_dir}"
     mkdir -p runner/config runner/cache
-    TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh multi
+    TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh multi > "${test_dir}/stdout.log"
   )
 
   assert_contains "${test_dir}/docker.log" "run --rm -it --name custom-runner-register"
+  assert_contains "${test_dir}/stdout.log" "[2/4] Resolving runner mode multi"
 }
 
 run_default_name_test

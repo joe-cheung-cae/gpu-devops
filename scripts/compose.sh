@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
 
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
+
 if [[ -f "${ENV_FILE}" ]]; then
   # shellcheck disable=SC1090
   source "${ENV_FILE}"
@@ -17,10 +20,16 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 if docker compose version >/dev/null 2>&1; then
+  progress_init 2
+  progress_step "Selecting docker compose implementation"
+  progress_done "Executing project compose command"
   exec env HOST_PROJECT_DIR="${HOST_PROJECT_DIR}" docker compose "${COMPOSE_ARGS[@]}" "$@"
 fi
 
 if command -v docker-compose >/dev/null 2>&1; then
+  progress_init 2
+  progress_step "Selecting docker-compose implementation"
+  progress_done "Executing project compose command"
   exec env HOST_PROJECT_DIR="${HOST_PROJECT_DIR}" docker-compose "${COMPOSE_ARGS[@]}" "$@"
 fi
 

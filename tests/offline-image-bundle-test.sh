@@ -84,11 +84,13 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-images.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz"
+  "${ROOT_DIR}/scripts/export-images.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.images.txt"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
+  assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
+  assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
@@ -127,9 +129,11 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz"
+  "${ROOT_DIR}/scripts/import-images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
 
   assert_contains "${test_dir}/logs/docker.log" "load"
+  assert_contains "${test_dir}/stdout.log" "[3/4] Loading image archive into Docker"
+  assert_contains "${test_dir}/stdout.log" "[4/4] Imported image bundle"
 }
 
 run_import_hash_failure_test() {
@@ -205,15 +209,17 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/export.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode images
+  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/export.stdout.log"
 
   TEST_LOG_FILE="${test_dir}/logs/import.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-project-bundle.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" --mode images
+  "${ROOT_DIR}/scripts/import-project-bundle.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/import.stdout.log"
 
   assert_contains "${test_dir}/logs/export.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/gitlab-runner:alpine-v16.10.1"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
   assert_contains "${test_dir}/logs/import.log" "load"
+  assert_contains "${test_dir}/export.stdout.log" "[4/5] Creating portable bundle archive"
+  assert_contains "${test_dir}/import.stdout.log" "[3/5] Importing bundled images"
 }
 
 run_export_test

@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
@@ -34,6 +36,9 @@ EOF
   esac
 done
 
+progress_init 5
+progress_step "Loading environment"
+
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
 
@@ -43,10 +48,14 @@ else
   ARCHIVE_PATH="$(default_archive_path "${ROOT_DIR}")"
 fi
 
+progress_step "Collecting image list"
 mapfile -t IMAGES < <(collect_bundle_images)
 
+progress_step "Ensuring images are available locally"
 ensure_bundle_images_available "${IMAGES[@]}"
+progress_step "Exporting image archive"
 export_images_archive "${ARCHIVE_PATH}" "${IMAGES[@]}"
 
-echo "Exported ${#IMAGES[@]} image(s) to ${ARCHIVE_PATH}"
-echo "Image list written to ${ARCHIVE_PATH}.images.txt"
+progress_done "Exported image bundle"
+progress_note "Exported ${#IMAGES[@]} image(s) to ${ARCHIVE_PATH}"
+progress_note "Image list written to ${ARCHIVE_PATH}.images.txt"

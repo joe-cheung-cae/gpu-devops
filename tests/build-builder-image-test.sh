@@ -24,7 +24,8 @@ assert_contains() {
 run_with_mock_docker() {
   local env_file="$1"
   local log_file="$2"
-  shift 2
+  local stdout_file="$3"
+  shift 3
 
   local mock_bin="${TMP_DIR}/bin"
   mkdir -p "${mock_bin}"
@@ -38,7 +39,7 @@ EOF
   chmod +x "${mock_bin}/docker"
 
   TEST_LOG_FILE="${log_file}" PATH="${mock_bin}:${PATH}" \
-    "${ROOT_DIR}/scripts/build-builder-image.sh" --env-file "${env_file}" "$@"
+    "${ROOT_DIR}/scripts/build-builder-image.sh" --env-file "${env_file}" "$@" > "${stdout_file}"
 }
 
 ENV_FILE="${TMP_DIR}/.env"
@@ -50,23 +51,31 @@ BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 EOF
 
 default_log="${TMP_DIR}/default.log"
-run_with_mock_docker "${ENV_FILE}" "${default_log}"
+default_stdout="${TMP_DIR}/default.stdout"
+run_with_mock_docker "${ENV_FILE}" "${default_log}" "${default_stdout}"
 assert_contains "${default_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
 assert_contains "${default_log}" "-f ${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile"
+assert_contains "${default_stdout}" "[1/5] Loading environment"
+assert_contains "${default_stdout}" "[5/5] Completed builder image build workflow"
 
 ubuntu_log="${TMP_DIR}/ubuntu.log"
-run_with_mock_docker "${ENV_FILE}" "${ubuntu_log}" --platform ubuntu2204
+ubuntu_stdout="${TMP_DIR}/ubuntu.stdout"
+run_with_mock_docker "${ENV_FILE}" "${ubuntu_log}" "${ubuntu_stdout}" --platform ubuntu2204
 assert_contains "${ubuntu_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
 assert_contains "${ubuntu_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 
 all_log="${TMP_DIR}/all.log"
-run_with_mock_docker "${ENV_FILE}" "${all_log}" --all-platforms
+all_stdout="${TMP_DIR}/all.stdout"
+run_with_mock_docker "${ENV_FILE}" "${all_log}" "${all_stdout}" --all-platforms
 assert_contains "${all_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile"
 assert_contains "${all_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile"
 assert_contains "${all_log}" "-t registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
+assert_contains "${all_stdout}" "[4/5] Building platform image centos7"
+assert_contains "${all_stdout}" "[4/5] Building platform image rocky8"
+assert_contains "${all_stdout}" "[4/5] Building platform image ubuntu2204"
 
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG EIGEN3_VERSION=3.4.0'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ARG EIGEN3_VERSION=3.4.0'

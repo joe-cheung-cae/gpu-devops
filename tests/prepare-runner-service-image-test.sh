@@ -71,6 +71,8 @@ run_default_retag_test() {
   assert_contains "${test_dir}/docker.log" "pull gitlab/gitlab-runner:alpine-v16.10.1"
   assert_contains "${test_dir}/docker.log" "tag gitlab/gitlab-runner:alpine-v16.10.1 tf-particles/devops/gitlab-runner:alpine-v16.10.1"
   assert_contains "${test_dir}/docker.log" "image inspect tf-particles/devops/gitlab-runner:alpine-v16.10.1"
+  assert_contains "${test_dir}/stdout.log" "[1/4] Loading environment"
+  assert_contains "${test_dir}/stdout.log" "[3/4] Preparing runner service image via retag"
   assert_contains "${test_dir}/stdout.log" "Prepared Runner service image tf-particles/devops/gitlab-runner:alpine-v16.10.1 via retag from gitlab/gitlab-runner:alpine-v16.10.1"
 }
 
@@ -87,6 +89,7 @@ run_build_mode_test() {
 
   assert_contains "${test_dir}/docker.log" "build -t tf-particles/devops/gitlab-runner:alpine-v16.10.1 --build-arg RUNNER_SERVICE_SOURCE_IMAGE=gitlab/gitlab-runner:alpine-v16.10.1 -f ${ROOT_DIR}/docker/gitlab-runner/Dockerfile ${ROOT_DIR}/docker/gitlab-runner"
   assert_contains "${test_dir}/docker.log" "image inspect tf-particles/devops/gitlab-runner:alpine-v16.10.1"
+  assert_contains "${test_dir}/stdout.log" "[3/4] Preparing runner service image via build"
   assert_contains "${test_dir}/stdout.log" "Prepared Runner service image tf-particles/devops/gitlab-runner:alpine-v16.10.1 via build from gitlab/gitlab-runner:alpine-v16.10.1"
 }
 
@@ -107,6 +110,7 @@ run_override_test() {
   assert_contains "${test_dir}/docker.log" "pull registry.internal/base/gitlab-runner:custom"
   assert_contains "${test_dir}/docker.log" "tag registry.internal/base/gitlab-runner:custom registry.internal/team/gitlab-runner:offline"
   assert_contains "${test_dir}/docker.log" "image inspect registry.internal/team/gitlab-runner:offline"
+  assert_contains "${test_dir}/stdout.log" "[2/4] Resolving runner service image source and target"
   assert_contains "${test_dir}/stdout.log" "Prepared Runner service image registry.internal/team/gitlab-runner:offline via retag from registry.internal/base/gitlab-runner:custom"
 }
 

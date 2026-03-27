@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
@@ -41,6 +43,8 @@ done
 
 MODE="$(normalize_bundle_mode "${MODE}")"
 
+progress_init 5
+progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 
 if [[ -n "${OUTPUT_OVERRIDE}" ]]; then
@@ -57,6 +61,7 @@ mkdir -p "${STAGE_DIR}"
 IMAGES=()
 ASSETS=()
 
+progress_step "Preparing bundled images"
 if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
   require_export_image_bundle_env
   mapfile -t IMAGES < <(collect_bundle_images)
@@ -65,6 +70,7 @@ if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
   export_images_archive "${STAGE_DIR}/images/offline-images.tar.gz" "${IMAGES[@]}"
 fi
 
+progress_step "Preparing bundled assets"
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
   mapfile -t ASSETS < <(project_bundle_assets)
   mkdir -p "${STAGE_DIR}/assets"
@@ -86,10 +92,12 @@ assets_root=$( [[ "${MODE}" == "all" || "${MODE}" == "assets" ]] && printf 'asse
 images_archive=$( [[ "${MODE}" == "all" || "${MODE}" == "images" ]] && printf 'images/offline-images.tar.gz' )
 EOF
 
+progress_step "Creating portable bundle archive"
 mkdir -p "$(dirname "${ARCHIVE_PATH}")"
 tar -czf "${ARCHIVE_PATH}" -C "${STAGE_DIR}" .
 write_bundle_sha256 "${ARCHIVE_PATH}"
 
-echo "Exported project integration bundle to ${ARCHIVE_PATH}"
-echo "Bundle mode: ${MODE}"
-echo "Bundle includes ${#IMAGES[@]} image(s) and ${#ASSETS[@]} asset file(s)"
+progress_done "Exported project integration bundle"
+progress_note "Exported project integration bundle to ${ARCHIVE_PATH}"
+progress_note "Bundle mode: ${MODE}"
+progress_note "Bundle includes ${#IMAGES[@]} image(s) and ${#ASSETS[@]} asset file(s)"

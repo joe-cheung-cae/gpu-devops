@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 INPUT_OVERRIDE=""
@@ -39,6 +41,9 @@ EOF
   esac
 done
 
+progress_init 4
+progress_step "Loading environment"
+
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 
 if [[ -n "${INPUT_OVERRIDE}" ]]; then
@@ -47,6 +52,14 @@ else
   ARCHIVE_PATH="$(default_archive_path "${ROOT_DIR}")"
 fi
 
+progress_step "Validating image archive input"
+if [[ "${SKIP_HASH_CHECK}" != "true" ]]; then
+  progress_note "SHA256 verification enabled"
+else
+  progress_note "SHA256 verification skipped by request"
+fi
+progress_step "Loading image archive into Docker"
 import_image_archive "${ARCHIVE_PATH}" "${SKIP_HASH_CHECK}"
 
-echo "Imported image bundle from ${ARCHIVE_PATH}"
+progress_done "Imported image bundle"
+progress_note "Imported image bundle from ${ARCHIVE_PATH}"

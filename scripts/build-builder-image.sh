@@ -6,6 +6,9 @@ ENV_FILE="${ROOT_DIR}/.env"
 SELECTED_PLATFORM=""
 BUILD_ALL=0
 
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
+
 while [[ $# -gt 0 ]]; do
   case "${1}" in
     --env-file)
@@ -35,6 +38,9 @@ EOF
   esac
 done
 
+progress_init 5
+progress_step "Loading environment"
+
 if [[ -f "${ENV_FILE}" ]]; then
   # shellcheck disable=SC1091
   source "${ENV_FILE}"
@@ -52,6 +58,8 @@ if [[ -z "${BUILDER_IMAGE_FAMILY}" ]] && [[ -z "${BUILDER_IMAGE:-}" ]]; then
   echo "Set BUILDER_IMAGE_FAMILY or BUILDER_IMAGE in .env before building." >&2
   exit 1
 fi
+
+progress_step "Resolving target platforms"
 
 DOCKER_DAEMON_CONFIG="/etc/docker/daemon.json"
 HTTP_PROXY_VALUE="${http_proxy:-${HTTP_PROXY:-}}"
@@ -115,6 +123,7 @@ build_platform() {
     exit 1
   fi
 
+  progress_note "[4/5] Building platform image ${platform}"
   docker build \
     "${NETWORK_ARGS[@]}" \
     ${HTTP_PROXY_VALUE:+--build-arg "http_proxy=${HTTP_PROXY_VALUE}"} \
@@ -128,11 +137,14 @@ build_platform() {
     "${ROOT_DIR}"
 }
 
+progress_step "Validating platform Dockerfiles"
+
 if [[ "${BUILD_ALL}" -eq 1 ]]; then
   IFS=',' read -r -a supported_platforms <<< "${BUILDER_PLATFORMS}"
   for platform in "${supported_platforms[@]}"; do
     build_platform "${platform}"
   done
+  progress_done "Completed builder image build workflow"
   exit 0
 fi
 
@@ -141,3 +153,4 @@ if [[ -z "${SELECTED_PLATFORM}" ]]; then
 fi
 
 build_platform "${SELECTED_PLATFORM}"
+progress_done "Completed builder image build workflow"

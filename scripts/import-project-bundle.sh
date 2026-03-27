@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 INPUT_OVERRIDE=""
@@ -56,6 +58,8 @@ done
 
 MODE="$(normalize_bundle_mode "${MODE}")"
 
+progress_init 5
+progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 
 if [[ -n "${INPUT_OVERRIDE}" ]]; then
@@ -69,6 +73,7 @@ if [[ ! -f "${ARCHIVE_PATH}" ]]; then
   exit 1
 fi
 
+progress_step "Validating project bundle"
 if [[ "${SKIP_HASH_CHECK}" != "true" ]]; then
   verify_bundle_sha256 "${ARCHIVE_PATH}"
 fi
@@ -78,10 +83,12 @@ trap 'rm -rf "${STAGE_DIR}"' EXIT
 
 tar -xzf "${ARCHIVE_PATH}" -C "${STAGE_DIR}"
 
+progress_step "Importing bundled images"
 if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
   import_image_archive "${STAGE_DIR}/images/offline-images.tar.gz" "${SKIP_HASH_CHECK}"
 fi
 
+progress_step "Installing bundled assets"
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
   if [[ -z "${TARGET_DIR}" ]]; then
     echo "Set --target-dir to the destination project directory when importing assets." >&2
@@ -109,13 +116,14 @@ CUDA_CXX_BUILD_ARGS=
 EOF
 fi
 
-echo "Imported project bundle from ${ARCHIVE_PATH}"
-echo "Bundle mode: ${MODE}"
+progress_done "Imported project bundle"
+progress_note "Imported project bundle from ${ARCHIVE_PATH}"
+progress_note "Bundle mode: ${MODE}"
 
 if [[ "${MODE}" == "all" || "${MODE}" == "images" ]]; then
-  echo "Imported bundled images into Docker"
+  progress_note "Imported bundled images into Docker"
 fi
 
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
-  echo "Installed integration assets to ${ASSETS_DEST}"
+  progress_note "Installed integration assets to ${ASSETS_DEST}"
 fi

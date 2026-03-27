@@ -177,6 +177,7 @@ docker-compose.yml
 runner-compose.yml
 examples/gitlab-ci/shared-gpu-runner.yml
 scripts/compose.sh
+scripts/progress-common.sh
 scripts/runner-compose.sh
 docs/operations.md
 docs/tutorial.en.md
