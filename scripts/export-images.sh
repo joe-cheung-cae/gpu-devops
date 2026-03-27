@@ -11,6 +11,19 @@ source "${ROOT_DIR}/scripts/progress-common.sh"
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
 
+timestamp_now() {
+  date '+%Y-%m-%d %H:%M:%S %z'
+}
+
+epoch_now() {
+  date '+%s'
+}
+
+image_size_bytes() {
+  local image="$1"
+  docker image inspect --format '{{.Size}}' "${image}"
+}
+
 while [[ $# -gt 0 ]]; do
   case "${1}" in
     --env-file)
@@ -53,8 +66,25 @@ mapfile -t IMAGES < <(collect_bundle_images)
 
 progress_step "Ensuring images are available locally"
 ensure_bundle_images_available "${IMAGES[@]}"
+index=0
+for image in "${IMAGES[@]}"; do
+  index=$((index + 1))
+  start_time="$(timestamp_now)"
+  progress_note "Starting [${index}/${#IMAGES[@]}] Preparing export for image ${image} at ${start_time}"
+  image_size="$(image_size_bytes "${image}")"
+  progress_note "  image size: ${image_size} bytes"
+  end_time="$(timestamp_now)"
+  progress_note "Finished [${index}/${#IMAGES[@]}] Preparing export for image ${image} at ${end_time}"
+done
 progress_step "Exporting image archive"
+archive_start_time="$(timestamp_now)"
+archive_start_epoch="$(epoch_now)"
+progress_note "Starting archive export at ${archive_start_time}"
 export_images_archive "${ARCHIVE_PATH}" "${IMAGES[@]}"
+archive_end_time="$(timestamp_now)"
+archive_end_epoch="$(epoch_now)"
+progress_note "Finished archive export at ${archive_end_time}"
+progress_note "Archive export elapsed: $((archive_end_epoch - archive_start_epoch))s"
 
 progress_done "Exported image bundle"
 progress_note "Exported ${#IMAGES[@]} image(s) to ${ARCHIVE_PATH}"

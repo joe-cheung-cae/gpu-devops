@@ -70,6 +70,9 @@ case "${1:-}" in
   image)
     shift
     if [[ "${1:-}" == "inspect" ]]; then
+      if [[ "${2:-}" == "--format" ]]; then
+        printf '123456789\n'
+      fi
       exit 0
     fi
     ;;
@@ -91,6 +94,12 @@ EOF
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
   assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
   assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
+  assert_contains "${test_dir}/stdout.log" "Starting [1/4] Preparing export for image registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_contains "${test_dir}/stdout.log" "image size: 123456789 bytes"
+  assert_contains "${test_dir}/stdout.log" "Finished [4/4] Preparing export for image registry.local/devops/gitlab-runner:alpine-v16.10.1"
+  assert_contains "${test_dir}/stdout.log" "Starting archive export at"
+  assert_contains "${test_dir}/stdout.log" "Finished archive export at"
+  assert_contains "${test_dir}/stdout.log" "Archive export elapsed:"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
   assert_contains "${test_dir}/logs/docker.log" "image inspect registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
