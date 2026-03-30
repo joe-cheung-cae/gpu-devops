@@ -14,6 +14,11 @@ That three-platform Docker matrix should be the default pipeline shape. It gives
 
 Windows and Linux shell runners are still valid extensions, but they should come after the Docker matrix is already in place.
 
+Unless a job explicitly switches to another platform image, the default builder job should run on `centos7`. That matches the current platform default in this repository:
+
+- `BUILDER_DEFAULT_PLATFORM=centos7`
+- `RUNNER_DOCKER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7`
+
 ## Recommended structure
 
 Use one root pipeline file, one shared policy file, and one Docker matrix file:
@@ -47,6 +52,28 @@ For projects that target the current platform images, the most useful pipeline f
 4. package only after all three builds finish successfully
 
 This flow catches compatibility regressions early. It is especially useful when one project must keep supporting a legacy baseline like `centos7` while also validating newer Linux environments such as `rocky8` and `ubuntu2204`.
+
+## Default single-platform behavior
+
+Even when a project has not adopted the three-platform matrix yet, the default Docker job should still compile on `centos7`.
+
+Use this as the minimum baseline:
+
+```yaml
+default:
+  image: ${BUILDER_IMAGE_FAMILY}-centos7
+  tags:
+    - gpu
+    - cuda
+    - cuda-11
+
+docker:build:default:
+  stage: build
+  script:
+    - bash scripts/ci/build-linux.sh build-centos7
+```
+
+This keeps the default job aligned with the current published runner and builder defaults. When the project is ready to validate all supported Linux baselines, expand this default `centos7` job into the full matrix shown below.
 
 ## Root pipeline example
 
@@ -140,6 +167,8 @@ This layout is the recommended default because:
 - the image is resolved directly from the published builder family
 - build output is isolated as `build-centos7`, `build-rocky8`, and `build-ubuntu2204`
 - all three platforms stay in sync without copying the same YAML three times
+
+If a job does not set `BUILD_PLATFORM`, keep `centos7` as the default baseline for compile jobs.
 
 ## Example build script
 
@@ -257,6 +286,7 @@ Keep Windows-specific generators and path handling inside the Windows path inste
 
 If your project is built on this platform today, start with:
 
+- one default compile job on `centos7`
 - one `docker:verify` job on `centos7`
 - one `docker:build` matrix for `centos7`, `rocky8`, `ubuntu2204`
 - optional `docker:test` matrix on the same three platforms
