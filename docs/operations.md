@@ -92,6 +92,15 @@ scripts/prepare-runner-service-image.sh --mode build
 
 `scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
 
+When you do not need the full image set, `scripts/export-images.sh` also supports:
+
+```bash
+scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
+scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+```
+
+Use `--only-runner-service` to refresh just `RUNNER_SERVICE_IMAGE` on an offline host that already has the builder images. Use `--only-build-images` when you want only the builder image matrix and do not need the Runner images in that archive.
+
 These image-only scripts share the same image export/import implementation as the project bundle scripts. The main difference is that they produce and consume the plain offline image archive directly.
 
 On an offline host, `scripts/runner-compose.sh up -d` assumes `RUNNER_SERVICE_IMAGE` is already present locally because `runner-compose.yml` only runs the service image and does not build it.

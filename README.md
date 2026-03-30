@@ -137,6 +137,15 @@ The exported Runner service image tag is determined by `RUNNER_SERVICE_IMAGE` in
 
 For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import-images.sh`.
 
+If you only need part of that image set, you can export a smaller archive:
+
+```bash
+scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
+scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+```
+
+`--only-runner-service` exports only `RUNNER_SERVICE_IMAGE`. `--only-build-images` exports only the builder image matrix and skips both Runner images.
+
 By default, `scripts/import-images.sh` verifies the SHA256 sidecar before calling `docker load`. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
 
 The image-only scripts and the project bundle scripts now share the same underlying image export/import implementation, so the difference between them is output format and installed assets, not a separate Docker save/load path.

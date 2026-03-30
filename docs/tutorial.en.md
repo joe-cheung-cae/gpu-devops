@@ -144,7 +144,14 @@ scripts/prepare-runner-service-image.sh --mode build
 
 The final Runner service tag exported into the offline archive is controlled by `RUNNER_SERVICE_IMAGE` in your active `.env`, not by `RUNNER_SERVICE_SOURCE_IMAGE`. Keep those two values distinct if you want the offline host to consume an internal tag such as `tf-particles/devops/gitlab-runner:alpine-v16.10.1`.
 
-Then `scripts/export-images.sh` exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. After copying that archive to the target host, run:
+Then `scripts/export-images.sh` exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. If you only need part of that set, you can export just the Runner service image or just the builder image matrix:
+
+```bash
+scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
+scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+```
+
+After copying the chosen archive to the target host, run:
 
 ```bash
 scripts/import-images.sh

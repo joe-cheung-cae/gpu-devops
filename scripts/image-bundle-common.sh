@@ -87,6 +87,19 @@ builder_export_images() {
   printf '%s\n' "${BUILDER_IMAGE}"
 }
 
+collect_build_images() {
+  local image
+  declare -A seen=()
+
+  while IFS= read -r image; do
+    [[ -n "${image}" ]] || continue
+    if [[ -z "${seen["${image}"]+x}" ]]; then
+      printf '%s\n' "${image}"
+      seen["${image}"]=1
+    fi
+  done < <(builder_export_images)
+}
+
 resolve_bundle_path() {
   local root_dir="$1"
   local path="$2"
@@ -118,7 +131,7 @@ collect_bundle_images() {
       printf '%s\n' "${image}"
       seen["${image}"]=1
     fi
-  done < <(builder_export_images)
+  done < <(collect_build_images)
 
   for image in "${RUNNER_DOCKER_IMAGE}" "${RUNNER_SERVICE_IMAGE}"; do
     [[ -n "${image}" ]] || continue

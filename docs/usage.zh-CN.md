@@ -57,6 +57,15 @@ scripts/export-images.sh
 - `artifacts/offline-images.tar.gz.images.txt`
 - `artifacts/offline-images.tar.gz.sha256`
 
+按需导出示例：
+
+```bash
+scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
+scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+```
+
+`--only-runner-service` 只导出 `RUNNER_SERVICE_IMAGE`。`--only-build-images` 只导出 builder image 矩阵。
+
 如果离线机器上不保留完整仓库代码，建议同时导出 operator toolkit：
 
 ```bash

@@ -57,6 +57,15 @@ This produces:
 - `artifacts/offline-images.tar.gz.images.txt`
 - `artifacts/offline-images.tar.gz.sha256`
 
+Selective export examples:
+
+```bash
+scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
+scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+```
+
+`--only-runner-service` exports only `RUNNER_SERVICE_IMAGE`. `--only-build-images` exports only the builder image matrix.
+
 If the offline host does not keep a full clone of this repository, also export the operator toolkit:
 
 ```bash

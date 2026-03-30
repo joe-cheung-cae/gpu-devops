@@ -10,6 +10,8 @@ source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
+ONLY_RUNNER_SERVICE=false
+ONLY_BUILD_IMAGES=false
 
 timestamp_now() {
   date '+%Y-%m-%d %H:%M:%S %z'
@@ -34,9 +36,18 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_OVERRIDE="${2:?Missing value for --output}"
       shift 2
       ;;
+    --only-runner-service)
+      ONLY_RUNNER_SERVICE=true
+      shift
+      ;;
+    --only-build-images)
+      ONLY_BUILD_IMAGES=true
+      shift
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: scripts/export-images.sh [--env-file PATH] [--output PATH]
+                                 [--only-runner-service | --only-build-images]
 
 Exports the configured builder/runner images into a compressed offline bundle.
 EOF
@@ -55,6 +66,11 @@ progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
 
+if [[ "${ONLY_RUNNER_SERVICE}" == "true" && "${ONLY_BUILD_IMAGES}" == "true" ]]; then
+  echo "Use at most one of: --only-runner-service, --only-build-images" >&2
+  exit 1
+fi
+
 if [[ -n "${OUTPUT_OVERRIDE}" ]]; then
   ARCHIVE_PATH="$(resolve_bundle_path "${ROOT_DIR}" "${OUTPUT_OVERRIDE}")"
 else
@@ -62,7 +78,13 @@ else
 fi
 
 progress_step "Collecting image list"
-mapfile -t IMAGES < <(collect_bundle_images)
+if [[ "${ONLY_RUNNER_SERVICE}" == "true" ]]; then
+  IMAGES=("${RUNNER_SERVICE_IMAGE}")
+elif [[ "${ONLY_BUILD_IMAGES}" == "true" ]]; then
+  mapfile -t IMAGES < <(collect_build_images)
+else
+  mapfile -t IMAGES < <(collect_bundle_images)
+fi
 
 progress_step "Ensuring images are available locally"
 ensure_bundle_images_available "${IMAGES[@]}"
