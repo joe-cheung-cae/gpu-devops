@@ -96,6 +96,7 @@ cp .env.example .env
 - `RUNNER_SERVICE_IMAGE`：Runner 服务容器镜像
 - `RUNNER_SERVICE_SOURCE_IMAGE`：`scripts/prepare-runner-service-image.sh` 使用的上游源镜像
 - `RUNNER_SERVICE_IMAGE_PREPARE_MODE`：准备 `RUNNER_SERVICE_IMAGE` 时使用 `retag` 或 `build`
+- `RUNNER_TLS_CA_FILE`：当 `GITLAB_URL` 指向自签名 HTTPS GitLab 时使用的可选 PEM 编码 CA 证书路径；源文件可以是 `.pem` 或 `.crt`
 - `RUNNER_CONTAINER_NAME`：`runner-compose.yml` 中长期运行的 Runner 服务容器名称
 - `RUNNER_REGISTRATION_CONTAINER_NAME`：`runner/register-runner.sh` 注册时使用的临时容器名称
 - `BUILDER_IMAGE`：标准 builder 镜像 tag
@@ -108,6 +109,7 @@ cp .env.example .env
 - `RUNNER_DOCKER_IMAGE` 与 `BUILDER_IMAGE` 保持一致
 - 使用内部镜像仓库地址，而不是长期依赖示例域名
 - 发布时使用明确 tag，不要依赖 `latest`
+- 如果 GitLab HTTPS 使用自签名证书，请在执行 `runner/register-runner.sh` 前设置 `RUNNER_TLS_CA_FILE`
 
 ## 5. 构建标准 CUDA Builder 镜像
 
@@ -179,6 +181,17 @@ scripts/import-images.sh
    - `runner/register-runner.sh gpu`
    - 可选：`runner/register-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
+
+如果 `GITLAB_URL` 使用的是带自签名证书的 HTTPS，请先准备 PEM 编码 CA 证书并设置 `RUNNER_TLS_CA_FILE`，例如：
+
+```bash
+mkdir -p certs
+cp /path/to/gitlab-ca.crt certs/gitlab-ca.crt
+echo 'RUNNER_TLS_CA_FILE=certs/gitlab-ca.crt' >> .env
+runner/register-runner.sh multi
+```
+
+`runner/register-runner.sh` 会自动把该 CA 复制到 `runner/config/certs/<gitlab-host>.crt`，并在注册容器中通过 `--tls-ca-file` 使用它。
 
 如果离线机器上仍保留完整仓库代码，可以先额外导出并导入 operator toolkit：
 
@@ -653,6 +666,16 @@ cp /var/cache/apt/archives/*.deb /out/
 随后在联网机器打包：
 
 ```bash
+
+### 11.8 Runner 注册时报 `x509: certificate signed by unknown authority`
+
+如果执行 `runner/register-runner.sh gpu` 或 `runner/register-runner.sh multi` 时出现：
+
+```text
+x509: certificate signed by unknown authority
+```
+
+说明注册容器还不信任 GitLab 的 HTTPS 证书。此时应在 `.env` 中设置 `RUNNER_TLS_CA_FILE` 指向包含 GitLab CA 的 PEM 编码证书文件，然后重新执行注册命令。源文件扩展名可以是 `.pem` 或 `.crt`。脚本会把该文件复制到 `runner/config/certs/` 并以 `/etc/gitlab-runner/certs/<gitlab-host>.crt` 的形式挂载到注册容器中。
 cd ~/offline-nvidia-toolkit-ubuntu2004
 tar -czf nvidia-container-toolkit-ubuntu2004-offline.tar.gz ./*.deb
 ```

@@ -96,6 +96,7 @@ Then update the main fields:
 - `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
 - `RUNNER_SERVICE_SOURCE_IMAGE`: upstream source consumed by `scripts/prepare-runner-service-image.sh`
 - `RUNNER_SERVICE_IMAGE_PREPARE_MODE`: `retag` or `build` for preparing `RUNNER_SERVICE_IMAGE`
+- `RUNNER_TLS_CA_FILE`: optional PEM-encoded CA certificate path for self-signed GitLab HTTPS endpoints; source files may use `.pem` or `.crt`
 - `RUNNER_CONTAINER_NAME`: long-running container name used by `runner-compose.yml`
 - `RUNNER_REGISTRATION_CONTAINER_NAME`: temporary container name used by `runner/register-runner.sh`
 - `BUILDER_IMAGE`: standard builder image tag
@@ -108,6 +109,7 @@ Recommended practice:
 - Keep `RUNNER_DOCKER_IMAGE` and `BUILDER_IMAGE` aligned
 - Replace the example registry with your internal registry
 - Use explicit immutable tags instead of `latest`
+- If GitLab HTTPS uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` before running `runner/register-runner.sh`
 
 ## 5. Build the standard CUDA builder image
 
@@ -179,6 +181,17 @@ For a complete connected-host to offline-host workflow, use this order:
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
+
+If `GITLAB_URL` uses HTTPS with a self-signed certificate, place the PEM-encoded CA certificate on disk first and set `RUNNER_TLS_CA_FILE`, for example:
+
+```bash
+mkdir -p certs
+cp /path/to/gitlab-ca.crt certs/gitlab-ca.crt
+echo 'RUNNER_TLS_CA_FILE=certs/gitlab-ca.crt' >> .env
+runner/register-runner.sh multi
+```
+
+`runner/register-runner.sh` copies that CA into `runner/config/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration container automatically.
 
 If the offline host keeps a full checkout of this repository, export and import the operator toolkit first:
 
@@ -653,6 +666,16 @@ cp /var/cache/apt/archives/*.deb /out/
 Back on the online host, package the collected files:
 
 ```bash
+
+### 11.8 Runner registration fails with `x509: certificate signed by unknown authority`
+
+If `runner/register-runner.sh gpu` or `runner/register-runner.sh multi` fails with:
+
+```text
+x509: certificate signed by unknown authority
+```
+
+the registration container does not trust the GitLab HTTPS certificate yet. Set `RUNNER_TLS_CA_FILE` in `.env` to a PEM-encoded CA certificate file that contains the GitLab CA certificate, then rerun the registration command. The source file may use either a `.pem` or `.crt` extension. The script copies that CA into `runner/config/certs/` and mounts it into the registration container as `/etc/gitlab-runner/certs/<gitlab-host>.crt`.
 cd ~/offline-nvidia-toolkit-ubuntu2004
 tar -czf nvidia-container-toolkit-ubuntu2004-offline.tar.gz ./*.deb
 ```

@@ -21,6 +21,7 @@ scripts/verify-host.sh
 - `BUILDER_IMAGE_FAMILY`
 - `BUILDER_IMAGE`
 - `RUNNER_DOCKER_IMAGE`
+- 如果 GitLab HTTPS 使用自签名证书，还要设置 `RUNNER_TLS_CA_FILE`
 
 ### 步骤 2：构建 builder 镜像
 

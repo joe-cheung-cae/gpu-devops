@@ -21,6 +21,7 @@ Then edit `.env` and set at least:
 - `BUILDER_IMAGE_FAMILY`
 - `BUILDER_IMAGE`
 - `RUNNER_DOCKER_IMAGE`
+- `RUNNER_TLS_CA_FILE` when GitLab HTTPS uses a self-signed certificate
 
 ### Step 2: Build the builder image
 

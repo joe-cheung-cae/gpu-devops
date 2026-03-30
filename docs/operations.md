@@ -90,6 +90,8 @@ Then continue from `/path/to/project/.gpu-devops/`:
 scripts/prepare-runner-service-image.sh --mode build
 ```
 
+If your GitLab HTTPS endpoint uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` in `.env` before running `runner/register-runner.sh`. The registration script copies that PEM file into `runner/config/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration container automatically.
+
 `scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
 
 When you do not need the full image set, `scripts/export-images.sh` also supports:

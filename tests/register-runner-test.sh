@@ -98,7 +98,36 @@ EOF
   assert_contains "${test_dir}/stdout.log" "[2/4] Resolving runner mode multi"
 }
 
+run_tls_ca_file_test() {
+  local test_dir="${TMP_DIR}/tls-ca-file"
+  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts" "${test_dir}/certs"
+
+  write_base_env "${test_dir}/.env"
+  cat >> "${test_dir}/.env" <<'EOF'
+GITLAB_URL=https://172.18.20.5
+RUNNER_TLS_CA_FILE=certs/gitlab-ca.pem
+EOF
+  printf 'fake-ca' > "${test_dir}/certs/gitlab-ca.pem"
+  write_docker_mock "${test_dir}/bin/docker"
+
+  cp "${ROOT_DIR}/runner/register-runner.sh" "${test_dir}/runner/register-runner.sh"
+  cp "${ROOT_DIR}/scripts/progress-common.sh" "${test_dir}/scripts/progress-common.sh"
+  chmod +x "${test_dir}/runner/register-runner.sh"
+
+  (
+    cd "${test_dir}"
+    mkdir -p runner/config runner/cache
+    TEST_LOG_FILE="${test_dir}/docker.log" PATH="${test_dir}/bin:${PATH}" ./runner/register-runner.sh multi > "${test_dir}/stdout.log"
+  )
+
+  assert_contains "${test_dir}/docker.log" "/runner/config/certs/172.18.20.5.crt:/etc/gitlab-runner/certs/172.18.20.5.crt:ro"
+  assert_contains "${test_dir}/docker.log" "--tls-ca-file /etc/gitlab-runner/certs/172.18.20.5.crt"
+  assert_contains "${test_dir}/stdout.log" "[3/4] Preparing runner configuration directories"
+  assert_contains "${test_dir}/runner/config/certs/172.18.20.5.crt" "fake-ca"
+}
+
 run_default_name_test
 run_override_name_test
+run_tls_ca_file_test
 
 echo "register runner tests passed"
