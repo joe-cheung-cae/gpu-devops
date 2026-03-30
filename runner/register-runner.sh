@@ -60,7 +60,8 @@ esac
 progress_step "Preparing runner configuration directories"
 mkdir -p "${ROOT_DIR}/runner/config" "${ROOT_DIR}/runner/cache"
 
-TLS_CA_ARGS=()
+TLS_CA_DOCKER_ARGS=()
+TLS_CA_REGISTER_ARGS=()
 if [[ -n "${RUNNER_TLS_CA_FILE:-}" ]]; then
   TLS_CA_SOURCE="$(resolve_path "${RUNNER_TLS_CA_FILE}")"
   if [[ ! -f "${TLS_CA_SOURCE}" ]]; then
@@ -73,8 +74,10 @@ if [[ -n "${RUNNER_TLS_CA_FILE:-}" ]]; then
   TLS_CA_TARGET_HOST_PATH="${ROOT_DIR}/runner/config/certs/${TLS_CA_HOSTNAME}.crt"
   cp "${TLS_CA_SOURCE}" "${TLS_CA_TARGET_HOST_PATH}"
   TLS_CA_CONTAINER_PATH="/etc/gitlab-runner/certs/${TLS_CA_HOSTNAME}.crt"
-  TLS_CA_ARGS=(
+  TLS_CA_DOCKER_ARGS=(
     -v "${TLS_CA_TARGET_HOST_PATH}:${TLS_CA_CONTAINER_PATH}:ro"
+  )
+  TLS_CA_REGISTER_ARGS=(
     --tls-ca-file "${TLS_CA_CONTAINER_PATH}"
   )
 fi
@@ -83,9 +86,10 @@ docker run --rm -it \
   --name "${RUNNER_REGISTRATION_CONTAINER_NAME}" \
   -v "${ROOT_DIR}/runner/config:/etc/gitlab-runner" \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  "${TLS_CA_ARGS[@]}" \
+  "${TLS_CA_DOCKER_ARGS[@]}" \
   "${RUNNER_SERVICE_IMAGE}" register \
   --non-interactive \
+  "${TLS_CA_REGISTER_ARGS[@]}" \
   --url "${GITLAB_URL}" \
   --registration-token "${RUNNER_REGISTRATION_TOKEN}" \
   --executor "${RUNNER_EXECUTOR:-docker}" \
