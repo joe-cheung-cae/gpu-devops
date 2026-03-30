@@ -133,6 +133,8 @@ By default this script pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUN
 scripts/prepare-runner-service-image.sh --mode build
 ```
 
+The exported Runner service image tag is determined by `RUNNER_SERVICE_IMAGE` in your active `.env`. If your offline environment is expected to run `tf-particles/devops/gitlab-runner:alpine-v16.10.1`, do not leave `RUNNER_SERVICE_IMAGE` set to the upstream source tag.
+
 For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing every builder tag derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import-images.sh`.
 
 By default, `scripts/import-images.sh` verifies the SHA256 sidecar before calling `docker load`. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.

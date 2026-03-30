@@ -142,6 +142,8 @@ scripts/export-images.sh
 scripts/prepare-runner-service-image.sh --mode build
 ```
 
+最终导出到离线归档中的 Runner 服务镜像 tag 由当前 `.env` 里的 `RUNNER_SERVICE_IMAGE` 决定，而不是 `RUNNER_SERVICE_SOURCE_IMAGE`。如果你希望离线环境使用 `tf-particles/devops/gitlab-runner:alpine-v16.10.1` 这类内部 tag，就不要把 `RUNNER_SERVICE_IMAGE` 留成上游官方 tag。
+
 随后 `scripts/export-images.sh` 会把 `BUILDER_IMAGE_FAMILY` 和 `BUILDER_PLATFORMS` 推导出的全部 builder tags，以及 `RUNNER_DOCKER_IMAGE`、`RUNNER_SERVICE_IMAGE` 去重后导出到 `IMAGE_ARCHIVE_PATH`。把归档复制到目标机器后，再执行：
 
 ```bash
