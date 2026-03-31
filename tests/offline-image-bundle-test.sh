@@ -212,6 +212,62 @@ EOF
   assert_not_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/gitlab-runner:alpine-v16.10.1"
 }
 
+run_export_only_build_images_single_platform_test() {
+  local test_dir="${TMP_DIR}/export-only-build-images-single-platform"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  cat > "${test_dir}/.env" <<'EOF'
+BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
+BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
+BUILDER_DEFAULT_PLATFORM=centos7
+BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+RUNNER_DOCKER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+RUNNER_SERVICE_IMAGE=registry.local/devops/gitlab-runner:alpine-v16.10.1
+IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
+EOF
+
+  cat > "${test_dir}/bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+LOG_FILE="${TEST_LOG_FILE:?}"
+printf '%s\n' "$*" >> "${LOG_FILE}"
+case "${1:-}" in
+  image)
+    shift
+    if [[ "${1:-}" == "inspect" ]]; then
+      if [[ "${2:-}" == "--format" ]]; then
+        printf '123456789\n'
+      fi
+      exit 0
+    fi
+    ;;
+  save)
+    printf 'fake-image-data'
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+  chmod +x "${test_dir}/bin/docker"
+
+  TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+  PATH="${test_dir}/bin:${PATH}" \
+  "${ROOT_DIR}/scripts/export-images.sh" \
+    --env-file "${test_dir}/.env" \
+    --output "${test_dir}/bundle.tar.gz" \
+    --only-build-images \
+    --platform centos7 > "${test_dir}/stdout.log"
+
+  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_not_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
+  assert_not_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+  assert_not_contains "${test_dir}/logs/docker.log" "save registry.local/devops/gitlab-runner:alpine-v16.10.1"
+  assert_equals "1" "$(wc -l < "${test_dir}/bundle.tar.gz.images.txt" | tr -d ' ')"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_not_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
+  assert_not_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+}
+
 run_import_test() {
   local test_dir="${TMP_DIR}/import"
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
@@ -334,6 +390,7 @@ EOF
 run_export_test
 run_export_only_runner_service_test
 run_export_only_build_images_test
+run_export_only_build_images_single_platform_test
 run_import_test
 run_import_hash_failure_test
 run_common_helper_regression_test

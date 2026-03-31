@@ -65,6 +65,36 @@ require_export_image_bundle_env() {
   fi
 }
 
+builder_platform_supported() {
+  local platform="$1"
+  local supported_platform
+
+  IFS=',' read -r -a supported_platforms <<< "${BUILDER_PLATFORMS}"
+  for supported_platform in "${supported_platforms[@]}"; do
+    if [[ "${supported_platform}" == "${platform}" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+builder_image_for_platform() {
+  local platform="$1"
+
+  if ! builder_platform_supported "${platform}"; then
+    echo "Unsupported platform: ${platform}" >&2
+    exit 1
+  fi
+
+  if [[ "${platform}" == "${BUILDER_DEFAULT_PLATFORM}" ]] && [[ -n "${BUILDER_IMAGE:-}" ]]; then
+    printf '%s\n' "${BUILDER_IMAGE}"
+    return 0
+  fi
+
+  printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
+}
+
 builder_export_images() {
   local image platform
 
@@ -87,6 +117,26 @@ builder_export_images() {
   printf '%s\n' "${BUILDER_IMAGE}"
 }
 
+builder_export_image_for_platform() {
+  local platform="$1"
+  local image
+
+  if [[ -n "${BUILDER_IMAGE_EXPORTS:-}" ]]; then
+    while IFS= read -r image; do
+      [[ -n "${image}" ]] || continue
+      if [[ "${image}" == *"-${platform}" ]]; then
+        printf '%s\n' "${image}"
+        return 0
+      fi
+    done < <(builder_export_images)
+
+    echo "No exported builder image configured for platform: ${platform}" >&2
+    exit 1
+  fi
+
+  builder_image_for_platform "${platform}"
+}
+
 collect_build_images() {
   local image
   declare -A seen=()
@@ -98,6 +148,11 @@ collect_build_images() {
       seen["${image}"]=1
     fi
   done < <(builder_export_images)
+}
+
+collect_build_images_for_platform() {
+  local platform="$1"
+  builder_export_image_for_platform "${platform}"
 }
 
 resolve_bundle_path() {
