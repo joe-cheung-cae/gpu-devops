@@ -88,18 +88,9 @@ mkdir -p /path/to/project/.gpu-devops
 tmpdir="$(mktemp -d)"
 tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
-cat > /path/to/project/.gpu-devops/.env <<'EOF'
-HOST_PROJECT_DIR=/path/to/project
-CUDA_CXX_PROJECT_DIR=.
-CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
-CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
-CUDA_CXX_CMAKE_GENERATOR=Ninja
-CUDA_CXX_CMAKE_ARGS=
-CUDA_CXX_BUILD_ARGS=
-EOF
 ```
 
-Then import the image archive:
+Then create `.gpu-devops/.env` from [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md), and import the image archive:
 
 ```bash
 scripts/import-images.sh --input artifacts/offline-images.tar.gz
@@ -166,7 +157,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 
 Then use [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) in a test project and confirm that `gpu-smoke`, `cuda-cmake-build`, and `multi-gpu-smoke` succeed.
 
-For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
+For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. That default belongs to the CI example, not `.env`. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
 
 ## 2. R&D engineer workflow
 

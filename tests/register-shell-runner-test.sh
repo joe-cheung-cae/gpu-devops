@@ -35,12 +35,10 @@ assert_not_contains() {
 write_base_env() {
   local env_path="$1"
   local shell_user="$2"
-  cat > "${env_path}" <<EOF
+cat > "${env_path}" <<EOF
 GITLAB_URL=http://gitlab.example.internal
 RUNNER_REGISTRATION_TOKEN=test-token
-RUNNER_SHELL_EXECUTOR=shell
 RUNNER_SHELL_USER=${shell_user}
-SHELL_RUNNER_DEFAULT_PLATFORM=centos7
 RUNNER_DESCRIPTION_PREFIX=shared-gpu
 RUNNER_TAG_LIST=gpu,cuda,cuda-11
 RUNNER_MULTI_TAG_LIST=gpu-multi,cuda,cuda-11

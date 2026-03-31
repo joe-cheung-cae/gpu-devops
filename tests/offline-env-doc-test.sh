@@ -28,5 +28,11 @@ assert_contains "${DOC_PATH}" "RUNNER_TLS_CA_FILE"
 assert_contains "${DOC_PATH}" "Docker executor"
 assert_contains "${DOC_PATH}" "shell runner"
 assert_contains "${DOC_PATH}" ".gpu-devops/.env"
+if grep -Fq -- "RUNNER_SHELL_EXECUTOR" "${DOC_PATH}"; then
+  fail "RUNNER_SHELL_EXECUTOR should not appear in offline env doc"
+fi
+if grep -Fq -- "SHELL_RUNNER_DEFAULT_PLATFORM" "${DOC_PATH}"; then
+  fail "SHELL_RUNNER_DEFAULT_PLATFORM should not appear in offline env doc"
+fi
 
 echo "offline env doc tests passed"

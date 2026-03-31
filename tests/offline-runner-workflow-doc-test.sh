@@ -28,7 +28,6 @@ assert_manual_toolkit_bootstrap() {
   local file="$1"
   assert_contains "$file" "tar -xzf artifacts/project-operator-toolkit.tar.gz"
   assert_contains "$file" ".gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz"
-  assert_contains "$file" "CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install"
   assert_contains "$file" "offline-env-configuration.md"
 }
 

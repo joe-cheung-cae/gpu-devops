@@ -88,18 +88,9 @@ mkdir -p /path/to/project/.gpu-devops
 tmpdir="$(mktemp -d)"
 tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
-cat > /path/to/project/.gpu-devops/.env <<'EOF'
-HOST_PROJECT_DIR=/path/to/project
-CUDA_CXX_PROJECT_DIR=.
-CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
-CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
-CUDA_CXX_CMAKE_GENERATOR=Ninja
-CUDA_CXX_CMAKE_ARGS=
-CUDA_CXX_BUILD_ARGS=
-EOF
 ```
 
-然后导入镜像归档：
+然后按 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md) 生成 `.gpu-devops/.env`，再导入镜像归档：
 
 ```bash
 scripts/import-images.sh --input artifacts/offline-images.tar.gz
@@ -166,7 +157,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 
 然后把 [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) 放到一个测试项目里，确认 `gpu-smoke`、`cuda-cmake-build` 和 `multi-gpu-smoke` 都能成功执行。
 
-如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
+如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。这个默认值来自 CI 示例，不来自 `.env`。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
 
 ## 2. 研发工程师使用流程
 

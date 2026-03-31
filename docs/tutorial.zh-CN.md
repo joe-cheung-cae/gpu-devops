@@ -207,18 +207,9 @@ mkdir -p /path/to/project/.gpu-devops
 tmpdir="$(mktemp -d)"
 tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
-cat > /path/to/project/.gpu-devops/.env <<'EOF'
-HOST_PROJECT_DIR=/path/to/project
-CUDA_CXX_PROJECT_DIR=.
-CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
-CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
-CUDA_CXX_CMAKE_GENERATOR=Ninja
-CUDA_CXX_CMAKE_ARGS=
-CUDA_CXX_BUILD_ARGS=
-EOF
 ```
 
-之后改在 `/path/to/project/.gpu-devops/` 下继续执行：
+之后按 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md) 补齐 `.gpu-devops/.env`，再在 `/path/to/project/.gpu-devops/` 下继续执行：
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz

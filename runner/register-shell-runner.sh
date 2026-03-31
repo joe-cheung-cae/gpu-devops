@@ -34,13 +34,7 @@ fi
 : "${GITLAB_URL:?Set GITLAB_URL in .env}"
 : "${RUNNER_REGISTRATION_TOKEN:?Set RUNNER_REGISTRATION_TOKEN in .env}"
 
-RUNNER_SHELL_EXECUTOR="${RUNNER_SHELL_EXECUTOR:-shell}"
 RUNNER_SHELL_USER="${RUNNER_SHELL_USER:-gitlab-runner}"
-
-if [[ "${RUNNER_SHELL_EXECUTOR}" != "shell" ]]; then
-  echo "RUNNER_SHELL_EXECUTOR must be 'shell'" >&2
-  exit 1
-fi
 
 CURRENT_USER="$(id -un)"
 if [[ "${CURRENT_USER}" != "${RUNNER_SHELL_USER}" ]]; then
@@ -94,7 +88,7 @@ gitlab-runner register \
   "${TLS_CA_REGISTER_ARGS[@]}" \
   --url "${GITLAB_URL}" \
   --registration-token "${RUNNER_REGISTRATION_TOKEN}" \
-  --executor "${RUNNER_SHELL_EXECUTOR}" \
+  --executor shell \
   --description "${DESCRIPTION}" \
   --tag-list "${TAGS}" \
   --limit "${LIMIT}" \
