@@ -238,49 +238,50 @@ After the three-platform Docker path is stable, you can layer in other environme
 
 ### Linux shell runner extension
 
-For a physical Linux machine or shell executor:
+For a physical Linux machine or shell executor, keep `centos7` as the default compile path and let `BUILD_PLATFORM` control only the Linux builder variant:
+
+- `BUILD_PLATFORM=centos7|rocky8|ubuntu2204` with `centos7` as the default
+
+In this model, Linux and Windows jobs both exist in the pipeline and run in parallel. The Linux shell path should call the imported operator toolkit from the job:
 
 ```yaml
-.linux_shell_base:
-  tags:
-    - linux-shell
-  extends:
-    - .workflow_rules
-    - .build_artifacts
+variables:
+  BUILD_PLATFORM: centos7
+
+.linux_shell_runner:
+  tags: [gpu, cuda, cuda-11]
+  before_script:
+    - |
+      if [[ ! " centos7 rocky8 ubuntu2204 " =~ " ${BUILD_PLATFORM} " ]]; then
+        echo "Unsupported BUILD_PLATFORM: ${BUILD_PLATFORM}" >&2
+        exit 1
+      fi
 
 linux-shell:build:
-  extends: .linux_shell_base
+  extends: .linux_shell_runner
   stage: build
   script:
-    - bash scripts/ci/build-linux.sh build-linux-shell
+    - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
 ```
 
-This is useful for comparing Docker-based builds with a host-native Linux environment, but it should not replace the three-platform builder matrix.
+This shell path is useful when the job itself must run as the Linux user `gitlab-runner` through a normal shell executor, but the build still needs to happen inside the published builder images. It should remain an extension, not a replacement for the three-platform Docker matrix.
 
 ### Windows runner extension
 
-For a Windows runner:
+For a Windows runner, add a separate Windows-tagged job:
 
 ```yaml
-.windows_base:
-  tags:
-    - windows
-  extends:
-    - .workflow_rules
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - build-win/
+.windows_shell_runner:
+  tags: [windows]
 
 windows:build:
-  extends: .windows_base
+  extends: .windows_shell_runner
   stage: build
   script:
     - powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ci/build-windows.ps1 -BuildDir build-win
 ```
 
-Keep Windows-specific generators and path handling inside the Windows path instead of trying to force Linux and Windows into one shared inline script.
+Keep Windows-specific generators and path handling inside the Windows path instead of trying to force Linux and Windows into one shared inline script. The practical result is a pipeline where Linux and Windows jobs run side by side, while `BUILD_PLATFORM` only selects the Linux builder image baseline.
 
 ## Practical recommendation
 
@@ -293,3 +294,5 @@ If your project is built on this platform today, start with:
 - one package stage after the Linux matrix completes
 
 Only add Windows or Linux shell jobs when they solve a real project need beyond the three published Linux builder images.
+
+For a working shell-runner example, see [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml).

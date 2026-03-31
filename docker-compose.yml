@@ -9,6 +9,7 @@ services:
       BUILD_PLATFORM: centos7
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
+      CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -20,7 +21,8 @@ services:
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
+        cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"
 
   cuda-cxx-rocky8:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
@@ -32,6 +34,7 @@ services:
       BUILD_PLATFORM: rocky8
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
+      CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -43,7 +46,8 @@ services:
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
+        cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"
 
   cuda-cxx-ubuntu2204:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
@@ -55,6 +59,7 @@ services:
       BUILD_PLATFORM: ubuntu2204
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
+      CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -66,4 +71,5 @@ services:
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
-        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS
+        cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
+        cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"

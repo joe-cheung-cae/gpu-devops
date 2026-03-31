@@ -92,6 +92,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -108,6 +109,9 @@ scripts/import-images.sh --input artifacts/offline-images.tar.gz
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/runner-compose.sh up -d
+.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 ```
 
 如果导入或解压了 toolkit，后续命令请在 `/path/to/project/.gpu-devops/` 目录下执行。
@@ -140,6 +144,20 @@ runner/register-runner.sh multi
 - 单卡池：`gpu`、`cuda`、`cuda-11`
 - 多卡池：`gpu-multi`、`cuda`、`cuda-11`
 
+如果你的环境要求 CI job 作为 Linux 用户 `gitlab-runner` 通过普通 shell executor 运行，则应注册 shell-runner 路径：
+
+```bash
+sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
+sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
+```
+
+这条路径要求：
+
+- `gitlab-runner` 用户可以执行 Docker 和 `docker compose`
+- 目标项目目录对 `gitlab-runner` 可访问
+- builder 镜像已经存在于本地 Docker
+- 项目 job 通过 `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` 调用构建
+
 ### 步骤 7：验证平台与本地 build 环境可用性
 
 ```bash
@@ -147,6 +165,8 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
 然后把 [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) 放到一个测试项目里，确认 `gpu-smoke`、`cuda-cmake-build` 和 `multi-gpu-smoke` 都能成功执行。
+
+如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
 
 ## 2. 研发工程师使用流程
 
@@ -157,6 +177,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 - `HOST_PROJECT_DIR=/path/to/your/project`
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=./artifacts/cuda-cxx-build`
+- `CUDA_CXX_INSTALL_ROOT=./artifacts/cuda-cxx-install`
 
 执行单平台构建：
 
@@ -170,7 +191,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`。
+构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`。
 
 ### 方式 B：在 `.gitlab-ci.yml` 中使用共享 Runner
 
@@ -191,7 +212,29 @@ default:
 
 如果项目依赖 `rocky8` 或 `ubuntu2204` 基线，只需要切换镜像 tag 后缀。
 
-### 方式 C：把集成资产导入到其他项目
+### 方式 C：使用 shell runner 并在 job 中调用 `docker compose`
+
+可以直接参考 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml)。
+
+这个路径适用于 GitLab job 必须作为 Linux 用户 `gitlab-runner` 通过普通 shell executor 运行的情况。job 本身不再使用 `image:`，而是在脚本里调用：
+
+```yaml
+script:
+  - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
+```
+
+示例默认的 Linux 变量如下：
+
+- `BUILD_PLATFORM=centos7`
+
+Linux shell-runner 构建支持 `centos7`、`rocky8` 和 `ubuntu2204`。示例中同时包含单独的 Windows 标签 job，因此 Windows 和 Linux job 可以并行执行，而不需要额外的 `BUILD_OS` 开关。
+
+示例还同时提供了 Linux 和 Windows 的 `test`、`deploy` 阶段，便于团队在同一条 shell-runner 流水线中继续扩展测试执行和部署交接逻辑。
+在 Linux 的 deploy job 中，会再次根据 `BUILD_PLATFORM` 选择对应的平台部署 shell，例如 `./scripts/deploy-centos7.sh`、`./scripts/deploy-rocky8.sh` 或 `./scripts/deploy-ubuntu2204.sh`。
+对于 Linux job，示例会把按平台区分的产物保留在 `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}` 和 `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}` 下。build 路径继续沿用 compose 现有约定，额外的 install 路径则显式保留给后续 `test` 和 `deploy` job 复用。
+如果你要按变量维度查看离线 `.env` 的推荐配置，包括自动生成值、Docker executor、shell runner 以及自签名 HTTPS GitLab，请继续参考 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)。
+
+### 方式 D：把集成资产导入到其他项目
 
 在本仓库执行：
 

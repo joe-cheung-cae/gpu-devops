@@ -189,7 +189,9 @@ project_bundle_assets() {
 docker-compose.yml
 runner-compose.yml
 examples/gitlab-ci/shared-gpu-runner.yml
+examples/gitlab-ci/shared-gpu-shell-runner.yml
 runner/register-runner.sh
+runner/register-shell-runner.sh
 runner/config.template.toml
 docker/cuda-builder
 docker/gitlab-runner
@@ -205,6 +207,7 @@ scripts/progress-common.sh
 scripts/runner-compose.sh
 scripts/verify-host.sh
 docs/operations.md
+docs/offline-env-configuration.md
 docs/tutorial.en.md
 docs/tutorial.zh-CN.md
 EOF

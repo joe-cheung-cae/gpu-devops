@@ -110,6 +110,7 @@ if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
 HOST_PROJECT_DIR=${TARGET_DIR}
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=${ASSETS_SUBDIR}/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=${ASSETS_SUBDIR}/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=

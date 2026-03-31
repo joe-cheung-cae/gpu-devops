@@ -5,6 +5,7 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 - A standard CUDA builder image for project jobs
 - Multiple builder platform variants: `centos7`, `rocky8`, `ubuntu2204`
 - A Docker Compose based GitLab Runner deployment for GPU workloads
+- An optional shell-runner path for hosts that run jobs as the Linux user `gitlab-runner`
 - A Docker Compose based local CUDA/C++ build workflow for one or more builder platforms
 - Registration and verification scripts
 - Example GitLab CI and a minimal CUDA/CMake smoke project
@@ -59,7 +60,7 @@ The shared builder images include a pinned math and simulation baseline:
 4. Prepare the Runner service image with `scripts/prepare-runner-service-image.sh`.
 5. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
 6. Start the Runner service with `scripts/runner-compose.sh up -d`.
-7. Register Runner entries with `runner/register-runner.sh`.
+7. Register Runner entries with `runner/register-runner.sh` for Docker executor, or `runner/register-shell-runner.sh` for a shell runner that invokes `docker compose`.
 8. Validate the deployment with `docs/self-check.md`.
 
 ## Compose files
@@ -88,6 +89,8 @@ For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_
 - `cuda`: jobs that require the standard CUDA toolchain
 - `gpu-multi`: jobs that need the multi-GPU runner pool
 - `cuda-11`: jobs pinned to the CUDA 11.7 platform baseline
+
+The same tags can be used by the optional shell-runner path. In that mode, the job runs as the Linux user `gitlab-runner` and calls `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` instead of using GitLab's Docker executor directly.
 
 Single-GPU jobs should use `gpu`, `cuda`, `cuda-11`.
 
@@ -189,6 +192,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -201,6 +205,7 @@ Then continue from `/path/to/project/.gpu-devops/`:
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
@@ -249,12 +254,14 @@ That imported `.gpu-devops/` directory is now a functional operator toolkit. Bey
 - `.gpu-devops/scripts/import-images.sh`
 - `.gpu-devops/scripts/runner-compose.sh up -d`
 - `.gpu-devops/runner/register-runner.sh gpu`
+- `.gpu-devops/runner/register-shell-runner.sh gpu`
 
 When assets are imported, the importer also writes `<target>/.gpu-devops/.env` with target-safe defaults:
 
 - `HOST_PROJECT_DIR=<target project root>`
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build`
+- `CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install`
 
 ## Project usage
 
@@ -266,6 +273,7 @@ Additional reference docs:
 - [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
 - [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
 - [docs/project-devops-capability-assessment.md](/home/joe/repo/gpu-devops/docs/project-devops-capability-assessment.md)
+- [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)
 
 ## Limitations
 

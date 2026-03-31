@@ -211,6 +211,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -223,6 +224,7 @@ EOF
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
@@ -235,7 +237,7 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 默认会把这些文件安装到 `/path/to/other/project/.gpu-devops/`。
 
-导入脚本还会生成 `/path/to/other/project/.gpu-devops/.env`，让复制过去的 `compose.sh` 默认把目标项目根目录作为 `HOST_PROJECT_DIR`，并以 `CUDA_CXX_PROJECT_DIR=.` 作为源码根。
+导入脚本还会生成 `/path/to/other/project/.gpu-devops/.env`，让复制过去的 `compose.sh` 默认把目标项目根目录作为 `HOST_PROJECT_DIR`，并预先写好 `CUDA_CXX_PROJECT_DIR=.`、`CUDA_CXX_BUILD_ROOT` 和 `CUDA_CXX_INSTALL_ROOT`。
 
 现在导入后的 `.gpu-devops/` 不再只是最小接入资产，而是一套可独立运行的 operator toolkit：除了 Compose 包装脚本外，还包含镜像导入导出、Runner 服务镜像准备、builder Dockerfile 与依赖资源、以及 `runner/` 下的注册资产。
 
@@ -250,6 +252,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 ```
 
 每个 project bundle 也会额外生成同名的 `.sha256` 文件。导入时默认会先校验外层 bundle，在 `all` 和 `images` 模式下还会继续校验内部的 `images/offline-images.tar.gz`。只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。
+
+如果你需要按变量维度查看离线 `.env` 应该如何配置，包括 Docker executor、shell runner 和自签名 HTTPS GitLab 场景，请继续参考 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)。
 
 镜像内默认包含：
 
@@ -385,6 +389,23 @@ runner/register-runner.sh multi
 
 - 一个面向普通 GPU 任务
 - 一个面向多卡任务
+
+### 7.3 面向 Linux 用户 `gitlab-runner` 的 shell-runner 路径
+
+如果你的环境要求 CI job 以 Linux 用户 `gitlab-runner` 的身份通过普通 shell executor 运行，请使用单独的 shell 注册脚本：
+
+```bash
+sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
+sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
+```
+
+这条路径仍然沿用相同的 `gpu` / `gpu-multi` 标签模型，但构建阶段不再依赖 GitLab 的 Docker executor，而是在 job 脚本里调用 `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`。
+
+运维前提：
+
+- `gitlab-runner` 用户必须能执行 Docker 和 `docker compose`
+- 目标项目目录必须对 `gitlab-runner` 可访问
+- 发布好的 builder 镜像必须已经存在于宿主机本地 Docker 中
 
 ## 8. 项目如何接入共享 Runner
 

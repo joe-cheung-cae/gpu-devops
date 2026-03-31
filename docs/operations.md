@@ -69,6 +69,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -81,6 +82,7 @@ Then continue from `/path/to/project/.gpu-devops/`:
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
@@ -116,7 +118,7 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 The imported files are installed under `/path/to/other/project/.gpu-devops/` by default.
 
-The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree.
+The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree. The generated file now includes both `CUDA_CXX_BUILD_ROOT` and `CUDA_CXX_INSTALL_ROOT`.
 
 The imported `.gpu-devops/` directory now behaves as a functional operator toolkit, not just a minimal project integration stub. It includes:
 
@@ -139,6 +141,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 `--mode images` does not require `--target-dir`. `--mode assets` skips Docker image import and only installs the copied files.
 
 Each exported project bundle also produces a sibling `.sha256` file, and the importer verifies it by default before unpacking. In `all` and `images` mode, the nested image archive is verified as well. Use `--skip-hash-check` only if you need to bypass those checks deliberately.
+
+For a field-by-field explanation of offline `.env` values, including Docker executor, shell runner, and self-signed GitLab HTTPS setup, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
 
 ## Runner registration
 

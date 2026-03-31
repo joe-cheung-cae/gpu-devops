@@ -1,0 +1,123 @@
+stages:
+  - verify
+  - build
+  - test
+  - deploy
+
+variables:
+  BUILD_PLATFORM: centos7
+  CUDA_CXX_BUILD_ROOT: .gpu-devops/artifacts/cuda-cxx-build
+  CUDA_CXX_INSTALL_ROOT: .gpu-devops/artifacts/cuda-cxx-install
+
+# This example is for normal shell executors. Jobs run as the host user
+# managed by GitLab Runner, and Linux builds are delegated to the published
+# builder images through .gpu-devops/scripts/compose.sh.
+#
+# Supported Linux BUILD_PLATFORM values:
+#   - centos7
+#   - rocky8
+#   - ubuntu2204
+# The default remains centos7.
+
+.linux_shell_runner:
+  tags:
+    - gpu
+    - cuda
+    - cuda-11
+  before_script:
+    - |
+      if [[ ! " centos7 rocky8 ubuntu2204 " =~ " ${BUILD_PLATFORM} " ]]; then
+        echo "Unsupported BUILD_PLATFORM: ${BUILD_PLATFORM}" >&2
+        exit 1
+      fi
+
+.windows_shell_runner:
+  tags:
+    - windows
+
+shell-runner:verify:linux:
+  extends: .linux_shell_runner
+  stage: verify
+  script:
+    - whoami
+    - docker info >/dev/null
+    - docker compose version >/dev/null
+
+shell-runner:build:linux:
+  extends: .linux_shell_runner
+  stage: build
+  script:
+    - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - ${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/
+      - ${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/
+
+shell-runner:build:windows:
+  extends: .windows_shell_runner
+  stage: build
+  script:
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows build script.'"
+
+shell-runner:test:linux:
+  extends: .linux_shell_runner
+  stage: test
+  needs:
+    - shell-runner:build:linux
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - ${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/
+      - ${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/
+  script:
+    - >
+      .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}" /bin/bash -lc
+      'ctest --test-dir "${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}" --output-on-failure &&
+      test -d "${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}"'
+
+shell-runner:test:windows:
+  extends: .windows_shell_runner
+  stage: test
+  needs:
+    - shell-runner:build:windows
+  script:
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows test script.'"
+
+shell-runner:deploy:linux:
+  extends: .linux_shell_runner
+  stage: deploy
+  needs:
+    - shell-runner:test:linux
+  script:
+    - |
+      case "${BUILD_PLATFORM}" in
+        centos7)
+          bash ./scripts/deploy-centos7.sh "${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}"
+          ;;
+        rocky8)
+          bash ./scripts/deploy-rocky8.sh "${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}"
+          ;;
+        ubuntu2204)
+          bash ./scripts/deploy-ubuntu2204.sh "${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}"
+          ;;
+      esac
+
+shell-runner:deploy:windows:
+  extends: .windows_shell_runner
+  stage: deploy
+  needs:
+    - shell-runner:test:windows
+  script:
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows deployment script.'"
+
+shell-runner:multi-gpu-smoke:
+  stage: verify
+  tags:
+    - gpu-multi
+    - cuda
+    - cuda-11
+  script:
+    - nvidia-smi

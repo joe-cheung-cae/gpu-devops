@@ -211,6 +211,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -223,6 +224,7 @@ Then continue from `/path/to/project/.gpu-devops/`:
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
@@ -235,7 +237,7 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 The imported files land in `/path/to/other/project/.gpu-devops/` by default.
 
-The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR` and `CUDA_CXX_PROJECT_DIR=.`
+The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR`, keeps `CUDA_CXX_PROJECT_DIR=.`, and pre-populates both `CUDA_CXX_BUILD_ROOT` and `CUDA_CXX_INSTALL_ROOT`.
 
 That imported `.gpu-devops/` directory is now a reusable operator toolkit. Besides the local build wrappers, it also includes image import/export, Runner service image preparation, builder Dockerfiles plus bundled deps, and Runner registration assets.
 
@@ -250,6 +252,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 ```
 
 Each exported project bundle also produces a sibling `.sha256` file. The importer verifies that file by default before unpacking, and in `all` or `images` mode it also verifies the nested `images/offline-images.tar.gz`. Use `--skip-hash-check` only when you explicitly need to bypass those checks.
+
+For a complete offline `.env` reference, including Docker executor, shell runner, and self-signed GitLab HTTPS scenarios, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
 
 The image includes:
 
@@ -385,6 +389,23 @@ After registration, GitLab should show two shared runners:
 
 - one for standard GPU jobs
 - one for multi-GPU jobs
+
+### 7.3 Shell runner path for the Linux user `gitlab-runner`
+
+If your environment requires CI jobs to run as the Linux user `gitlab-runner` through a normal shell executor, use the separate shell registration script:
+
+```bash
+sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
+sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
+```
+
+This path keeps the same `gpu` and `gpu-multi` tag model, but the build happens by calling `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` from the job instead of using GitLab's Docker executor.
+
+Operator prerequisites:
+
+- the `gitlab-runner` user must be able to run Docker and `docker compose`
+- the project checkout path must be accessible to `gitlab-runner`
+- the published builder images must already be available locally on the host
 
 ## 8. How projects consume the shared platform
 

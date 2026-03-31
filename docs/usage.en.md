@@ -92,6 +92,7 @@ cat > /path/to/project/.gpu-devops/.env <<'EOF'
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
+CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -108,6 +109,9 @@ If you unpacked the toolkit manually, run:
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/runner-compose.sh up -d
+.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/runner/register-shell-runner.sh gpu
 ```
 
 If you imported or unpacked the toolkit, run later commands from `/path/to/project/.gpu-devops/`.
@@ -140,6 +144,20 @@ Default tags are:
 - single GPU: `gpu`, `cuda`, `cuda-11`
 - multi GPU: `gpu-multi`, `cuda`, `cuda-11`
 
+If your environment must run jobs as the Linux user `gitlab-runner` through a normal shell executor, register the shell-runner path instead:
+
+```bash
+sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
+sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
+```
+
+That path expects:
+
+- the `gitlab-runner` user can run Docker and `docker compose`
+- the target project checkout is readable by `gitlab-runner`
+- the builder images are already loaded locally
+- project jobs call `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
+
 ### Step 7: Validate the platform and local build environment
 
 ```bash
@@ -147,6 +165,8 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
 Then use [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) in a test project and confirm that `gpu-smoke`, `cuda-cmake-build`, and `multi-gpu-smoke` succeed.
+
+For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
 
 ## 2. R&D engineer workflow
 
@@ -157,6 +177,7 @@ Point `.env` at your project tree:
 - `HOST_PROJECT_DIR=/path/to/your/project`
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=./artifacts/cuda-cxx-build`
+- `CUDA_CXX_INSTALL_ROOT=./artifacts/cuda-cxx-install`
 
 Run a single-platform build:
 
@@ -170,7 +191,7 @@ Run multiple platform builds:
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`.
+Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, and install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`.
 
 ### Option B: Use the shared Runner in `.gitlab-ci.yml`
 
@@ -191,7 +212,29 @@ default:
 
 Switch the image suffix to `rocky8` or `ubuntu2204` if your project depends on that platform baseline.
 
-### Option C: Import the integration bundle into another project
+### Option C: Use a shell runner and invoke `docker compose` from the job
+
+Start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml).
+
+This path is for projects whose GitLab jobs must run as the Linux user `gitlab-runner` through a normal shell executor. The job itself does not use `image:`. Instead, it calls:
+
+```yaml
+script:
+  - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
+```
+
+The example keeps this Linux default:
+
+- `BUILD_PLATFORM=centos7`
+
+Linux shell-runner builds support `centos7`, `rocky8`, and `ubuntu2204`. A separate Windows-tagged job is included in the same pipeline, so Windows and Linux jobs can run in parallel without a separate `BUILD_OS` switch.
+
+The example also includes `test` and `deploy` stages for both Linux and Windows, so teams can extend the same shell-runner pipeline from build verification into test execution and deployment handoff.
+In the Linux deploy job, `BUILD_PLATFORM` is used again to choose the platform-specific deployment shell, for example `./scripts/deploy-centos7.sh`, `./scripts/deploy-rocky8.sh`, or `./scripts/deploy-ubuntu2204.sh`.
+For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}` and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`. The build path follows the existing compose contract, and the additional install path is explicitly preserved so later `test` and `deploy` jobs can reuse it.
+For offline `.env` details, including generated defaults, Docker executor, shell runner, and self-signed HTTPS GitLab setup, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
+
+### Option D: Import the integration bundle into another project
 
 From this repository:
 
