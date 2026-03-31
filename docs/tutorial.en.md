@@ -151,6 +151,7 @@ Then `scripts/export-images.sh` exports all builder tags derived from `BUILDER_I
 ```bash
 scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
 After copying the chosen archive to the target host, run:
@@ -271,7 +272,7 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
@@ -286,7 +287,7 @@ Expected:
 - `mpicc` reports `Open MPI 4.1.6`
 - `mpicxx` resolves to the C++ compiler wrapper
 - `Eigen/Core` exists under `/usr/local/include/eigen3`
-- OpenMPI is installed as static libraries only under `/opt/openmpi/lib`
+- OpenMPI installs both static and shared libraries under `/opt/openmpi/lib`
 - Chrono is installed under `${HOME}/deps/chrono-install`
 - `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` does not show dynamic `libstdc++.so` or `libgcc_s.so`
 - HDF5 is installed under `${HOME}/deps/hdf5-install`

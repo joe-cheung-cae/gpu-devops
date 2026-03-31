@@ -23,14 +23,17 @@ RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
     if [ -n "${YUM_PROXY}" ]; then echo "proxy=${YUM_PROXY}" >> /etc/yum.conf; fi && \
     sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
     sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    yum install -y epel-release && \
     yum install -y \
       ca-certificates \
+      ccache \
       centos-release-scl \
       curl \
       gcc \
       gcc-c++ \
       gdb \
       git \
+      libuuid-devel \
       make \
       perl \
       rsync \

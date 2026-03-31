@@ -17,7 +17,7 @@ cd "${SOURCE_DIR}"
   --enable-mpi-cxx \
   --disable-mpi-fortran \
   --enable-static \
-  --disable-shared \
+  --enable-shared \
   --with-hwloc=internal \
   --with-libevent=internal \
   --with-pmix=internal

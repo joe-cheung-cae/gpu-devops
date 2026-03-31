@@ -151,6 +151,7 @@ scripts/prepare-runner-service-image.sh --mode build
 ```bash
 scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
 把所需归档复制到目标机器后，再执行：
@@ -271,7 +272,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
@@ -286,7 +287,7 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git re
 - `mpicc` 显示 `Open MPI 4.1.6`
 - `mpicxx` 能解析到 C++ wrapper
 - `/usr/local/include/eigen3` 下能找到 `Eigen/Core`
-- `/opt/openmpi/lib` 下只有静态库，没有 `libmpi.so`
+- `/opt/openmpi/lib` 下同时有静态库和共享库
 - `${HOME}/deps/chrono-install` 下能找到 `libChronoEngine.so`
 - `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` 不应再依赖动态 `libstdc++.so` 或 `libgcc_s.so`
 - `${HOME}/deps/hdf5-install` 下能找到 `libhdf5.so`

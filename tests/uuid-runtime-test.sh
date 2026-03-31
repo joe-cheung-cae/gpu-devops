@@ -16,31 +16,23 @@ IFS=',' read -r -a PLATFORMS <<< "${TEST_PLATFORMS}"
 
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"
-  echo "Verifying toolchain in ${image}"
+  echo "Verifying uuid headers in ${image}"
   docker run --rm "${image}" sh -lc '
     set -e
-    command -v mpicc >/dev/null
-    command -v mpicxx >/dev/null
-    command -v mpirun >/dev/null
-    mpicc --showme:version | grep -F "Open MPI 4.1.6"
-    mpicxx --showme:command | grep -F "g++"
-    test -f /opt/openmpi/lib/libmpi.a
-    test -e /opt/openmpi/lib/libmpi.so
-    test -f /usr/local/include/eigen3/Eigen/Core
+    command -v ccache >/dev/null
     workdir="$(mktemp -d)"
     cat > "${workdir}/CMakeLists.txt" <<'"'"'EOF'"'"'
 cmake_minimum_required(VERSION 3.16)
-project(eigen_smoke LANGUAGES CXX)
-find_package(Eigen3 3.4 REQUIRED NO_MODULE)
-add_executable(eigen_smoke main.cpp)
-target_link_libraries(eigen_smoke PRIVATE Eigen3::Eigen)
-target_compile_features(eigen_smoke PRIVATE cxx_std_11)
+project(uuid_smoke LANGUAGES CXX)
+add_executable(uuid_smoke main.cpp)
+target_compile_features(uuid_smoke PRIVATE cxx_std_11)
 EOF
     cat > "${workdir}/main.cpp" <<'"'"'EOF'"'"'
-#include <Eigen/Core>
+#include <uuid/uuid.h>
+
 int main() {
-  Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
-  return static_cast<int>(m(0, 0) - 1.0f);
+  uuid_t value{};
+  return static_cast<int>(value[0]);
 }
 EOF
     cmake -S "${workdir}" -B "${workdir}/build"
@@ -49,4 +41,4 @@ EOF
   '
 done
 
-echo "toolchain runtime tests passed"
+echo "uuid runtime tests passed"

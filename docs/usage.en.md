@@ -63,9 +63,10 @@ Selective export examples:
 ```bash
 scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
-`--only-runner-service` exports only `RUNNER_SERVICE_IMAGE`. `--only-build-images` exports only the builder image matrix.
+`--only-runner-service` exports only `RUNNER_SERVICE_IMAGE`. `--only-build-images` exports only the builder image matrix. Add `--platform <name>` if you want just one builder platform such as `centos7`.
 
 If the offline host does not keep a full clone of this repository, also export the operator toolkit:
 
@@ -183,6 +184,11 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 ```
 
 Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, and install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`.
+
+The Linux builder images also include UUID development headers for projects that include `uuid/uuid.h`, and they ship `ccache`. To enable compiler caching in your own CMake project, add:
+
+- `-DCMAKE_C_COMPILER_LAUNCHER=ccache`
+- `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
 
 ### Option B: Use the shared Runner in `.gitlab-ci.yml`
 

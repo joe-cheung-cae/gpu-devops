@@ -19,8 +19,10 @@ ENV PATH="${OPENMPI_PREFIX}/bin:${PATH}"
 ENV LD_LIBRARY_PATH="${OPENMPI_PREFIX}/lib:${LD_LIBRARY_PATH}"
 ENV PKG_CONFIG_PATH="${OPENMPI_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-RUN dnf install -y \
+RUN dnf install -y epel-release && \
+    dnf install -y \
       ca-certificates \
+      ccache \
       curl \
       gcc-toolset-11-binutils \
       gcc-toolset-11-gcc \
@@ -29,6 +31,7 @@ RUN dnf install -y \
       gcc-c++ \
       gdb \
       git \
+      libuuid-devel \
       make \
       perl \
       python3 \

@@ -22,6 +22,7 @@ ENV PKG_CONFIG_PATH="${OPENMPI_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
+      ccache \
       curl \
       g++ \
       gcc \
@@ -33,6 +34,7 @@ RUN apt-get update && \
       python3-pip \
       rsync \
       unzip \
+      uuid-dev \
       zlib1g-dev \
       wget && \
     rm -rf /var/lib/apt/lists/*

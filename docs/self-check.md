@@ -28,7 +28,7 @@ cp .env.example .env
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test ! -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
@@ -44,7 +44,7 @@ Expected:
 - If proxy settings are present, all builder platforms consume the same proxy input and `centos7` still completes its `yum` steps
 - Eigen3 `3.4.0` is installed under `/usr/local/include/eigen3`
 - OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
-- `/opt/openmpi/lib/libmpi.a` exists and `/opt/openmpi/lib/libmpi.so` does not
+- `/opt/openmpi/lib/libmpi.a` and `/opt/openmpi/lib/libmpi.so` both exist
 - Chrono source exists under `${HOME}/deps/chrono`
 - `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
 - HDF5 is installed under `${HOME}/deps/hdf5-install`

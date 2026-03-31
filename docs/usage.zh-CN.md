@@ -63,9 +63,10 @@ scripts/export-images.sh
 ```bash
 scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
-`--only-runner-service` 只导出 `RUNNER_SERVICE_IMAGE`。`--only-build-images` 只导出 builder image 矩阵。
+`--only-runner-service` 只导出 `RUNNER_SERVICE_IMAGE`。`--only-build-images` 只导出 builder image 矩阵。如果只想导出单个平台，例如 `centos7`，可以再加 `--platform <name>`。
 
 如果离线机器上不保留完整仓库代码，建议同时导出 operator toolkit：
 
@@ -183,6 +184,11 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 ```
 
 构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`。
+
+Linux builder image 现在也内置了 `uuid/uuid.h` 对应的开发头文件和 `ccache`。如果你要在自己的 CMake 项目里启用编译缓存，可增加：
+
+- `-DCMAKE_C_COMPILER_LAUNCHER=ccache`
+- `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
 
 ### 方式 B：在 `.gitlab-ci.yml` 中使用共享 Runner
 
