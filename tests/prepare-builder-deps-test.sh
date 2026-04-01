@@ -80,12 +80,27 @@ assert_contains "${default_log}" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
 assert_contains "${default_log}" "DEPS_ROOT=/workspace/.gpu-devops/artifacts/deps/centos7"
 assert_contains "${default_log}" "CHRONO_ARCHIVE=/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
+assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
+assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-muparserx.sh"
 assert_contains "${default_stdout}" "[1/5] Loading environment"
 assert_contains "${default_stdout}" "[5/5] Prepared builder dependency cache"
-assert_contains "${default_stdout}" "Dependencies: chrono,hdf5,h5engine,muparserx"
+assert_contains "${default_stdout}" "Dependencies: chrono,eigen3,openmpi,hdf5,h5engine,muparserx"
+python3 - "${default_log}" <<'PY'
+import sys
+text = open(sys.argv[1]).read()
+needles = [
+    "/toolkit/docker/cuda-builder/install-eigen3.sh",
+    "/toolkit/docker/cuda-builder/install-openmpi.sh",
+    "/toolkit/docker/cuda-builder/install-hdf5.sh",
+    "/toolkit/docker/cuda-builder/install-h5engine.sh",
+]
+positions = [text.index(n) for n in needles]
+if positions != sorted(positions):
+    raise SystemExit("dependency commands are not emitted in registry order")
+PY
 
 subset_log="${TMP_DIR}/subset.log"
 subset_stdout="${TMP_DIR}/subset.stdout"
@@ -96,6 +111,28 @@ assert_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-muparserx.
 assert_not_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
 assert_not_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
 assert_contains "${subset_stdout}" "Dependencies: chrono,muparserx"
+
+toolchain_log="${TMP_DIR}/toolchain.log"
+toolchain_stdout="${TMP_DIR}/toolchain.stdout"
+run_prepare "${toolchain_log}" "${toolchain_stdout}" --platform ubuntu2204 --deps eigen3,openmpi
+assert_contains "${toolchain_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
+assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
+assert_not_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
+assert_contains "${toolchain_stdout}" "Dependencies: eigen3,openmpi"
+
+h5engine_log="${TMP_DIR}/h5engine.log"
+h5engine_stdout="${TMP_DIR}/h5engine.stdout"
+run_prepare "${h5engine_log}" "${h5engine_stdout}" --platform centos7 --deps h5engine
+assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
+assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
+python3 - "${h5engine_log}" <<'PY'
+import sys
+text = open(sys.argv[1]).read()
+if text.index("/toolkit/docker/cuda-builder/install-hdf5.sh") > text.index("/toolkit/docker/cuda-builder/install-h5engine.sh"):
+    raise SystemExit("hdf5 should be installed before h5engine")
+PY
+assert_contains "${h5engine_stdout}" "Dependencies: hdf5,h5engine"
 
 assert_file_exists "${ROOT_DIR}/scripts/prepare-builder-deps.sh"
 

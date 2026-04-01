@@ -15,10 +15,13 @@ assert_contains() {
 assert_online_offline_workflow() {
   local file="$1"
   assert_contains "$file" "scripts/build-builder-image.sh --all-platforms"
+  assert_contains "$file" "scripts/prepare-third-party-cache.sh"
   assert_contains "$file" "scripts/prepare-runner-service-image.sh"
   assert_contains "$file" "scripts/export-images.sh"
   assert_contains "$file" "scripts/import-images.sh"
   assert_contains "$file" "scripts/prepare-builder-deps.sh --platform centos7"
+  assert_contains "$file" "scripts/install-third-party.sh --host linux --platform centos7"
+  assert_contains "$file" "scripts/install-third-party.sh --host windows"
   assert_contains "$file" "scripts/runner-compose.sh up -d"
   assert_contains "$file" "runner/register-runner.sh gpu"
   assert_contains "$file" "runner/register-shell-runner.sh gpu"
@@ -30,6 +33,7 @@ assert_manual_toolkit_bootstrap() {
   assert_contains "$file" "tar -xzf artifacts/project-operator-toolkit.tar.gz"
   assert_contains "$file" ".gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz"
   assert_contains "$file" ".gpu-devops/scripts/prepare-builder-deps.sh --platform centos7"
+  assert_contains "$file" ".gpu-devops/scripts/install-third-party.sh --host linux --platform centos7"
   assert_contains "$file" "offline-env-configuration.md"
 }
 

@@ -42,6 +42,9 @@ assert_file_exists "${ROOT_DIR}/scripts/common/images.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/archive.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/project-bundle.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/progress.sh"
+assert_file_exists "${ROOT_DIR}/scripts/common/third-party-registry.sh"
+assert_file_exists "${ROOT_DIR}/scripts/prepare-third-party-cache.sh"
+assert_file_exists "${ROOT_DIR}/scripts/install-third-party.sh"
 
 assert_contains "${ROOT_DIR}/scripts/export-images.sh" 'exec bash "${ROOT_DIR}/scripts/export/images.sh" "$@"'
 assert_contains "${ROOT_DIR}/scripts/export-project-bundle.sh" 'exec bash "${ROOT_DIR}/scripts/export/project-bundle.sh" "$@"'
@@ -58,5 +61,6 @@ assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR
 assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
 assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/project-bundle.sh"'
 assert_contains "${ROOT_DIR}/scripts/progress-common.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
+assert_contains "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" 'exec "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps chrono "$@"'
 
 echo "script layout tests passed"

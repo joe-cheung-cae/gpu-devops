@@ -54,6 +54,8 @@ assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "./
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:build:windows"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:test:windows"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:deploy:windows"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" ".gpu-devops/scripts/install-third-party.sh --host windows"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "MS-MPI"
 if grep -Fq -- "BUILD_OS:" "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml"; then
   fail "BUILD_OS should not appear in shared-gpu-shell-runner.yml"
 fi
@@ -73,6 +75,10 @@ assert_contains "${ROOT_DIR}/docs/usage.en.md" "register-shell-runner.sh"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "register-shell-runner.sh"
 assert_contains "${ROOT_DIR}/docs/usage.en.md" "prepare-builder-deps.sh"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "prepare-builder-deps.sh"
+assert_contains "${ROOT_DIR}/docs/usage.en.md" "install-third-party.sh --host windows"
+assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "install-third-party.sh --host windows"
+assert_contains "${ROOT_DIR}/docs/usage.en.md" "MS-MPI"
+assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "MS-MPI"
 assert_contains "${ROOT_DIR}/docs/usage.en.md" "offline-env-configuration.md"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "offline-env-configuration.md"
 
