@@ -71,10 +71,8 @@ scripts/verify-host.sh
 - `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
 - `centos7` 和其他平台一样接收统一的代理构建参数，但只会在装包阶段把它转换成临时的 `yum.conf` 代理配置
 - 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
-- 三个平台都会把 Project Chrono 准备到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
-- 三个平台都会从 `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` 构建 HDF5 `1.14.1-2`，并安装到 `${HOME}/deps/hdf5-install`
-- 三个平台都会把 `h5engine-sph` 和 `h5engine-dem` 解压到 `${HOME}/deps`，再用已安装的 HDF5 头文件和动态库刷新各自的 `third/hdf5/include/linux`、`third/hdf5/lib/linux` 后以 `Release` 重新构建
-- 三个平台都会把 `muparserx` 克隆到 `${HOME}/deps/muparserx`，强制切到 `master`，在 `${HOME}/deps/muparserx/build` 中构建，并安装到 `${HOME}/deps/muparserx-install`
+- 三个平台的 base image 只保留通用 CUDA/C++ 工具链、UUID 头文件和 `ccache`
+- Chrono、HDF5、h5engine、muparserx 改为通过 `scripts/prepare-builder-deps.sh` 后置准备到 `${CUDA_CXX_DEPS_ROOT}/<platform>`
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -181,6 +179,7 @@ scripts/import-images.sh
 2. 把 `artifacts/offline-images.tar.gz` 和 `artifacts/offline-images.tar.gz.sha256` 复制到离线机器。
 3. 离线机器：
    - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
+   - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - 可选：`runner/register-runner.sh multi`
@@ -217,6 +216,7 @@ cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -258,11 +258,8 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - `gcc/g++`
 - `Eigen3 3.4.0`
 - 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
-- `Project Chrono`，固定到 commit `3eb56218b`
-- 带 zlib 压缩支持的 `HDF5 1.14.1-2`
-- 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-sph`
-- 基于 `${HOME}/deps/hdf5-install` 重编译的 `h5engine-dem`
-- 来自 `master` 分支的 `muparserx`
+- `Project Chrono`、`HDF5`、`h5engine-sph`、`h5engine-dem`、`muparserx` 不再预装到 base image
+- 改为通过 `scripts/prepare-builder-deps.sh` 准备到 `${CUDA_CXX_DEPS_ROOT}/<platform>`
 - `git`
 - `gdb`
 - `python3`
@@ -275,11 +272,9 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+scripts/prepare-builder-deps.sh --platform centos7
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 期望结果：
@@ -291,18 +286,13 @@ docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git re
 - `mpicxx` 能解析到 C++ wrapper
 - `/usr/local/include/eigen3` 下能找到 `Eigen/Core`
 - `/opt/openmpi/lib` 下同时有静态库和共享库
-- `${HOME}/deps/chrono-install` 下能找到 `libChronoEngine.so`
-- `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` 不应再依赖动态 `libstdc++.so` 或 `libgcc_s.so`
-- `${HOME}/deps/hdf5-install` 下能找到 `libhdf5.so`
-- `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so` 应能看到 `libz.so` 依赖，并且 `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` 能正常执行
-- `${HOME}/deps/h5engine-sph` 下能找到重编译后的 `build/h5Engine/libh5Engine.so`
-- `${HOME}/deps/h5engine-dem` 下能找到重编译后的 `build/h5Engine/libh5Engine.so`
-- `ldd ${HOME}/deps/h5engine-*/build/h5Engine/libh5Engine.so` 应解析到各自 `third/hdf5/lib/linux/libhdf5.so`
-- `${HOME}/deps/h5engine-*/build/testHdf5` 能正常执行
-- `${HOME}/deps/muparserx` 下能找到源码仓库
-- `${HOME}/deps/muparserx` 当前分支应为 `master`
-- `ldd ${HOME}/deps/muparserx/build/libmuparserx.so` 能正常执行
-- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` 应存在
+- `/usr/include/uuid/uuid.h` 和 `ccache` 在 base builder image 中可用
+- `scripts/prepare-builder-deps.sh --platform centos7` 会填充 `./artifacts/deps/centos7`
+- `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` 存在
+- `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` 存在
+- `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` 存在
+- `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` 存在
+- `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` 存在
 
 ## 6. 启动 GitLab Runner 服务
 

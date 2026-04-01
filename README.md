@@ -12,14 +12,11 @@ This repository provides a shared GitLab CI/CD platform for CUDA and CMake based
 
 The first release targets a single host with NVIDIA GPUs and shared Runner usage across multiple projects.
 
-The shared builder images include a pinned math and simulation baseline:
+The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 
-- Eigen3 `3.4.0`, installed from source to `/usr/local`
-- Project Chrono at commit `3eb56218b`, staged under `${HOME}/deps/chrono` from a local source archive when available, otherwise from git, and installed to `${HOME}/deps/chrono-install`
-- HDF5 `1.14.1-2`, built from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and installed to `${HOME}/deps/hdf5-install`
-- `h5engine-sph`, unpacked to `${HOME}/deps/h5engine-sph` and rebuilt against the installed HDF5 runtime
-- `h5engine-dem`, unpacked to `${HOME}/deps/h5engine-dem` and rebuilt against the installed HDF5 runtime
-- `muparserx`, cloned from `master` into `${HOME}/deps/muparserx` and installed to `${HOME}/deps/muparserx-install`
+- OpenMPI, Eigen3, CMake, Conan, Ninja, UUID development headers, and `ccache`
+- a smaller base image that is faster to rebuild and export
+- heavy project dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into a project-local cache under `CUDA_CXX_DEPS_ROOT/<platform>`
 
 ## Tutorials
 
@@ -67,7 +64,7 @@ The shared builder images include a pinned math and simulation baseline:
 ## Compose files
 
 - [runner-compose.yml](/home/joe/repo/gpu-devops/runner-compose.yml): Runner deployment only. It defines the `gitlab-runner` service used for registration and steady-state operation.
-- [docker-compose.yml](/home/joe/repo/gpu-devops/docker-compose.yml): local CUDA/C++ project build only. It runs one build container per supported builder platform.
+- [docker-compose.yml](/home/joe/repo/gpu-devops/docker-compose.yml): local CUDA/C++ project build and dependency-cache preparation. It defines one build container and one dependency-preparation container per supported Linux builder platform.
 
 Wrapper scripts:
 
@@ -80,7 +77,7 @@ Local project build examples:
 - Multiple platforms: `scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204`
 - Profile-based selection: `docker compose --profile centos7 --profile rocky8 -f docker-compose.yml up`
 
-The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, and build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`.
+The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`, install output is written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and heavy dependency caches live under `CUDA_CXX_DEPS_ROOT/<platform>`.
 
 For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 
@@ -115,21 +112,21 @@ Projects should pin to a published immutable tag rather than `latest`.
 
 All three builder Dockerfiles accept the same proxy build arguments from `scripts/build-builder-image.sh`. The `centos7` variant does not persist those proxy variables into the final image, but it does translate them into a temporary `yum.conf` proxy entry during package installation.
 
-Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine` is explicitly linked with `-static-libgcc -static-libstdc++`, so `libChronoEngine.so` does not retain dynamic `libstdc++.so` or `libgcc_s.so` dependencies.
-
 If you rebuild the builder images frequently, you can pre-stage Chrono once on the host:
 
 ```bash
 scripts/prepare-chrono-source-cache.sh
 ```
 
-When `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the Dockerfiles unpack that local archive first. If it does not exist, `install-chrono.sh` falls back to the online git checkout path automatically.
+When `docker/cuda-builder/deps/chrono-source.tar.gz` exists, `install-chrono.sh` consumes that archive before falling back to the online git checkout path automatically.
 
-HDF5 is built from the repo-local `CMake-hdf5-1.14.1-2.tar.gz` archive with zlib enabled and installed to `${HOME}/deps/hdf5-install`. The runtime validation command is `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so`.
+Heavy dependencies are no longer baked into the base builder image. Prepare them into the project-local cache when the project actually needs them:
 
-Both `h5engine-sph` and `h5engine-dem` are rebuilt from the bundled tarballs after HDF5 installation. During image build, each package refreshes `third/hdf5/include/linux` and `third/hdf5/lib/linux` from `${HOME}/deps/hdf5-install`, then runs `cmake .. -DCMAKE_BUILD_TYPE=Release`, `make -j6`, `ldd ./build/h5Engine/libh5Engine.so`, and `./build/testHdf5`.
+```bash
+scripts/prepare-builder-deps.sh --platform centos7
+```
 
-`muparserx` is cloned directly from `https://github.com/joe-cheung-cae/muparserx.git`, reset to `master`, configured in `${HOME}/deps/muparserx/build`, and installed to `${HOME}/deps/muparserx-install`. The runtime validation command is `ldd ${HOME}/deps/muparserx/build/libmuparserx.so`.
+That cache is stored under `CUDA_CXX_DEPS_ROOT/<platform>` and is then reused by `scripts/compose.sh run --rm cuda-cxx-centos7`, shell-runner Linux jobs, and offline no-checkout deployments.
 
 ## Offline image bundle
 
@@ -179,6 +176,7 @@ Use this sequence when you need to prepare the full platform on a connected host
 2. Copy `artifacts/offline-images.tar.gz` and `artifacts/offline-images.tar.gz.sha256` to the offline host.
 3. Offline host:
    - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
+   - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
@@ -204,6 +202,7 @@ Then create `.gpu-devops/.env` by following [docs/offline-env-configuration.md](
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu

@@ -28,16 +28,20 @@ assert_file_exists "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml"
 
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "  - test"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "  - deploy"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:prepare-deps:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '.gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"'
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '.gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "BUILD_PLATFORM: centos7"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_BUILD_ROOT: .gpu-devops/artifacts/cuda-cxx-build"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_INSTALL_ROOT: .gpu-devops/artifacts/cuda-cxx-install"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_DEPS_ROOT: .gpu-devops/artifacts/deps"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" 'cuda-cxx-${BUILD_PLATFORM}'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" 'if [[ ! " centos7 rocky8 ubuntu2204 " =~ " ${BUILD_PLATFORM} " ]]; then'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:verify:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:build:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:test:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:deploy:linux"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "artifacts:"
@@ -57,11 +61,18 @@ if grep -Fq -- "cmake --install" "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shel
   fail "cmake --install should be handled by docker-compose.yml, not the shell-runner example"
 fi
 assert_contains "${ROOT_DIR}/docker-compose.yml" "CUDA_CXX_INSTALL_ROOT"
+assert_contains "${ROOT_DIR}/docker-compose.yml" "CUDA_CXX_DEPS_ROOT"
+assert_contains "${ROOT_DIR}/docker-compose.yml" "CMAKE_PREFIX_PATH"
+assert_contains "${ROOT_DIR}/docker-compose.yml" "LD_LIBRARY_PATH"
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-centos7'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"'
 assert_contains "${ROOT_DIR}/docs/gitlab-ci-multi-environment.md" "shared-gpu-shell-runner.yml"
 assert_contains "${ROOT_DIR}/docs/gitlab-ci-multi-environment.md" '.gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"'
+assert_contains "${ROOT_DIR}/docs/gitlab-ci-multi-environment.md" "prepare-builder-deps.sh"
 assert_contains "${ROOT_DIR}/docs/usage.en.md" "register-shell-runner.sh"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "register-shell-runner.sh"
+assert_contains "${ROOT_DIR}/docs/usage.en.md" "prepare-builder-deps.sh"
+assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "prepare-builder-deps.sh"
 assert_contains "${ROOT_DIR}/docs/usage.en.md" "offline-env-configuration.md"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "offline-env-configuration.md"
 

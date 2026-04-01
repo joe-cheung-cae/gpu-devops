@@ -17,6 +17,7 @@ HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
 CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
+CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -28,6 +29,7 @@ CUDA_CXX_BUILD_ARGS=
 - `CUDA_CXX_PROJECT_DIR=.`：源码根默认就是项目根目录
 - `CUDA_CXX_BUILD_ROOT`：按 `BUILD_PLATFORM` 划分的构建产物根目录
 - `CUDA_CXX_INSTALL_ROOT`：按 `BUILD_PLATFORM` 划分的安装产物根目录
+- `CUDA_CXX_DEPS_ROOT`：按 `BUILD_PLATFORM` 划分的项目本地依赖缓存根目录
 
 ## 2. 哪些变量必须手工补齐
 
@@ -70,6 +72,7 @@ RUNNER_MULTI_TAG_LIST=gpu-multi,cuda,cuda-11
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 ```
@@ -108,6 +111,7 @@ shell-runner 示例中：
 - `BUILD_PLATFORM` 只控制 Linux 平台
 - 默认 Linux 平台是 `centos7`，这个默认值来自 `shared-gpu-shell-runner.yml`，不是 `.env` 配置
 - Linux build/test/deploy 会复用：
+  - `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`
   - `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`
   - `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`
 - Windows job 与 Linux job 并行存在，但不依赖 `BUILD_PLATFORM`
@@ -132,6 +136,7 @@ HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
 CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
+CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=

@@ -71,10 +71,8 @@ Platform-specific notes:
 - `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
 - `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
 - all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
-- all three platforms stage Project Chrono under `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
-- all three platforms build HDF5 `1.14.1-2` from `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` and install it to `${HOME}/deps/hdf5-install`
-- all three platforms unpack `h5engine-sph` and `h5engine-dem` into `${HOME}/deps`, refresh `third/hdf5/include/linux` and `third/hdf5/lib/linux` from the installed HDF5 tree, and rebuild them in `Release`
-- all three platforms clone `muparserx` into `${HOME}/deps/muparserx`, force checkout `master`, build it in `${HOME}/deps/muparserx/build`, and install it to `${HOME}/deps/muparserx-install`
+- all three platforms keep the base image limited to the common CUDA/C++ toolchain, UUID headers, and `ccache`
+- Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -181,6 +179,7 @@ For a complete connected-host to offline-host workflow, use this order:
 2. Copy `artifacts/offline-images.tar.gz` and `artifacts/offline-images.tar.gz.sha256` to the offline host.
 3. Offline host:
    - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
+   - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
@@ -217,6 +216,7 @@ Then fill `.gpu-devops/.env` according to [offline-env-configuration.md](/home/j
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -258,11 +258,8 @@ The image includes:
 - `gcc/g++`
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
-- `Project Chrono` at commit `3eb56218b`
-- `HDF5 1.14.1-2` with zlib compression support
-- `h5engine-sph` rebuilt against `${HOME}/deps/hdf5-install`
-- `h5engine-dem` rebuilt against `${HOME}/deps/hdf5-install`
-- `muparserx` from the `master` branch
+- `Project Chrono`, `HDF5`, `h5engine-sph`, `h5engine-dem`, and `muparserx` are no longer preinstalled in the base image
+- prepare them into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
 - `git`
 - `gdb`
 - `python3`
@@ -275,11 +272,9 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+scripts/prepare-builder-deps.sh --platform centos7
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -291,18 +286,13 @@ Expected:
 - `mpicxx` resolves to the C++ compiler wrapper
 - `Eigen/Core` exists under `/usr/local/include/eigen3`
 - OpenMPI installs both static and shared libraries under `/opt/openmpi/lib`
-- Chrono is installed under `${HOME}/deps/chrono-install`
-- `ldd ${HOME}/deps/chrono-install/lib/libChronoEngine.so` does not show dynamic `libstdc++.so` or `libgcc_s.so`
-- HDF5 is installed under `${HOME}/deps/hdf5-install`
-- `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so` shows a `libz.so` dependency and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` succeeds
-- `h5engine-sph` is installed under `${HOME}/deps/h5engine-sph`
-- `h5engine-dem` is installed under `${HOME}/deps/h5engine-dem`
-- each `ldd ${HOME}/deps/h5engine-*/build/h5Engine/libh5Engine.so` resolves the package-local `third/hdf5/lib/linux/libhdf5.so`
-- each `${HOME}/deps/h5engine-*/build/testHdf5` succeeds
-- `muparserx` is cloned under `${HOME}/deps/muparserx`
-- `muparserx` stays on branch `master`
-- `ldd ${HOME}/deps/muparserx/build/libmuparserx.so` succeeds
-- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` exists
+- `uuid/uuid.h` and `ccache` exist in the base builder image
+- `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
+- `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
+- `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
+- `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
+- `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
+- `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` exists
 
 ## 6. Start the GitLab Runner service
 

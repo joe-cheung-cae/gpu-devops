@@ -24,6 +24,12 @@ scripts/runner-compose.sh up -d
 
 `scripts/prepare-chrono-source-cache.sh` is optional. Use it when repeated builder-image rebuilds spend too much time downloading Chrono. It generates `docker/cuda-builder/deps/chrono-source.tar.gz`, which the Dockerfiles consume before falling back to the online git path.
 
+The published builder images now keep only the common toolchain baseline. Heavy project dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
+
+```bash
+scripts/prepare-builder-deps.sh --platform centos7
+```
+
 If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
 
 ```bash
@@ -42,6 +48,7 @@ For a complete online-to-offline deployment workflow, use this order:
 2. Transfer `IMAGE_ARCHIVE_PATH` and `${IMAGE_ARCHIVE_PATH}.sha256` to the offline host.
 3. Offline host:
    - `scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"`
+   - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
@@ -73,6 +80,7 @@ HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
 CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
+CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -83,6 +91,7 @@ Then continue from `/path/to/project/.gpu-devops/`:
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -122,7 +131,7 @@ scripts/import-project-bundle.sh --target-dir /path/to/other/project
 
 The imported files are installed under `/path/to/other/project/.gpu-devops/` by default.
 
-The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree. The generated file now includes both `CUDA_CXX_BUILD_ROOT` and `CUDA_CXX_INSTALL_ROOT`.
+The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree. The generated file now includes `CUDA_CXX_BUILD_ROOT`, `CUDA_CXX_INSTALL_ROOT`, and `CUDA_CXX_DEPS_ROOT`.
 
 The imported `.gpu-devops/` directory now behaves as a functional operator toolkit, not just a minimal project integration stub. It includes:
 
@@ -169,13 +178,14 @@ Both registrations append to `runner/config/config.toml`.
 Use `docker-compose.yml` when you want to compile a CUDA/C++ project locally with one or more builder platforms instead of deploying GitLab Runner:
 
 ```bash
+scripts/prepare-builder-deps.sh --platform centos7
 scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
 If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 
-The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, and build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`.
+The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`, install outputs are written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and the prepared dependency cache is reused from `CUDA_CXX_DEPS_ROOT/<platform>`.
 
 Proxy handling is aligned across `centos7`, `rocky8`, and `ubuntu2204`: the build wrapper passes the same proxy inputs to every platform. `centos7` additionally maps that input into a temporary `yum.conf` proxy entry so legacy package installation still works without baking proxy environment variables into the final image.
 

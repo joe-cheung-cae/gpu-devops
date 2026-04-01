@@ -54,7 +54,7 @@ The current boundary is governance. The repository standardizes build and execut
 
 `Pre-integrated project dependency baseline`
 - Status: `已具备`
-- Basis: the builder images already include Eigen3, OpenMPI, Chrono, HDF5, h5engine-sph, h5engine-dem, and muparserx as part of the platform baseline.
+- Basis: the platform already standardizes two layers: the published builder images include the common CUDA/C++ toolchain baseline, and `scripts/prepare-builder-deps.sh` prepares Chrono, HDF5, h5engine-sph, h5engine-dem, and muparserx into a reusable project-local dependency cache.
 
 ### Partially in place
 

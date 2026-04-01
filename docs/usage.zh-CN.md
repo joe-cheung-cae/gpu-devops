@@ -46,6 +46,8 @@ scripts/build-builder-image.sh --all-platforms
 
 `scripts/prepare-chrono-source-cache.sh` 是可选步骤。它会在宿主机生成 `docker/cuda-builder/deps/chrono-source.tar.gz`，让 Dockerfile 在构建时优先解压本地 Chrono 源码归档，而不是每次都重新下载。
 
+当前发布的 builder image 只保留通用 CUDA/C++ 工具链基线。Chrono、HDF5、h5engine、muparserx 这类重依赖改为通过 `scripts/prepare-builder-deps.sh` 后置准备到 `CUDA_CXX_DEPS_ROOT/<platform>`。
+
 ### 步骤 3：准备 Runner 服务镜像并导出离线包
 
 在联网环境中，先准备 Runner 服务镜像，再导出部署镜像：
@@ -104,6 +106,7 @@ scripts/import-images.sh --input artifacts/offline-images.tar.gz
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -151,7 +154,7 @@ sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
 - `gitlab-runner` 用户可以执行 Docker 和 `docker compose`
 - 目标项目目录对 `gitlab-runner` 可访问
 - builder 镜像已经存在于本地 Docker
-- 项目 job 通过 `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` 调用构建
+- Linux job 一般先执行 `.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7`，再调用 `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
 
 ### 步骤 7：验证平台与本地 build 环境可用性
 
@@ -173,6 +176,13 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=./artifacts/cuda-cxx-build`
 - `CUDA_CXX_INSTALL_ROOT=./artifacts/cuda-cxx-install`
+- `CUDA_CXX_DEPS_ROOT=./artifacts/deps`
+
+先准备依赖缓存：
+
+```bash
+scripts/prepare-builder-deps.sh --platform centos7
+```
 
 执行单平台构建：
 
@@ -186,7 +196,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`。
+构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`，重依赖缓存会写入 `${CUDA_CXX_DEPS_ROOT}/<platform>`。
 
 Linux builder image 现在也内置了 `uuid/uuid.h` 对应的开发头文件和 `ccache`。如果你要在自己的 CMake 项目里启用编译缓存，可增加：
 
@@ -229,9 +239,9 @@ script:
 
 Linux shell-runner 构建支持 `centos7`、`rocky8` 和 `ubuntu2204`。示例中同时包含单独的 Windows 标签 job，因此 Windows 和 Linux job 可以并行执行，而不需要额外的 `BUILD_OS` 开关。
 
-示例还同时提供了 Linux 和 Windows 的 `test`、`deploy` 阶段，便于团队在同一条 shell-runner 流水线中继续扩展测试执行和部署交接逻辑。
+示例还新增了独立的 Linux `prepare` 阶段，会先执行 `.gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"`。同时它也提供了 Linux 和 Windows 的 `test`、`deploy` 阶段，便于团队在同一条 shell-runner 流水线中继续扩展测试执行和部署交接逻辑。
 在 Linux 的 deploy job 中，会再次根据 `BUILD_PLATFORM` 选择对应的平台部署 shell，例如 `./scripts/deploy-centos7.sh`、`./scripts/deploy-rocky8.sh` 或 `./scripts/deploy-ubuntu2204.sh`。
-对于 Linux job，示例会把按平台区分的产物保留在 `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}` 和 `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}` 下。build 路径继续沿用 compose 现有约定，额外的 install 路径则显式保留给后续 `test` 和 `deploy` job 复用。
+对于 Linux job，示例会把按平台区分的产物保留在 `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`、`${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}` 和 `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}` 下。
 如果你要按变量维度查看离线 `.env` 的推荐配置，包括自动生成值、Docker executor、shell runner 以及自签名 HTTPS GitLab，请继续参考 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)。
 
 ### 方式 D：把集成资产导入到其他项目

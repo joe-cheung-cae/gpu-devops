@@ -242,7 +242,7 @@ For a physical Linux machine or shell executor, keep `centos7` as the default co
 
 - `BUILD_PLATFORM=centos7|rocky8|ubuntu2204` with `centos7` as the default
 
-In this model, Linux and Windows jobs both exist in the pipeline and run in parallel. The Linux shell path should call the imported operator toolkit from the job:
+In this model, Linux and Windows jobs both exist in the pipeline and run in parallel. The Linux shell path should first prepare the project-local dependency cache, then call the imported operator toolkit from the job:
 
 ```yaml
 variables:
@@ -260,11 +260,19 @@ variables:
 linux-shell:build:
   extends: .linux_shell_runner
   stage: build
+  needs:
+    - linux-shell:prepare-deps
   script:
     - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
+
+linux-shell:prepare-deps:
+  extends: .linux_shell_runner
+  stage: prepare
+  script:
+    - .gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"
 ```
 
-This shell path is useful when the job itself must run as the Linux user `gitlab-runner` through a normal shell executor, but the build still needs to happen inside the published builder images. It should remain an extension, not a replacement for the three-platform Docker matrix.
+This shell path is useful when the job itself must run as the Linux user `gitlab-runner` through a normal shell executor, but the build still needs to happen inside the published builder images. The heavy dependency cache then lives under `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}` and is reused by later build, test, and deploy jobs. It should remain an extension, not a replacement for the three-platform Docker matrix.
 
 ### Windows runner extension
 

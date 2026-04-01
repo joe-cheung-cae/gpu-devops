@@ -46,6 +46,8 @@ scripts/build-builder-image.sh --all-platforms
 
 `scripts/prepare-chrono-source-cache.sh` is optional. It prepares `docker/cuda-builder/deps/chrono-source.tar.gz` on the host so the Dockerfiles can unpack a local Chrono source archive instead of downloading Chrono every time.
 
+The published builder images now keep only the common CUDA/C++ toolchain baseline. Heavy dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with `scripts/prepare-builder-deps.sh`.
+
 ### Step 3: Prepare the Runner service image and offline bundle
 
 In a connected environment, prepare the Runner service image before export:
@@ -104,6 +106,7 @@ If you unpacked the toolkit manually, run:
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -151,7 +154,7 @@ That path expects:
 - the `gitlab-runner` user can run Docker and `docker compose`
 - the target project checkout is readable by `gitlab-runner`
 - the builder images are already loaded locally
-- project jobs call `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
+- Linux jobs normally call `.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7` once before `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
 
 ### Step 7: Validate the platform and local build environment
 
@@ -173,6 +176,13 @@ Point `.env` at your project tree:
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=./artifacts/cuda-cxx-build`
 - `CUDA_CXX_INSTALL_ROOT=./artifacts/cuda-cxx-install`
+- `CUDA_CXX_DEPS_ROOT=./artifacts/deps`
+
+Prepare the dependency cache first:
+
+```bash
+scripts/prepare-builder-deps.sh --platform centos7
+```
 
 Run a single-platform build:
 
@@ -186,7 +196,7 @@ Run multiple platform builds:
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, and install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`.
+Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`, and heavy dependency caches are reused from `${CUDA_CXX_DEPS_ROOT}/<platform>`.
 
 The Linux builder images also include UUID development headers for projects that include `uuid/uuid.h`, and they ship `ccache`. To enable compiler caching in your own CMake project, add:
 
@@ -229,9 +239,9 @@ The example keeps this Linux default:
 
 Linux shell-runner builds support `centos7`, `rocky8`, and `ubuntu2204`. A separate Windows-tagged job is included in the same pipeline, so Windows and Linux jobs can run in parallel without a separate `BUILD_OS` switch.
 
-The example also includes `test` and `deploy` stages for both Linux and Windows, so teams can extend the same shell-runner pipeline from build verification into test execution and deployment handoff.
+The example also adds a dedicated Linux `prepare` stage that runs `.gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"` before build. It keeps `test` and `deploy` stages for both Linux and Windows, so teams can extend the same shell-runner pipeline from dependency preparation into build verification, test execution, and deployment handoff.
 In the Linux deploy job, `BUILD_PLATFORM` is used again to choose the platform-specific deployment shell, for example `./scripts/deploy-centos7.sh`, `./scripts/deploy-rocky8.sh`, or `./scripts/deploy-ubuntu2204.sh`.
-For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}` and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`. The build path follows the existing compose contract, and the additional install path is explicitly preserved so later `test` and `deploy` jobs can reuse it.
+For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`, `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`, and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`.
 For offline `.env` details, including generated defaults, Docker executor, shell runner, and self-signed HTTPS GitLab setup, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
 
 ### Option D: Import the integration bundle into another project

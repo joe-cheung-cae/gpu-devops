@@ -24,10 +24,12 @@ assert_contains() {
 assert_contains "${DOC_PATH}" "HOST_PROJECT_DIR"
 assert_contains "${DOC_PATH}" "CUDA_CXX_BUILD_ROOT"
 assert_contains "${DOC_PATH}" "CUDA_CXX_INSTALL_ROOT"
+assert_contains "${DOC_PATH}" "CUDA_CXX_DEPS_ROOT"
 assert_contains "${DOC_PATH}" "RUNNER_TLS_CA_FILE"
 assert_contains "${DOC_PATH}" "Docker executor"
 assert_contains "${DOC_PATH}" "shell runner"
 assert_contains "${DOC_PATH}" ".gpu-devops/.env"
+assert_contains "${DOC_PATH}" "prepare-builder-deps.sh"
 if grep -Fq -- "RUNNER_SHELL_EXECUTOR" "${DOC_PATH}"; then
   fail "RUNNER_SHELL_EXECUTOR should not appear in offline env doc"
 fi

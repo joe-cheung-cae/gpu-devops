@@ -28,11 +28,9 @@ cp .env.example .env
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so" && ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so" && ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so" && "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-sph/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && ldd "${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so" && "${HOME}/deps/h5engine-dem/build/testHdf5"'
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'cd "${HOME}/deps/muparserx" && git rev-parse --abbrev-ref HEAD && test -f build/libmuparserx.so && ldd build/libmuparserx.so && find "${HOME}/deps/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+scripts/prepare-builder-deps.sh --platform centos7
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -45,15 +43,13 @@ Expected:
 - Eigen3 `3.4.0` is installed under `/usr/local/include/eigen3`
 - OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
 - `/opt/openmpi/lib/libmpi.a` and `/opt/openmpi/lib/libmpi.so` both exist
-- Chrono source exists under `${HOME}/deps/chrono`, and `${HOME}/deps/chrono/.chrono-source-ref` records the staged ref
-- `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
-- HDF5 is installed under `${HOME}/deps/hdf5-install`
-- `${HOME}/deps/hdf5-install/lib/libhdf5.so` exists, `ldd` prints successfully, and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` works
-- `${HOME}/deps/h5engine-sph/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-sph/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-sph/build/testHdf5` succeeds
-- `${HOME}/deps/h5engine-dem/build/h5Engine/libh5Engine.so` exists, `ldd` resolves `${HOME}/deps/h5engine-dem/third/hdf5/lib/linux/libhdf5.so`, and `${HOME}/deps/h5engine-dem/build/testHdf5` succeeds
-- `${HOME}/deps/muparserx` exists as a git clone on branch `master`
-- `${HOME}/deps/muparserx/build/libmuparserx.so` exists and `ldd` prints successfully
-- `${HOME}/deps/muparserx-install/lib/libmuparserx.so*` exists
+- `/usr/include/uuid/uuid.h` and `ccache` exist in the base builder image
+- `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
+- `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
+- `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
+- `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
+- `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
+- `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` exists
 
 ## 3. Start Runner service
 
@@ -74,6 +70,7 @@ Expected:
 Run:
 
 ```bash
+scripts/prepare-builder-deps.sh --platform centos7
 scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
@@ -81,6 +78,7 @@ Expected:
 
 - The sample CUDA/C++ project configures successfully
 - The sample CUDA/C++ project builds successfully
+- The prepared dependency cache under `${CUDA_CXX_DEPS_ROOT}/centos7` is reused
 - Build output is written under `${CUDA_CXX_BUILD_ROOT}/centos7`
 
 ## 4. Register Runner entries

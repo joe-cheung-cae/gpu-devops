@@ -16,13 +16,11 @@
 - The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
 - All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
-- All builder platforms stage Project Chrono under `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`.
-- If `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the builder consumes that local source archive before falling back to git.
-- All builder platforms build HDF5 `1.14.1-2` from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and install it to `${HOME}/deps/hdf5-install`.
-- All builder platforms unpack `h5engine-sph` and `h5engine-dem` under `${HOME}/deps`, replace the bundled Linux HDF5 headers and shared libraries with `${HOME}/deps/hdf5-install`, and rebuild them in `Release`.
-- All builder platforms clone `muparserx` to `${HOME}/deps/muparserx`, force checkout `master`, build it in `${HOME}/deps/muparserx/build`, and install it to `${HOME}/deps/muparserx-install`.
+- All builder platforms include the common CUDA/C++ toolchain baseline only: OpenMPI, Eigen3, UUID headers, `ccache`, CMake, Conan, and Ninja.
+- Heavy dependencies such as Project Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` by `scripts/prepare-builder-deps.sh`.
+- If `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the dependency-preparation workflow consumes that local Chrono source archive before falling back to git.
 - Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`.
-- HDF5 is configured with zlib support enabled, so the platform requires the matching zlib development package during image build.
+- HDF5 still requires the matching zlib development package inside the base image so the later dependency-preparation step can build it successfully.
 - `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
 - `rocky8` uses `gcc-toolset-11` for the Chrono build so static `libstdc++` and `libgcc` linking works consistently.
 - `ubuntu2204` uses the Ubuntu 22.04 CUDA image and installs toolchain packages with `apt`.
@@ -38,15 +36,20 @@ The standard builder image includes:
 - `gcc/g++`
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
-- `Project Chrono` at commit `3eb56218b`
-- `HDF5 1.14.1-2` with zlib compression support
-- `h5engine-sph` rebuilt against the installed HDF5 runtime
-- `h5engine-dem` rebuilt against the installed HDF5 runtime
-- `muparserx` built from the `master` branch
+- UUID development headers
+- `ccache`
 - `git`
 - `gdb`
 - `python3` and `pip`
 - `conan`
+
+The standard local dependency cache adds:
+
+- `Project Chrono` at commit `3eb56218b`
+- `HDF5 1.14.1-2` with zlib compression support
+- `h5engine-sph` rebuilt against the prepared HDF5 runtime
+- `h5engine-dem` rebuilt against the prepared HDF5 runtime
+- `muparserx` built from the `master` branch
 
 ## Shared usage contract
 
