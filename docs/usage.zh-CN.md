@@ -203,6 +203,8 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`，重依赖缓存会写入 `${CUDA_CXX_DEPS_ROOT}/<platform>`。
 
+现在通过 `scripts/compose.sh` 和 `scripts/prepare-builder-deps.sh` 启动的项目容器，默认都会继承当前 Linux 调用者的 UID/GID。这些项目侧入口在 Linux 上也默认要求 rootless Docker；只有在兼容旧环境时才应显式设置 `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` 放行。这样宿主机上的产物文件会归当前调用者所有，也能降低多人共用 Docker 主机时的跨用户访问风险。但这并不等同于把 Docker daemon 切换成 rootless 模式，脚本也不会自动替你完成这类迁移。
+
 如果是 Windows/MSVC 开发机，则使用 `scripts/install-third-party.sh --host windows`。这条路径会复用同一套源码/发行归档缓存，但在 Windows 上把 MPI 安装为 `MS-MPI`。
 
 现在 `--deps` 表示“目标依赖集合”。脚本会从共享注册表里自动补齐上游依赖，并按依赖顺序执行。例如 `--deps h5engine` 会自动展开成 `hdf5,h5engine`。
@@ -241,6 +243,8 @@ default:
 script:
   - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
 ```
+
+这些项目容器同样会继承 shell runner 用户本身的 UID/GID。对应的 Linux job 默认也要求 rootless Docker；只有在迁移旧环境时才建议临时设置 `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1`。如果 `${CUDA_CXX_DEPS_ROOT}`、`${CUDA_CXX_BUILD_ROOT}` 或 `${CUDA_CXX_INSTALL_ROOT}` 对该 Linux 用户不可写，job 会直接以权限错误失败，而不是继续以容器 `root` 静默绕过。
 
 示例默认的 Linux 变量如下：
 

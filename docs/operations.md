@@ -189,6 +189,8 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
+These project-side compose containers now run as the current Linux caller UID/GID by default, and `scripts/prepare-builder-deps.sh` uses the same identity for its direct `docker run` path. On Linux, both entrypoints now require a rootless Docker daemon by default; set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` only when you need a temporary compatibility bypass for a legacy host. This reduces cross-user access to bind-mounted files on shared Docker hosts. It is a project workflow hardening step, not a rootless Docker daemon deployment.
+
 For Windows/MSVC hosts, use `scripts/install-third-party.sh --host windows`. That path prepares the same archive cache but installs `MS-MPI` instead of `OpenMPI`.
 
 All third-party entrypoints now use the shared registry under `scripts/common/third-party-registry.sh`. When you pass `--deps`, the scripts automatically expand required upstream dependencies and execute them in dependency order.
@@ -196,6 +198,8 @@ All third-party entrypoints now use the shared registry under `scripts/common/th
 If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 
 The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`, install outputs are written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and the prepared dependency cache is reused from `CUDA_CXX_DEPS_ROOT/<platform>`.
+
+If those target directories are not writable by the calling user, the compose workflow now fails with a normal permission error instead of falling back to container `root`.
 
 Proxy handling is aligned across `centos7`, `rocky8`, and `ubuntu2204`: the build wrapper passes the same proxy inputs to every platform. `centos7` additionally maps that input into a temporary `yum.conf` proxy entry so legacy package installation still works without baking proxy environment variables into the final image.
 

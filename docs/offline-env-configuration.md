@@ -116,7 +116,43 @@ shell-runner 示例中：
   - `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`
 - Windows job 与 Linux job 并行存在，但不依赖 `BUILD_PLATFORM`
 
-## 5. 推荐的离线 `.env` 最小示例
+## 5. 离线 rootless Docker 准备
+
+从当前版本开始，Linux 上的项目侧入口 `scripts/compose.sh` 和 `scripts/prepare-builder-deps.sh` 默认要求 rootless Docker。离线主机如果还没有完成 rootless Docker 准备，这两个入口会直接失败；只有在迁移旧环境时才建议临时设置 `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` 继续运行。
+
+离线主机至少要提前准备这些前置条件：
+
+- `uidmap` 相关工具可用，也就是 `newuidmap` 和 `newgidmap`
+- `/etc/subuid` 和 `/etc/subgid` 已为目标 Linux 用户分配 subordinate UID/GID 范围
+- 目标 Linux 用户可以启动自己的 user-level systemd 服务
+
+建议在联网环境提前准备好 rootless Docker 所需的软件包或企业内部镜像源，再把它们带到离线主机。完成软件安装后，在离线主机上以目标 Linux 用户执行官方初始化命令：
+
+```bash
+dockerd-rootless-setuptool.sh install
+systemctl --user enable docker
+systemctl --user start docker
+sudo loginctl enable-linger "$USER"
+export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock
+docker info | grep -i rootless
+```
+
+说明：
+
+- `dockerd-rootless-setuptool.sh install` 会初始化用户态 Docker daemon
+- `/run/user/<uid>/docker.sock` 是 rootless Docker 常见的本地 socket 路径
+- `loginctl enable-linger` 可以让用户退出登录后 user-level daemon 继续保留
+- `docker info` 中应能看到 `rootless`，否则项目侧脚本仍会拒绝执行
+
+如果你是通过 shell runner 离线部署，则 rootless Docker 应该为实际执行 job 的 Linux 用户准备，通常就是 `gitlab-runner`。如果你短期内还不能完成迁移，可以在过渡期显式导出：
+
+```bash
+export CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1
+```
+
+这个变量只建议用于兼容旧环境，不应作为长期默认配置。
+
+## 6. 推荐的离线 `.env` 最小示例
 
 下面这份 `.gpu-devops/.env` 可以作为离线外部项目的推荐起点：
 

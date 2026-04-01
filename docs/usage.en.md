@@ -203,6 +203,8 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`, and heavy dependency caches are reused from `${CUDA_CXX_DEPS_ROOT}/<platform>`.
 
+Project containers started through `scripts/compose.sh` and `scripts/prepare-builder-deps.sh` now run as the current Linux caller UID/GID by default. These project-side entrypoints also require a rootless Docker daemon on Linux unless you explicitly set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` for a legacy host. This keeps generated files owned by that caller and reduces cross-user access in shared Docker hosts. It is not the same as running a rootless Docker daemon automatically for you.
+
 For Windows/MSVC developers, use `scripts/install-third-party.sh --host windows`. That path reuses the same archive cache but installs `MS-MPI` on Windows in place of the Linux `OpenMPI` layout.
 
 `--deps` now means "target dependency set". The scripts resolve required upstream packages automatically from the shared registry and run them in dependency order. Example: `--deps h5engine` becomes `hdf5,h5engine`.
@@ -241,6 +243,8 @@ This path is for projects whose GitLab jobs must run as the Linux user `gitlab-r
 script:
   - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
 ```
+
+Those project containers also inherit the shell runner user's UID/GID. The same Linux jobs now expect rootless Docker by default; only set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` if you must keep a legacy rootful daemon during migration. If `${CUDA_CXX_DEPS_ROOT}`, `${CUDA_CXX_BUILD_ROOT}`, or `${CUDA_CXX_INSTALL_ROOT}` is not writable by that Linux user, the job fails on permissions instead of silently running the builder container as `root`.
 
 The example keeps this Linux default:
 

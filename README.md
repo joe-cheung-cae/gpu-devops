@@ -71,6 +71,8 @@ Wrapper scripts:
 - [runner-compose.sh](/home/joe/repo/gpu-devops/scripts/runner-compose.sh) targets `runner-compose.yml`
 - [compose.sh](/home/joe/repo/gpu-devops/scripts/compose.sh) targets `docker-compose.yml`
 
+Project build containers started through `scripts/compose.sh` now run as the current host caller UID/GID by default. On Linux, the project-side Docker entrypoints also require a rootless Docker daemon by default. This limits cross-user access to bind-mounted project files in shared Linux Docker environments, but it does not change the Docker daemon itself into rootless mode for you. Set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` only when you need to keep a legacy rootful host temporarily. `runner-compose.yml` keeps its existing service behavior.
+
 Local project build examples:
 
 - Single platform: `scripts/compose.sh run --rm cuda-cxx-centos7`
@@ -78,6 +80,8 @@ Local project build examples:
 - Profile-based selection: `docker compose --profile centos7 --profile rocky8 -f docker-compose.yml up`
 
 The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`, install output is written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and heavy dependency caches live under `CUDA_CXX_DEPS_ROOT/<platform>`.
+
+Because these project containers now run with the caller's UID/GID, generated files on the host stay owned by that caller instead of container `root`. If the target build, install, or dependency directories are not writable by that user, the compose run fails explicitly instead of silently bypassing permissions as `root`.
 
 For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 
@@ -211,6 +215,8 @@ cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
 Then create `.gpu-devops/.env` by following [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
+
+Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md). Linux project-side Docker entrypoints now require rootless Docker by default; `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` is only a temporary compatibility bypass for legacy hosts.
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
