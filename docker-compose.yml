@@ -21,12 +21,15 @@ services:
       - -lc
       - >
         export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
         export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
         export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
         export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
         export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -51,9 +54,11 @@ services:
       - >
         mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" EIGEN3_ARCHIVE="/toolkit/docker/cuda-builder/deps/eigen-3.4.0.tar.gz" /toolkit/docker/cuda-builder/install-eigen3.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" OPENMPI_ARCHIVE="/toolkit/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz" /toolkit/docker/cuda-builder/install-openmpi.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
-        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" MUPARSERX_ARCHIVE="/toolkit/docker/cuda-builder/deps/muparserx-source.tar.gz" /toolkit/docker/cuda-builder/install-muparserx.sh
 
   cuda-cxx-rocky8:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
@@ -77,12 +82,15 @@ services:
       - -lc
       - >
         export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
         export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
         export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
         export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
         export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -107,9 +115,11 @@ services:
       - >
         mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" EIGEN3_ARCHIVE="/toolkit/docker/cuda-builder/deps/eigen-3.4.0.tar.gz" /toolkit/docker/cuda-builder/install-eigen3.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" OPENMPI_ARCHIVE="/toolkit/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz" /toolkit/docker/cuda-builder/install-openmpi.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
-        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" MUPARSERX_ARCHIVE="/toolkit/docker/cuda-builder/deps/muparserx-source.tar.gz" /toolkit/docker/cuda-builder/install-muparserx.sh
 
   cuda-cxx-ubuntu2204:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
@@ -133,12 +143,15 @@ services:
       - -lc
       - >
         export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
         export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
         export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
         export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
         export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -163,6 +176,8 @@ services:
       - >
         mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" EIGEN3_ARCHIVE="/toolkit/docker/cuda-builder/deps/eigen-3.4.0.tar.gz" /toolkit/docker/cuda-builder/install-eigen3.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" OPENMPI_ARCHIVE="/toolkit/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz" /toolkit/docker/cuda-builder/install-openmpi.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
         DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
-        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" MUPARSERX_ARCHIVE="/toolkit/docker/cuda-builder/deps/muparserx-source.tar.gz" /toolkit/docker/cuda-builder/install-muparserx.sh

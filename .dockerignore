@@ -6,3 +6,6 @@ task_plan.md
 findings.md
 progress.md
 docker/cuda-builder/deps/chrono-cache
+docker/cuda-builder/deps/eigen3-cache
+docker/cuda-builder/deps/openmpi-cache
+docker/cuda-builder/deps/muparserx-cache

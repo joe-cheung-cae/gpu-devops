@@ -4,17 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/third-party-registry.sh"
+# shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/progress-common.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 PLATFORM=""
-DEPS_CSV="chrono,hdf5,h5engine,muparserx"
+DEPS_CSV="$(third_party_all_deps_csv)"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/prepare-builder-deps.sh [--env-file PATH] [--platform centos7|rocky8|ubuntu2204] [--deps chrono,hdf5,h5engine,muparserx]
+Usage: scripts/prepare-builder-deps.sh [--env-file PATH] [--platform centos7|rocky8|ubuntu2204] [--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx]
 
 Prepares the project-local dependency cache used by docker compose and shell-runner Linux jobs.
 EOF
@@ -57,18 +59,6 @@ normalize_host_path() {
   fi
 }
 
-validate_dep_name() {
-  case "$1" in
-    chrono|hdf5|h5engine|muparserx)
-      ;;
-    *)
-      echo "Unsupported dependency: $1" >&2
-      echo "Expected one of: chrono,hdf5,h5engine,muparserx" >&2
-      exit 1
-      ;;
-  esac
-}
-
 progress_init 5
 progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
@@ -101,37 +91,18 @@ mkdir -p "${HOST_DEPS_ROOT}/${PLATFORM}"
 progress_step "Resolving builder image"
 BUILDER_IMAGE="$(builder_image_for_platform "${PLATFORM}")"
 
-IFS=',' read -r -a REQUESTED_DEPS <<< "${DEPS_CSV}"
-DEPS=()
-for dep in "${REQUESTED_DEPS[@]}"; do
-  dep="${dep//[[:space:]]/}"
-  [[ -n "${dep}" ]] || continue
-  validate_dep_name "${dep}"
-  DEPS+=("${dep}")
-done
+RESOLVED_DEPS_CSV="$(third_party_resolve_dep_order "${DEPS_CSV}" linux)"
+IFS=',' read -r -a DEPS <<< "${RESOLVED_DEPS_CSV}"
 
 if [[ "${#DEPS[@]}" -eq 0 ]]; then
-  echo "No dependencies selected. Use --deps chrono,hdf5,h5engine,muparserx" >&2
+  echo "No dependencies selected. Use --deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx" >&2
   exit 1
 fi
 
 progress_step "Preparing dependency command"
 COMMANDS=()
 for dep in "${DEPS[@]}"; do
-  case "${dep}" in
-    chrono)
-      COMMANDS+=("DEPS_ROOT='${CONTAINER_PLATFORM_DEPS_ROOT}' CHRONO_ARCHIVE='/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz' /toolkit/docker/cuda-builder/install-chrono.sh")
-      ;;
-    hdf5)
-      COMMANDS+=("DEPS_ROOT='${CONTAINER_PLATFORM_DEPS_ROOT}' HDF5_ARCHIVE='/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz' /toolkit/docker/cuda-builder/install-hdf5.sh")
-      ;;
-    h5engine)
-      COMMANDS+=("DEPS_ROOT='${CONTAINER_PLATFORM_DEPS_ROOT}' HDF5_INSTALL_PREFIX='${CONTAINER_PLATFORM_DEPS_ROOT}/hdf5-install' H5ENGINE_SPH_ARCHIVE='/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz' H5ENGINE_DEM_ARCHIVE='/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz' /toolkit/docker/cuda-builder/install-h5engine.sh")
-      ;;
-    muparserx)
-      COMMANDS+=("DEPS_ROOT='${CONTAINER_PLATFORM_DEPS_ROOT}' /toolkit/docker/cuda-builder/install-muparserx.sh")
-      ;;
-  esac
+  COMMANDS+=("$(third_party_linux_install_command "${dep}" "${CONTAINER_PLATFORM_DEPS_ROOT}")")
 done
 
 COMMAND_STRING="$(printf '%s && ' "${COMMANDS[@]}")"
