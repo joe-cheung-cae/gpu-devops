@@ -28,6 +28,7 @@ Then edit `.env` and set at least:
 Build the default platform:
 
 ```bash
+scripts/prepare-chrono-source-cache.sh
 scripts/build-builder-image.sh
 ```
 
@@ -42,6 +43,8 @@ Build all supported platforms:
 ```bash
 scripts/build-builder-image.sh --all-platforms
 ```
+
+`scripts/prepare-chrono-source-cache.sh` is optional. It prepares `docker/cuda-builder/deps/chrono-source.tar.gz` on the host so the Dockerfiles can unpack a local Chrono source archive instead of downloading Chrono every time.
 
 ### Step 3: Prepare the Runner service image and offline bundle
 

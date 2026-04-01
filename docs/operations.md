@@ -13,6 +13,7 @@
 ```bash
 cp .env.example .env
 scripts/verify-host.sh
+scripts/prepare-chrono-source-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
@@ -20,6 +21,8 @@ scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
 scripts/runner-compose.sh up -d
 ```
+
+`scripts/prepare-chrono-source-cache.sh` is optional. Use it when repeated builder-image rebuilds spend too much time downloading Chrono. It generates `docker/cuda-builder/deps/chrono-source.tar.gz`, which the Dockerfiles consume before falling back to the online git path.
 
 If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
 

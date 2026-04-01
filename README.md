@@ -15,7 +15,7 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
 The shared builder images include a pinned math and simulation baseline:
 
 - Eigen3 `3.4.0`, installed from source to `/usr/local`
-- Project Chrono at commit `3eb56218b`, cloned into `${HOME}/deps/chrono` and installed to `${HOME}/deps/chrono-install`
+- Project Chrono at commit `3eb56218b`, staged under `${HOME}/deps/chrono` from a local source archive when available, otherwise from git, and installed to `${HOME}/deps/chrono-install`
 - HDF5 `1.14.1-2`, built from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and installed to `${HOME}/deps/hdf5-install`
 - `h5engine-sph`, unpacked to `${HOME}/deps/h5engine-sph` and rebuilt against the installed HDF5 runtime
 - `h5engine-dem`, unpacked to `${HOME}/deps/h5engine-dem` and rebuilt against the installed HDF5 runtime
@@ -55,6 +55,7 @@ The shared builder images include a pinned math and simulation baseline:
 1. Copy [.env.example](/home/joe/repo/gpu-devops/.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
+   Optional Chrono acceleration: `scripts/prepare-chrono-source-cache.sh`
    Single platform: `scripts/build-builder-image.sh --platform ubuntu2204`
    All supported platforms: `scripts/build-builder-image.sh --all-platforms`
 4. Prepare the Runner service image with `scripts/prepare-runner-service-image.sh`.
@@ -115,6 +116,14 @@ Projects should pin to a published immutable tag rather than `latest`.
 All three builder Dockerfiles accept the same proxy build arguments from `scripts/build-builder-image.sh`. The `centos7` variant does not persist those proxy variables into the final image, but it does translate them into a temporary `yum.conf` proxy entry during package installation.
 
 Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`. `ChronoEngine` is explicitly linked with `-static-libgcc -static-libstdc++`, so `libChronoEngine.so` does not retain dynamic `libstdc++.so` or `libgcc_s.so` dependencies.
+
+If you rebuild the builder images frequently, you can pre-stage Chrono once on the host:
+
+```bash
+scripts/prepare-chrono-source-cache.sh
+```
+
+When `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the Dockerfiles unpack that local archive first. If it does not exist, `install-chrono.sh` falls back to the online git checkout path automatically.
 
 HDF5 is built from the repo-local `CMake-hdf5-1.14.1-2.tar.gz` archive with zlib enabled and installed to `${HOME}/deps/hdf5-install`. The runtime validation command is `ldd ${HOME}/deps/hdf5-install/lib/libhdf5.so`.
 

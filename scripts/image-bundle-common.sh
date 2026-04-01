@@ -254,6 +254,7 @@ scripts/build-builder-image.sh
 scripts/compose.sh
 scripts/export-images.sh
 scripts/export-project-bundle.sh
+scripts/prepare-chrono-source-cache.sh
 scripts/image-bundle-common.sh
 scripts/import-images.sh
 scripts/import-project-bundle.sh

@@ -122,6 +122,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-runner-service-image.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
       assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
@@ -150,6 +151,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
       assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
@@ -205,6 +207,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/import-images.sh" "${bundle_root}/assets/scripts/import-images.sh"
     cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
     cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
+    cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
     cp "${ROOT_DIR}/scripts/runner-compose.sh" "${bundle_root}/assets/scripts/runner-compose.sh"
@@ -287,6 +290,7 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
@@ -316,6 +320,7 @@ run_import_test() {
       "${target_dir}/.gpu-devops/scripts/export-images.sh" --help > "${test_dir}/export-images-help.log"
       "${target_dir}/.gpu-devops/scripts/build-builder-image.sh" --help > "${test_dir}/build-builder-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh" --help > "${test_dir}/prepare-runner-help.log"
+      "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh" --help > "${test_dir}/prepare-chrono-help.log"
       set +e
       "${target_dir}/.gpu-devops/runner/register-runner.sh" invalid > "${test_dir}/register-runner-help.log" 2>&1
       local register_status=$?
@@ -325,6 +330,7 @@ run_import_test() {
       assert_contains "${test_dir}/export-images-help.log" "Usage: scripts/export-images.sh"
       assert_contains "${test_dir}/build-builder-help.log" "Usage: scripts/build-builder-image.sh"
       assert_contains "${test_dir}/prepare-runner-help.log" "Usage: scripts/prepare-runner-service-image.sh"
+      assert_contains "${test_dir}/prepare-chrono-help.log" "Usage: scripts/prepare-chrono-source-cache.sh"
       assert_contains "${test_dir}/register-runner-help.log" "Set GITLAB_URL in .env"
       ;;
     images)
@@ -337,6 +343,7 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"

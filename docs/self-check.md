@@ -45,7 +45,7 @@ Expected:
 - Eigen3 `3.4.0` is installed under `/usr/local/include/eigen3`
 - OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
 - `/opt/openmpi/lib/libmpi.a` and `/opt/openmpi/lib/libmpi.so` both exist
-- Chrono source exists under `${HOME}/deps/chrono`
+- Chrono source exists under `${HOME}/deps/chrono`, and `${HOME}/deps/chrono/.chrono-source-ref` records the staged ref
 - `${HOME}/deps/chrono-install/lib/libChronoEngine.so` exists and `ldd` prints successfully
 - HDF5 is installed under `${HOME}/deps/hdf5-install`
 - `${HOME}/deps/hdf5-install/lib/libhdf5.so` exists, `ldd` prints successfully, and `${HOME}/deps/hdf5-install/bin/h5cc -showconfig` works

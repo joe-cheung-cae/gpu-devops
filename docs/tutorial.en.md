@@ -71,7 +71,7 @@ Platform-specific notes:
 - `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
 - `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
 - all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
-- all three platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
+- all three platforms stage Project Chrono under `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`
 - all three platforms build HDF5 `1.14.1-2` from `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` and install it to `${HOME}/deps/hdf5-install`
 - all three platforms unpack `h5engine-sph` and `h5engine-dem` into `${HOME}/deps`, refresh `third/hdf5/include/linux` and `third/hdf5/lib/linux` from the installed HDF5 tree, and rebuild them in `Release`
 - all three platforms clone `muparserx` into `${HOME}/deps/muparserx`, force checkout `master`, build it in `${HOME}/deps/muparserx/build`, and install it to `${HOME}/deps/muparserx-install`
@@ -116,10 +116,13 @@ Recommended practice:
 Run:
 
 ```bash
+scripts/prepare-chrono-source-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
+
+`scripts/prepare-chrono-source-cache.sh` is optional. Run it when you rebuild the builder images frequently and want Docker to consume a local `docker/cuda-builder/deps/chrono-source.tar.gz` archive instead of downloading Chrono every time. If that archive is absent, the build still falls back to git automatically.
 
 The script will:
 

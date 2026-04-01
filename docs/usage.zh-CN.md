@@ -28,6 +28,7 @@ scripts/verify-host.sh
 构建默认平台镜像：
 
 ```bash
+scripts/prepare-chrono-source-cache.sh
 scripts/build-builder-image.sh
 ```
 
@@ -42,6 +43,8 @@ scripts/build-builder-image.sh --platform ubuntu2204
 ```bash
 scripts/build-builder-image.sh --all-platforms
 ```
+
+`scripts/prepare-chrono-source-cache.sh` 是可选步骤。它会在宿主机生成 `docker/cuda-builder/deps/chrono-source.tar.gz`，让 Dockerfile 在构建时优先解压本地 Chrono 源码归档，而不是每次都重新下载。
 
 ### 步骤 3：准备 Runner 服务镜像并导出离线包
 

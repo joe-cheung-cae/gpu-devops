@@ -60,8 +60,14 @@ COPY docker/cuda-builder/install-eigen3.sh /usr/local/bin/install-eigen3.sh
 RUN chmod +x /usr/local/bin/install-eigen3.sh && \
     EIGEN3_VERSION="${EIGEN3_VERSION}" EIGEN3_PREFIX="/usr/local" /usr/local/bin/install-eigen3.sh
 
+RUN python3 -m pip install --no-cache-dir \
+      conan \
+      ninja
+
+COPY docker/cuda-builder/deps /tmp/deps
 COPY docker/cuda-builder/install-chrono.sh /usr/local/bin/install-chrono.sh
 RUN chmod +x /usr/local/bin/install-chrono.sh && \
+    CHRONO_ARCHIVE="/tmp/deps/chrono-source.tar.gz" \
     CHRONO_GIT_URL="${CHRONO_GIT_URL}" \
     CHRONO_GIT_REF="${CHRONO_GIT_REF}" \
     CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
@@ -84,10 +90,6 @@ COPY docker/cuda-builder/install-muparserx.sh /usr/local/bin/install-muparserx.s
 RUN chmod +x /usr/local/bin/install-muparserx.sh && \
     CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
     /usr/local/bin/install-muparserx.sh
-
-RUN python3 -m pip install --no-cache-dir \
-      conan \
-      ninja
 
 WORKDIR /workspace
 

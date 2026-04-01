@@ -16,7 +16,8 @@
 - The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
 - All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
-- All builder platforms clone Project Chrono to `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`.
+- All builder platforms stage Project Chrono under `${HOME}/deps/chrono`, pin it to commit `3eb56218b`, and install it to `${HOME}/deps/chrono-install`.
+- If `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the builder consumes that local source archive before falling back to git.
 - All builder platforms build HDF5 `1.14.1-2` from the bundled `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` archive and install it to `${HOME}/deps/hdf5-install`.
 - All builder platforms unpack `h5engine-sph` and `h5engine-dem` under `${HOME}/deps`, replace the bundled Linux HDF5 headers and shared libraries with `${HOME}/deps/hdf5-install`, and rebuild them in `Release`.
 - All builder platforms clone `muparserx` to `${HOME}/deps/muparserx`, force checkout `master`, build it in `${HOME}/deps/muparserx/build`, and install it to `${HOME}/deps/muparserx-install`.

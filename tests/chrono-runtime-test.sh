@@ -19,11 +19,9 @@ for platform in "${PLATFORMS[@]}"; do
   echo "Verifying Chrono in ${image}"
   docker run --rm "${image}" sh -lc '
     set -e
-    test -d "${HOME}/deps/chrono/.git"
-    (
-      cd "${HOME}/deps/chrono"
-      git rev-parse --short=9 HEAD
-    ) | grep -Fx "3eb56218b"
+    test -d "${HOME}/deps/chrono"
+    test -f "${HOME}/deps/chrono/.chrono-source-ref"
+    grep -Fx "3eb56218b" "${HOME}/deps/chrono/.chrono-source-ref"
     test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so"
     ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"
     chrono_config="$(find "${HOME}/deps/chrono-install" \( -name ChronoConfig.cmake -o -name chrono-config.cmake \) -print -quit)"

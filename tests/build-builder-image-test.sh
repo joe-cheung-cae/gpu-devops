@@ -106,6 +106,12 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'install
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'install-chrono.sh'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'install-chrono.sh'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'install-chrono.sh'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'COPY docker/cuda-builder/deps /tmp/deps'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'COPY docker/cuda-builder/deps /tmp/deps'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'COPY docker/cuda-builder/deps /tmp/deps'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'CHRONO_ARCHIVE="/tmp/deps/chrono-source.tar.gz"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'CHRONO_ARCHIVE="/tmp/deps/chrono-source.tar.gz"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'CHRONO_ARCHIVE="/tmp/deps/chrono-source.tar.gz"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'CMake-hdf5-1.14.1-2.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'CMake-hdf5-1.14.1-2.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'CMake-hdf5-1.14.1-2.tar.gz'
@@ -132,7 +138,19 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_GIT_
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_SOURCE_DIR:=${HOME}/deps/chrono'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_INSTALL_PREFIX:=${HOME}/deps/chrono-install'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_BUILD_PARALLEL:=6'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_ARCHIVE:=/tmp/deps/chrono-source.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_CMAKE_GENERATOR:=Ninja'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'test -f "${CHRONO_ARCHIVE}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'git fetch --depth 1 origin "${CHRONO_GIT_REF}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'git fetch origin "${CHRONO_GIT_REF}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" '-DBUILD_DEMOS=OFF'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" '-DBUILD_TESTING=OFF'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" '-DBUILD_BENCHMARKING=OFF'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" "target_link_libraries(ChronoEngine -static-libgcc -static-libstdc++)"
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'cmake -G "${CHRONO_CMAKE_GENERATOR}" ..'
+if grep -Fq -- 'git fetch --all --tags' "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh"; then
+  fail "install-chrono.sh should not use git fetch --all --tags"
+fi
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_ARCHIVE:=docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_INSTALL_PREFIX:=/root/deps/hdf5-install'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}'
@@ -171,5 +189,9 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'devtoolset
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ENV PATH="/opt/rh/devtoolset-11/root/usr/bin:${PATH}"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'gcc-toolset-11-gcc-c++'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ENV PATH="/opt/rh/gcc-toolset-11/root/usr/bin:${PATH}"'
+assert_contains "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" 'Usage: scripts/prepare-chrono-source-cache.sh'
+assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/chrono-cache/'
+assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/chrono-source.tar.gz'
+assert_contains "${ROOT_DIR}/.dockerignore" 'docker/cuda-builder/deps/chrono-cache'
 
 echo "build builder image tests passed"

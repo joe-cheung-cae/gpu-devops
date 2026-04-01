@@ -71,7 +71,7 @@ scripts/verify-host.sh
 - `centos7` 使用 `rh-python38`，并保留 `urllib3<2` 以兼容旧 OpenSSL
 - `centos7` 和其他平台一样接收统一的代理构建参数，但只会在装包阶段把它转换成临时的 `yum.conf` 代理配置
 - 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
-- 三个平台都会把 Project Chrono 克隆到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
+- 三个平台都会把 Project Chrono 准备到 `${HOME}/deps/chrono`，固定到 commit `3eb56218b`，并安装到 `${HOME}/deps/chrono-install`
 - 三个平台都会从 `docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz` 构建 HDF5 `1.14.1-2`，并安装到 `${HOME}/deps/hdf5-install`
 - 三个平台都会把 `h5engine-sph` 和 `h5engine-dem` 解压到 `${HOME}/deps`，再用已安装的 HDF5 头文件和动态库刷新各自的 `third/hdf5/include/linux`、`third/hdf5/lib/linux` 后以 `Release` 重新构建
 - 三个平台都会把 `muparserx` 克隆到 `${HOME}/deps/muparserx`，强制切到 `master`，在 `${HOME}/deps/muparserx/build` 中构建，并安装到 `${HOME}/deps/muparserx-install`
@@ -116,10 +116,13 @@ cp .env.example .env
 执行：
 
 ```bash
+scripts/prepare-chrono-source-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
+
+`scripts/prepare-chrono-source-cache.sh` 是可选加速步骤。对于会频繁重建 builder image 的场景，可以先运行它生成本地 `docker/cuda-builder/deps/chrono-source.tar.gz`，这样 Docker 会优先解压本地 Chrono 源码归档；如果归档不存在，构建流程仍会自动回退到 git。
 
 该脚本会：
 

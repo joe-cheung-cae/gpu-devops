@@ -3,6 +3,8 @@
 runner/config/
 runner/cache/
 docker/cuda-builder/build/
+docker/cuda-builder/deps/chrono-cache/
+docker/cuda-builder/deps/chrono-source.tar.gz
 artifacts/*.tar
 artifacts/*.tar.gz
 artifacts/*.tar.gz.sha256
