@@ -74,6 +74,7 @@ scripts/verify-host.sh
 - 三个平台都会把 Eigen3 `3.4.0` 以源码方式安装到 `/usr/local`
 - 三个平台的 base image 只保留通用 CUDA/C++ 工具链、UUID 头文件和 `ccache`
 - Chrono、HDF5、h5engine、muparserx 改为通过 `scripts/prepare-builder-deps.sh` 后置准备到 `${CUDA_CXX_DEPS_ROOT}/<platform>`
+- 同一套依赖缓存流程也可以额外准备项目本地的 `Eigen3` 和 `OpenMPI`，用于离线或 Windows/MSVC 交付
 - `rocky8` 和 `ubuntu2204` 使用更新的系统 Python 包，不需要保留 CentOS 7 的兼容性约束
 
 ## 4. 环境变量配置
@@ -115,13 +116,13 @@ cp .env.example .env
 执行：
 
 ```bash
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-chrono-source-cache.sh` 是可选加速步骤。对于会频繁重建 builder image 的场景，可以先运行它生成本地 `docker/cuda-builder/deps/chrono-source.tar.gz`，这样 Docker 会优先解压本地 Chrono 源码归档；如果归档不存在，构建流程仍会自动回退到 git。
+`scripts/prepare-third-party-cache.sh` 是可选加速步骤。对于会频繁重建 builder image 或需要离线依赖介质的场景，可以先运行它准备 `chrono`、`eigen3`、`openmpi`、`muparserx` 的本地归档。`scripts/prepare-chrono-source-cache.sh` 继续保留为只处理 Chrono 的兼容入口。
 
 该脚本会：
 

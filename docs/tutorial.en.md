@@ -74,6 +74,7 @@ Platform-specific notes:
 - all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
 - all three platforms keep the base image limited to the common CUDA/C++ toolchain, UUID headers, and `ccache`
 - Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
+- the same dependency-cache flow can also stage project-local `Eigen3` and `OpenMPI` copies for offline or Windows/MSVC handoff
 - `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
 
 ## 4. Configure environment variables
@@ -115,13 +116,13 @@ Recommended practice:
 Run:
 
 ```bash
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-chrono-source-cache.sh` is optional. Run it when you rebuild the builder images frequently and want Docker to consume a local `docker/cuda-builder/deps/chrono-source.tar.gz` archive instead of downloading Chrono every time. If that archive is absent, the build still falls back to git automatically.
+`scripts/prepare-third-party-cache.sh` is optional. Run it when you rebuild builder images frequently or need offline dependency media. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh` remains available as the Chrono-only compatibility wrapper.
 
 The script will:
 

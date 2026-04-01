@@ -30,7 +30,7 @@ Then edit `.env` and set at least:
 Build the default platform:
 
 ```bash
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 ```
 
@@ -46,9 +46,9 @@ Build all supported platforms:
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-chrono-source-cache.sh` is optional. It prepares `docker/cuda-builder/deps/chrono-source.tar.gz` on the host so the Dockerfiles can unpack a local Chrono source archive instead of downloading Chrono every time.
+`scripts/prepare-third-party-cache.sh` is optional. It prepares local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-chrono-source-cache.sh` stays available as a Chrono-only compatibility wrapper.
 
-The published builder images now keep only the common CUDA/C++ toolchain baseline. Heavy dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with `scripts/prepare-builder-deps.sh`.
+The published builder images still keep the common CUDA/C++ toolchain baseline, including `Eigen3` and `OpenMPI`. The dependency-cache workflow can additionally prepare project-local copies of `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` into `CUDA_CXX_DEPS_ROOT/<platform>` with `scripts/prepare-builder-deps.sh` or `scripts/install-third-party.sh --host linux --platform <name>`.
 
 ### Step 3: Prepare the Runner service image and offline bundle
 
@@ -109,6 +109,7 @@ If you unpacked the toolkit manually, run:
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
+.gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -157,6 +158,7 @@ That path expects:
 - the target project checkout is readable by `gitlab-runner`
 - the builder images are already loaded locally
 - Linux jobs normally call `.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7` once before `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
+- Windows jobs can call `.gpu-devops/scripts/install-third-party.sh --host windows` to prepare the MSVC dependency tree, including `MS-MPI`
 
 ### Step 7: Validate the platform and local build environment
 
@@ -166,7 +168,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 
 Then use [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) in a test project and confirm that `gpu-smoke`, `cuda-cmake-build`, and `multi-gpu-smoke` succeed.
 
-For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. That default belongs to the CI example, not `.env`. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
+For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. The Windows side uses `scripts/install-third-party.sh --host windows` and installs `MS-MPI` instead of `OpenMPI`. That Linux default belongs to the CI example, not `.env`. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
 
 ## 2. R&D engineer workflow
 
@@ -184,6 +186,7 @@ Prepare the dependency cache first:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 ```
 
 Run a single-platform build:
@@ -199,6 +202,10 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 ```
 
 Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`, and heavy dependency caches are reused from `${CUDA_CXX_DEPS_ROOT}/<platform>`.
+
+For Windows/MSVC developers, use `scripts/install-third-party.sh --host windows`. That path reuses the same archive cache but installs `MS-MPI` on Windows in place of the Linux `OpenMPI` layout.
+
+`--deps` now means "target dependency set". The scripts resolve required upstream packages automatically from the shared registry and run them in dependency order. Example: `--deps h5engine` becomes `hdf5,h5engine`.
 
 The Linux builder images also include UUID development headers for projects that include `uuid/uuid.h`, and they ship `ccache`. To enable compiler caching in your own CMake project, add:
 

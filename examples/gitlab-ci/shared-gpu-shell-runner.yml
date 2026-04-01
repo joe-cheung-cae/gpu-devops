@@ -75,7 +75,8 @@ shell-runner:build:windows:
   extends: .windows_shell_runner
   stage: build
   script:
-    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows build script.'"
+    - .gpu-devops/scripts/install-third-party.sh --host windows --deps chrono,eigen3,openmpi,muparserx
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Build with your MSVC project script here. MPI uses MS-MPI on Windows.'"
 
 shell-runner:test:linux:
   extends: .linux_shell_runner
@@ -101,7 +102,7 @@ shell-runner:test:windows:
   needs:
     - shell-runner:build:windows
   script:
-    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows test script.'"
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Run your Windows/MSVC test script here after MS-MPI and the other dependencies are installed.'"
 
 shell-runner:deploy:linux:
   extends: .linux_shell_runner
@@ -128,7 +129,7 @@ shell-runner:deploy:windows:
   needs:
     - shell-runner:test:windows
   script:
-    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Replace this with your Windows deployment script.'"
+    - powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Run your Windows deployment script here.'"
 
 shell-runner:multi-gpu-smoke:
   stage: verify

@@ -30,7 +30,7 @@ scripts/verify-host.sh
 构建默认平台镜像：
 
 ```bash
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 ```
 
@@ -46,9 +46,9 @@ scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-chrono-source-cache.sh` 是可选步骤。它会在宿主机生成 `docker/cuda-builder/deps/chrono-source.tar.gz`，让 Dockerfile 在构建时优先解压本地 Chrono 源码归档，而不是每次都重新下载。
+`scripts/prepare-third-party-cache.sh` 是可选步骤。它会在宿主机下准备 `chrono`、`eigen3`、`openmpi`、`muparserx` 的本地归档，供 Linux 和 Windows 离线安装复用。`scripts/prepare-chrono-source-cache.sh` 继续保留为只处理 Chrono 的兼容入口。
 
-当前发布的 builder image 只保留通用 CUDA/C++ 工具链基线。Chrono、HDF5、h5engine、muparserx 这类重依赖改为通过 `scripts/prepare-builder-deps.sh` 后置准备到 `CUDA_CXX_DEPS_ROOT/<platform>`。
+当前发布的 builder image 仍然保留通用 CUDA/C++ 工具链基线，其中包括 `Eigen3` 和 `OpenMPI`。依赖缓存流程还可以额外把 `Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine`、`muparserx` 准备到 `CUDA_CXX_DEPS_ROOT/<platform>`，对应入口是 `scripts/prepare-builder-deps.sh` 或 `scripts/install-third-party.sh --host linux --platform <name>`。
 
 ### 步骤 3：准备 Runner 服务镜像并导出离线包
 
@@ -109,6 +109,7 @@ scripts/import-images.sh --input artifacts/offline-images.tar.gz
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
+.gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -157,6 +158,7 @@ sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
 - 目标项目目录对 `gitlab-runner` 可访问
 - builder 镜像已经存在于本地 Docker
 - Linux job 一般先执行 `.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7`，再调用 `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7`
+- Windows job 可以执行 `.gpu-devops/scripts/install-third-party.sh --host windows` 来准备 MSVC 依赖树，其中 MPI 在 Windows 上采用 `MS-MPI`
 
 ### 步骤 7：验证平台与本地 build 环境可用性
 
@@ -166,7 +168,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 
 然后把 [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) 放到一个测试项目里，确认 `gpu-smoke`、`cuda-cmake-build` 和 `multi-gpu-smoke` 都能成功执行。
 
-如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。这个默认值来自 CI 示例，不来自 `.env`。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
+如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。Windows 一侧通过 `scripts/install-third-party.sh --host windows` 安装依赖，并在 Windows 上使用 `MS-MPI` 而不是 `OpenMPI`。这个默认值来自 CI 示例，不来自 `.env`。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
 
 ## 2. 研发工程师使用流程
 
@@ -184,6 +186,7 @@ scripts/compose.sh run --rm cuda-cxx-centos7
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 ```
 
 执行单平台构建：
@@ -199,6 +202,10 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 ```
 
 构建产物会写入 `${CUDA_CXX_BUILD_ROOT}/<platform>`，安装产物会写入 `${CUDA_CXX_INSTALL_ROOT}/<platform>`，重依赖缓存会写入 `${CUDA_CXX_DEPS_ROOT}/<platform>`。
+
+如果是 Windows/MSVC 开发机，则使用 `scripts/install-third-party.sh --host windows`。这条路径会复用同一套源码/发行归档缓存，但在 Windows 上把 MPI 安装为 `MS-MPI`。
+
+现在 `--deps` 表示“目标依赖集合”。脚本会从共享注册表里自动补齐上游依赖，并按依赖顺序执行。例如 `--deps h5engine` 会自动展开成 `hdf5,h5engine`。
 
 Linux builder image 现在也内置了 `uuid/uuid.h` 对应的开发头文件和 `ccache`。如果你要在自己的 CMake 项目里启用编译缓存，可增加：
 

@@ -15,7 +15,7 @@ Bundle-related implementation is now grouped under `scripts/export/`, `scripts/i
 ```bash
 cp .env.example .env
 scripts/verify-host.sh
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
@@ -24,12 +24,13 @@ scripts/export-images.sh
 scripts/runner-compose.sh up -d
 ```
 
-`scripts/prepare-chrono-source-cache.sh` is optional. Use it when repeated builder-image rebuilds spend too much time downloading Chrono. It generates `docker/cuda-builder/deps/chrono-source.tar.gz`, which the Dockerfiles consume before falling back to the online git path.
+`scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. The builder images still keep the standard `Eigen3` and `OpenMPI` baseline, but the same cache workflow can also prepare project-local copies when an offline or Windows/MSVC path needs them. `scripts/prepare-chrono-source-cache.sh` remains as a Chrono-only compatibility wrapper.
 
 The published builder images now keep only the common toolchain baseline. Heavy project dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 ```
 
 If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
@@ -51,6 +52,7 @@ For a complete online-to-offline deployment workflow, use this order:
 3. Offline host:
    - `scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"`
    - `scripts/prepare-builder-deps.sh --platform centos7`
+   - `scripts/install-third-party.sh --host linux --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
@@ -94,6 +96,7 @@ Then continue from `/path/to/project/.gpu-devops/`:
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
+.gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -181,9 +184,14 @@ Use `docker-compose.yml` when you want to compile a CUDA/C++ project locally wit
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
+
+For Windows/MSVC hosts, use `scripts/install-third-party.sh --host windows`. That path prepares the same archive cache but installs `MS-MPI` instead of `OpenMPI`.
+
+All third-party entrypoints now use the shared registry under `scripts/common/third-party-registry.sh`. When you pass `--deps`, the scripts automatically expand required upstream dependencies and execute them in dependency order.
 
 If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
 

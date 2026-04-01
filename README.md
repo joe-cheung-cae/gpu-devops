@@ -52,7 +52,7 @@ The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 1. Copy [.env.example](/home/joe/repo/gpu-devops/.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
-   Optional Chrono acceleration: `scripts/prepare-chrono-source-cache.sh`
+   Optional dependency cache staging: `scripts/prepare-third-party-cache.sh`
    Single platform: `scripts/build-builder-image.sh --platform ubuntu2204`
    All supported platforms: `scripts/build-builder-image.sh --all-platforms`
 4. Prepare the Runner service image with `scripts/prepare-runner-service-image.sh`.
@@ -114,21 +114,30 @@ Projects should pin to a published immutable tag rather than `latest`.
 
 All three builder Dockerfiles accept the same proxy build arguments from `scripts/build-builder-image.sh`. The `centos7` variant does not persist those proxy variables into the final image, but it does translate them into a temporary `yum.conf` proxy entry during package installation.
 
-If you rebuild the builder images frequently, you can pre-stage Chrono once on the host:
+If you rebuild builder images or prepare offline dependency media frequently, pre-stage the third-party archives on the host:
 
 ```bash
-scripts/prepare-chrono-source-cache.sh
+scripts/prepare-third-party-cache.sh
 ```
 
-When `docker/cuda-builder/deps/chrono-source.tar.gz` exists, `install-chrono.sh` consumes that archive before falling back to the online git checkout path automatically.
+This cache now covers `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh` remains as a compatibility wrapper for the Chrono-only path.
 
-Heavy dependencies are no longer baked into the base builder image. Prepare them into the project-local cache when the project actually needs them:
+Heavy project dependencies are no longer baked into the base builder image. The same dependency-cache workflow can also prepare project-local copies of `Eigen3` and `OpenMPI` when an offline or cross-host install needs them:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 ```
 
-That cache is stored under `CUDA_CXX_DEPS_ROOT/<platform>` and is then reused by `scripts/compose.sh run --rm cuda-cxx-centos7`, shell-runner Linux jobs, and offline no-checkout deployments.
+That cache is stored under `CUDA_CXX_DEPS_ROOT/<platform>` and is then reused by `scripts/compose.sh run --rm cuda-cxx-centos7`, shell-runner Linux jobs, and offline no-checkout deployments. For Windows/MSVC hosts, use:
+
+```bash
+scripts/install-third-party.sh --host windows --deps chrono,eigen3,openmpi,muparserx
+```
+
+On Windows, the MPI dependency is installed as `MS-MPI` instead of `OpenMPI`.
+
+The third-party entrypoints now resolve dependencies from a shared registry. `--deps` selects the target packages, and the scripts automatically add required upstream packages and run them in dependency order. For example, `--deps h5engine` resolves to `hdf5,h5engine`.
 
 ## Offline image bundle
 
@@ -179,6 +188,7 @@ Use this sequence when you need to prepare the full platform on a connected host
 3. Offline host:
    - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
    - `scripts/prepare-builder-deps.sh --platform centos7`
+   - `scripts/install-third-party.sh --host linux --platform centos7`
    - `scripts/runner-compose.sh up -d`
    - `runner/register-runner.sh gpu`
    - optional: `runner/register-runner.sh multi`
@@ -205,6 +215,7 @@ Then create `.gpu-devops/.env` by following [docs/offline-env-configuration.md](
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
+.gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/scripts/runner-compose.sh up -d
 .gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
