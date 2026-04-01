@@ -123,6 +123,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
       assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
@@ -152,6 +153,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
       assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
@@ -208,6 +210,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
     cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
     cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
+    cp "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${bundle_root}/assets/scripts/prepare-builder-deps.sh"
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
     cp "${ROOT_DIR}/scripts/runner-compose.sh" "${bundle_root}/assets/scripts/runner-compose.sh"
@@ -291,6 +294,7 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
@@ -306,6 +310,7 @@ run_import_test() {
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_PROJECT_DIR=."
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install"
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_CMAKE_GENERATOR=Ninja"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_CMAKE_ARGS="
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ARGS="
@@ -321,6 +326,7 @@ run_import_test() {
       "${target_dir}/.gpu-devops/scripts/build-builder-image.sh" --help > "${test_dir}/build-builder-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh" --help > "${test_dir}/prepare-runner-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh" --help > "${test_dir}/prepare-chrono-help.log"
+      "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh" --help > "${test_dir}/prepare-builder-deps-help.log"
       set +e
       "${target_dir}/.gpu-devops/runner/register-runner.sh" invalid > "${test_dir}/register-runner-help.log" 2>&1
       local register_status=$?
@@ -331,6 +337,7 @@ run_import_test() {
       assert_contains "${test_dir}/build-builder-help.log" "Usage: scripts/build-builder-image.sh"
       assert_contains "${test_dir}/prepare-runner-help.log" "Usage: scripts/prepare-runner-service-image.sh"
       assert_contains "${test_dir}/prepare-chrono-help.log" "Usage: scripts/prepare-chrono-source-cache.sh"
+      assert_contains "${test_dir}/prepare-builder-deps-help.log" "Usage: scripts/prepare-builder-deps.sh"
       assert_contains "${test_dir}/register-runner-help.log" "Set GITLAB_URL in .env"
       ;;
     images)
@@ -344,12 +351,14 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/docs/offline-env-configuration.md"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install"
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
       ;;
   esac
 

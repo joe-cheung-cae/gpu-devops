@@ -4,9 +4,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG CMAKE_VERSION=3.26.0
 ARG OPENMPI_VERSION=4.1.6
 ARG EIGEN3_VERSION=3.4.0
-ARG CHRONO_GIT_URL=https://github.com/projectchrono/chrono.git
-ARG CHRONO_GIT_REF=3eb56218b
-ARG CHRONO_BUILD_PARALLEL=6
 ARG http_proxy
 ARG https_proxy
 ARG HTTP_PROXY
@@ -54,33 +51,6 @@ RUN chmod +x /usr/local/bin/install-eigen3.sh && \
 RUN python3 -m pip install --no-cache-dir \
       conan \
       ninja
-
-COPY docker/cuda-builder/deps /tmp/deps
-COPY docker/cuda-builder/install-chrono.sh /usr/local/bin/install-chrono.sh
-RUN chmod +x /usr/local/bin/install-chrono.sh && \
-    CHRONO_ARCHIVE="/tmp/deps/chrono-source.tar.gz" \
-    CHRONO_GIT_URL="${CHRONO_GIT_URL}" \
-    CHRONO_GIT_REF="${CHRONO_GIT_REF}" \
-    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
-    /usr/local/bin/install-chrono.sh
-
-COPY docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz /tmp/CMake-hdf5-1.14.1-2.tar.gz
-COPY docker/cuda-builder/install-hdf5.sh /usr/local/bin/install-hdf5.sh
-RUN chmod +x /usr/local/bin/install-hdf5.sh && \
-    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
-    /usr/local/bin/install-hdf5.sh
-
-COPY docker/cuda-builder/deps/h5engine-sph.tar.gz /tmp/h5engine-sph.tar.gz
-COPY docker/cuda-builder/deps/h5engine-dem.tar.gz /tmp/h5engine-dem.tar.gz
-COPY docker/cuda-builder/install-h5engine.sh /usr/local/bin/install-h5engine.sh
-RUN chmod +x /usr/local/bin/install-h5engine.sh && \
-    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
-    /usr/local/bin/install-h5engine.sh
-
-COPY docker/cuda-builder/install-muparserx.sh /usr/local/bin/install-muparserx.sh
-RUN chmod +x /usr/local/bin/install-muparserx.sh && \
-    CHRONO_BUILD_PARALLEL="${CHRONO_BUILD_PARALLEL}" \
-    /usr/local/bin/install-muparserx.sh
 
 WORKDIR /workspace
 

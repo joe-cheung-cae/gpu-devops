@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
+TEST_ENV_FILE="$(mktemp)"
+trap 'rm -f "${TEST_ENV_FILE}"' EXIT
 
 if [[ -f "${ENV_FILE}" ]]; then
   # shellcheck disable=SC1090
@@ -14,17 +16,27 @@ TEST_PLATFORMS="${BUILDER_TEST_PLATFORMS:-${BUILDER_PLATFORMS:-centos7,rocky8,ub
 
 IFS=',' read -r -a PLATFORMS <<< "${TEST_PLATFORMS}"
 
+cat > "${TEST_ENV_FILE}" <<EOF
+BUILDER_IMAGE_FAMILY=${BUILDER_IMAGE_FAMILY}
+BUILDER_DEFAULT_PLATFORM=centos7
+BUILDER_PLATFORMS=${TEST_PLATFORMS}
+BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
+HOST_PROJECT_DIR=${ROOT_DIR}
+CUDA_CXX_DEPS_ROOT=./artifacts/deps
+EOF
+
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"
   echo "Verifying Chrono in ${image}"
-  docker run --rm "${image}" sh -lc '
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps chrono >/dev/null
+  docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
-    test -d "${HOME}/deps/chrono"
-    test -f "${HOME}/deps/chrono/.chrono-source-ref"
-    grep -Fx "3eb56218b" "${HOME}/deps/chrono/.chrono-source-ref"
-    test -f "${HOME}/deps/chrono-install/lib/libChronoEngine.so"
-    ldd "${HOME}/deps/chrono-install/lib/libChronoEngine.so"
-    chrono_config="$(find "${HOME}/deps/chrono-install" \( -name ChronoConfig.cmake -o -name chrono-config.cmake \) -print -quit)"
+    test -d "./artifacts/deps/'"${platform}"'/chrono"
+    test -f "./artifacts/deps/'"${platform}"'/chrono/.chrono-source-ref"
+    grep -Fx "3eb56218b" "./artifacts/deps/'"${platform}"'/chrono/.chrono-source-ref"
+    test -f "./artifacts/deps/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
+    ldd "./artifacts/deps/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
+    chrono_config="$(find "./artifacts/deps/'"${platform}"'/chrono-install" \( -name ChronoConfig.cmake -o -name chrono-config.cmake \) -print -quit)"
     test -n "${chrono_config}"
     workdir="$(mktemp -d)"
     cat > "${workdir}/CMakeLists.txt" <<'"'"'EOF'"'"'

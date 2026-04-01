@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
+TEST_ENV_FILE="$(mktemp)"
+trap 'rm -f "${TEST_ENV_FILE}"' EXIT
 
 if [[ -f "${ENV_FILE}" ]]; then
   # shellcheck disable=SC1090
@@ -14,17 +16,27 @@ TEST_PLATFORMS="${BUILDER_TEST_PLATFORMS:-${BUILDER_PLATFORMS:-centos7,rocky8,ub
 
 IFS=',' read -r -a PLATFORMS <<< "${TEST_PLATFORMS}"
 
+cat > "${TEST_ENV_FILE}" <<EOF
+BUILDER_IMAGE_FAMILY=${BUILDER_IMAGE_FAMILY}
+BUILDER_DEFAULT_PLATFORM=centos7
+BUILDER_PLATFORMS=${TEST_PLATFORMS}
+BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
+HOST_PROJECT_DIR=${ROOT_DIR}
+CUDA_CXX_DEPS_ROOT=./artifacts/deps
+EOF
+
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"
   echo "Verifying HDF5 in ${image}"
-  docker run --rm "${image}" sh -lc '
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps hdf5 >/dev/null
+  docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
-    test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so"
-    test -x "${HOME}/deps/hdf5-install/bin/h5cc"
-    ldd_output="$(ldd "${HOME}/deps/hdf5-install/lib/libhdf5.so")"
+    test -f "./artifacts/deps/'"${platform}"'/hdf5-install/lib/libhdf5.so"
+    test -x "./artifacts/deps/'"${platform}"'/hdf5-install/bin/h5cc"
+    ldd_output="$(ldd "./artifacts/deps/'"${platform}"'/hdf5-install/lib/libhdf5.so")"
     printf "%s\n" "${ldd_output}"
     printf "%s\n" "${ldd_output}" | grep -E "libz(\.so)?"
-    "${HOME}/deps/hdf5-install/bin/h5cc" -showconfig >/dev/null
+    "./artifacts/deps/'"${platform}"'/hdf5-install/bin/h5cc" -showconfig >/dev/null
   '
 done
 

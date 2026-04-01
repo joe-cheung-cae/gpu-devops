@@ -5,11 +5,14 @@ services:
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
     environment:
       BUILD_PLATFORM: centos7
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/centos7
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -17,12 +20,40 @@ services:
       - /bin/bash
       - -lc
       - >
+        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
+        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
+        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
         cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
         cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"
+
+  cuda-cxx-deps-centos7:
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
+    profiles: ["centos7"]
+    working_dir: /workspace
+    volumes:
+      - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
+    environment:
+      BUILD_PLATFORM: centos7
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/centos7
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh
 
   cuda-cxx-rocky8:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
@@ -30,11 +61,14 @@ services:
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
     environment:
       BUILD_PLATFORM: rocky8
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/rocky8
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -42,6 +76,13 @@ services:
       - /bin/bash
       - -lc
       - >
+        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
+        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
+        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -49,17 +90,41 @@ services:
         cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
         cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"
 
+  cuda-cxx-deps-rocky8:
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
+    profiles: ["rocky8"]
+    working_dir: /workspace
+    volumes:
+      - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
+    environment:
+      BUILD_PLATFORM: rocky8
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/rocky8
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh
+
   cuda-cxx-ubuntu2204:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
     profiles: ["ubuntu2204"]
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
     environment:
       BUILD_PLATFORM: ubuntu2204
       CUDA_CXX_PROJECT_DIR: ${CUDA_CXX_PROJECT_DIR:-./examples/cuda-smoke}
       CUDA_CXX_BUILD_ROOT: ${CUDA_CXX_BUILD_ROOT:-./artifacts/cuda-cxx-build}
       CUDA_CXX_INSTALL_ROOT: ${CUDA_CXX_INSTALL_ROOT:-./artifacts/cuda-cxx-install}
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/ubuntu2204
       CUDA_CXX_CMAKE_GENERATOR: ${CUDA_CXX_CMAKE_GENERATOR:-Ninja}
       CUDA_CXX_CMAKE_ARGS: ${CUDA_CXX_CMAKE_ARGS:-}
       CUDA_CXX_BUILD_ARGS: ${CUDA_CXX_BUILD_ARGS:-}
@@ -67,9 +132,37 @@ services:
       - /bin/bash
       - -lc
       - >
+        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
+        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
+        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
+        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
+        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
+        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
         -G "$$CUDA_CXX_CMAKE_GENERATOR" $$CUDA_CXX_CMAKE_ARGS &&
         cmake --build "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" $$CUDA_CXX_BUILD_ARGS &&
         cmake --install "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM" --prefix "$$CUDA_CXX_INSTALL_ROOT/$$BUILD_PLATFORM"
+
+  cuda-cxx-deps-ubuntu2204:
+    image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
+    profiles: ["ubuntu2204"]
+    working_dir: /workspace
+    volumes:
+      - ${HOST_PROJECT_DIR:-.}:/workspace
+      - .:/toolkit
+    environment:
+      BUILD_PLATFORM: ubuntu2204
+      CUDA_CXX_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}
+      CUDA_CXX_PLATFORM_DEPS_ROOT: ${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}/ubuntu2204
+    command:
+      - /bin/bash
+      - -lc
+      - >
+        mkdir -p "$$CUDA_CXX_PLATFORM_DEPS_ROOT" &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" CHRONO_ARCHIVE="/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" /toolkit/docker/cuda-builder/install-chrono.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_ARCHIVE="/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" /toolkit/docker/cuda-builder/install-hdf5.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" HDF5_INSTALL_PREFIX="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" H5ENGINE_SPH_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz" H5ENGINE_DEM_ARCHIVE="/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz" /toolkit/docker/cuda-builder/install-h5engine.sh &&
+        DEPS_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT" /toolkit/docker/cuda-builder/install-muparserx.sh

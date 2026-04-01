@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
+TEST_ENV_FILE="$(mktemp)"
+trap 'rm -f "${TEST_ENV_FILE}"' EXIT
 
 if [[ -f "${ENV_FILE}" ]]; then
   # shellcheck disable=SC1090
@@ -14,15 +16,25 @@ TEST_PLATFORMS="${BUILDER_TEST_PLATFORMS:-${BUILDER_PLATFORMS:-centos7,rocky8,ub
 
 IFS=',' read -r -a PLATFORMS <<< "${TEST_PLATFORMS}"
 
+cat > "${TEST_ENV_FILE}" <<EOF
+BUILDER_IMAGE_FAMILY=${BUILDER_IMAGE_FAMILY}
+BUILDER_DEFAULT_PLATFORM=centos7
+BUILDER_PLATFORMS=${TEST_PLATFORMS}
+BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
+HOST_PROJECT_DIR=${ROOT_DIR}
+CUDA_CXX_DEPS_ROOT=./artifacts/deps
+EOF
+
 for platform in "${PLATFORMS[@]}"; do
   image="${BUILDER_IMAGE_FAMILY}-${platform}"
   echo "Verifying h5engine packages in ${image}"
-  docker run --rm "${image}" sh -lc '
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps hdf5,h5engine >/dev/null
+  docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
 
     check_package() {
       local package_name="$1"
-      local package_dir="${HOME}/deps/${package_name}"
+      local package_dir="./artifacts/deps/'"${platform}"'/${package_name}"
       local lib_path="${package_dir}/build/h5Engine/libh5Engine.so"
       local test_path="${package_dir}/build/testHdf5"
       local ldd_output

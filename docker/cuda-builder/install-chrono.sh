@@ -3,14 +3,22 @@ set -euo pipefail
 
 : "${CHRONO_GIT_URL:=https://github.com/projectchrono/chrono.git}"
 : "${CHRONO_GIT_REF:=3eb56218b}"
-: "${CHRONO_SOURCE_DIR:=${HOME}/deps/chrono}"
+: "${DEPS_ROOT:=${HOME}/deps}"
+: "${CHRONO_SOURCE_DIR:=${DEPS_ROOT}/chrono}"
 : "${CHRONO_BUILD_DIR:=${CHRONO_SOURCE_DIR}/build}"
-: "${CHRONO_INSTALL_PREFIX:=${HOME}/deps/chrono-install}"
+: "${CHRONO_INSTALL_PREFIX:=${DEPS_ROOT}/chrono-install}"
 : "${CHRONO_BUILD_PARALLEL:=6}"
 : "${CHRONO_ARCHIVE:=/tmp/deps/chrono-source.tar.gz}"
 : "${CHRONO_CMAKE_GENERATOR:=Ninja}"
 
 mkdir -p "$(dirname "${CHRONO_SOURCE_DIR}")" "${CHRONO_INSTALL_PREFIX}"
+
+if [[ -f "${CHRONO_INSTALL_PREFIX}/.chrono-source-ref" ]] && \
+   grep -Fxq "${CHRONO_GIT_REF}" "${CHRONO_INSTALL_PREFIX}/.chrono-source-ref" && \
+   [[ -f "${CHRONO_INSTALL_PREFIX}/lib/libChronoEngine.so" ]]; then
+  ldd "${CHRONO_INSTALL_PREFIX}/lib/libChronoEngine.so"
+  exit 0
+fi
 
 if test -f "${CHRONO_ARCHIVE}"; then
   rm -rf "${CHRONO_SOURCE_DIR}"
@@ -53,6 +61,7 @@ else
   CHRONO_SOURCE_REF="${CHRONO_GIT_REF}"
 fi
 printf '%s\n' "${CHRONO_SOURCE_REF}" > "${CHRONO_SOURCE_DIR}/.chrono-source-ref"
+printf '%s\n' "${CHRONO_SOURCE_REF}" > "${CHRONO_INSTALL_PREFIX}/.chrono-source-ref"
 
 CHRONO_CMAKELISTS="${CHRONO_SOURCE_DIR}/src/chrono/CMakeLists.txt" python3 - <<'PY'
 import os

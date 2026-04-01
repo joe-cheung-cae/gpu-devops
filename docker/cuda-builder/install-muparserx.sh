@@ -3,10 +3,13 @@ set -euo pipefail
 
 : "${MUPARSERX_GIT_URL:=https://github.com/joe-cheung-cae/muparserx.git}"
 : "${MUPARSERX_GIT_BRANCH:=master}"
-: "${MUPARSERX_SOURCE_DIR:=${HOME}/deps/muparserx}"
+: "${DEPS_ROOT:=${HOME}/deps}"
+: "${MUPARSERX_SOURCE_DIR:=${DEPS_ROOT}/muparserx}"
 : "${MUPARSERX_BUILD_DIR:=${MUPARSERX_SOURCE_DIR}/build}"
-: "${MUPARSERX_INSTALL_PREFIX:=${HOME}/deps/muparserx-install}"
+: "${MUPARSERX_INSTALL_PREFIX:=${DEPS_ROOT}/muparserx-install}"
 : "${MUPARSERX_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
+
+REF_MARKER="${MUPARSERX_INSTALL_PREFIX}/.muparserx-source-ref"
 
 mkdir -p "$(dirname "${MUPARSERX_SOURCE_DIR}")" "${MUPARSERX_INSTALL_PREFIX}"
 
@@ -21,6 +24,18 @@ fi
   git reset --hard "origin/${MUPARSERX_GIT_BRANCH}"
 )
 
+CURRENT_REF="$(git -C "${MUPARSERX_SOURCE_DIR}" rev-parse HEAD)"
+if [[ -f "${REF_MARKER}" ]] && \
+   grep -Fxq "${CURRENT_REF}" "${REF_MARKER}" && \
+   [[ -f "${MUPARSERX_BUILD_DIR}/libmuparserx.so" ]] && \
+   find "${MUPARSERX_INSTALL_PREFIX}/lib" -maxdepth 1 -name 'libmuparserx.so*' | grep -q .; then
+  (
+    cd "${MUPARSERX_SOURCE_DIR}"
+    ldd build/libmuparserx.so
+  )
+  exit 0
+fi
+
 mkdir -p "${MUPARSERX_BUILD_DIR}"
 (
   cd "${MUPARSERX_BUILD_DIR}"
@@ -28,6 +43,8 @@ mkdir -p "${MUPARSERX_BUILD_DIR}"
   make -j"${MUPARSERX_BUILD_PARALLEL}"
   cmake --install .
 )
+
+printf '%s\n' "${CURRENT_REF}" > "${REF_MARKER}"
 
 test -f "${MUPARSERX_BUILD_DIR}/libmuparserx.so"
 (

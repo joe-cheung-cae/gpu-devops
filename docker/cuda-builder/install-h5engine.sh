@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${HDF5_INSTALL_PREFIX:=${HOME}/deps/hdf5-install}"
+: "${DEPS_ROOT:=${HOME}/deps}"
+: "${HDF5_INSTALL_PREFIX:=${DEPS_ROOT}/hdf5-install}"
 : "${H5ENGINE_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
+: "${H5ENGINE_OUTPUT_ROOT:=${DEPS_ROOT}}"
 : "${H5ENGINE_SPH_ARCHIVE:=docker/cuda-builder/deps/h5engine-sph.tar.gz}"
 : "${H5ENGINE_DEM_ARCHIVE:=docker/cuda-builder/deps/h5engine-dem.tar.gz}"
 
-test -f "${HOME}/deps/hdf5-install/lib/libhdf5.so"
+test -f "${HDF5_INSTALL_PREFIX}/lib/libhdf5.so"
+
+resolve_archive_path() {
+  local archive_path="$1"
+  if [[ -f "${archive_path}" ]]; then
+    printf '%s\n' "${archive_path}"
+  else
+    printf '/tmp/%s\n' "$(basename "${archive_path}")"
+  fi
+}
 
 copy_hdf5_runtime() {
   local package_dir="$1"
@@ -21,12 +32,22 @@ copy_hdf5_runtime() {
 build_package() {
   local package_name="$1"
   local archive_path="$2"
-  local package_dir="${HOME}/deps/${package_name}"
+  local package_dir="${H5ENGINE_OUTPUT_ROOT}/${package_name}"
+  local version_marker="${package_dir}/.h5engine-source-version"
 
+  archive_path="$(resolve_archive_path "${archive_path}")"
   test -f "${archive_path}"
+
+  if [[ -f "${version_marker}" ]] && \
+     grep -Fxq "$(basename "${archive_path}")" "${version_marker}" && \
+     [[ -f "${package_dir}/build/h5Engine/libh5Engine.so" ]] && \
+     [[ -x "${package_dir}/build/testHdf5" ]]; then
+    return 0
+  fi
+
   rm -rf "${package_dir}"
-  mkdir -p "${HOME}/deps"
-  tar -xzf "${archive_path}" -C "${HOME}/deps"
+  mkdir -p "${H5ENGINE_OUTPUT_ROOT}"
+  tar -xzf "${archive_path}" -C "${H5ENGINE_OUTPUT_ROOT}"
 
   test -d "${package_dir}"
   copy_hdf5_runtime "${package_dir}"
@@ -45,6 +66,7 @@ build_package() {
     ldd ./build/h5Engine/libh5Engine.so
     ./build/testHdf5
   )
+  printf '%s\n' "$(basename "${archive_path}")" > "${version_marker}"
 }
 
 build_package "h5engine-sph" "/tmp/$(basename "${H5ENGINE_SPH_ARCHIVE}")"

@@ -1,5 +1,6 @@
 stages:
   - verify
+  - prepare
   - build
   - test
   - deploy
@@ -8,6 +9,7 @@ variables:
   BUILD_PLATFORM: centos7
   CUDA_CXX_BUILD_ROOT: .gpu-devops/artifacts/cuda-cxx-build
   CUDA_CXX_INSTALL_ROOT: .gpu-devops/artifacts/cuda-cxx-install
+  CUDA_CXX_DEPS_ROOT: .gpu-devops/artifacts/deps
 
 # This example is for normal shell executors. Jobs run as the host user
 # managed by GitLab Runner, and Linux builds are delegated to the published
@@ -43,15 +45,29 @@ shell-runner:verify:linux:
     - docker info >/dev/null
     - docker compose version >/dev/null
 
+shell-runner:prepare-deps:linux:
+  extends: .linux_shell_runner
+  stage: prepare
+  script:
+    - .gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - ${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}/
+
 shell-runner:build:linux:
   extends: .linux_shell_runner
   stage: build
+  needs:
+    - shell-runner:prepare-deps:linux
   script:
     - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
   artifacts:
     when: always
     expire_in: 7 days
     paths:
+      - ${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}/
       - ${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/
       - ${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/
 
@@ -70,6 +86,7 @@ shell-runner:test:linux:
     when: always
     expire_in: 7 days
     paths:
+      - ${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}/
       - ${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/
       - ${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/
   script:
