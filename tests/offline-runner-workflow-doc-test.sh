@@ -45,5 +45,10 @@ assert_manual_toolkit_bootstrap "${ROOT_DIR}/README.md"
 assert_manual_toolkit_bootstrap "${ROOT_DIR}/docs/operations.md"
 assert_manual_toolkit_bootstrap "${ROOT_DIR}/docs/usage.en.md"
 assert_manual_toolkit_bootstrap "${ROOT_DIR}/docs/usage.zh-CN.md"
+assert_contains "${ROOT_DIR}/README.md" 'Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in'
+assert_contains "${ROOT_DIR}/README.md" "CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1"
+assert_contains "${ROOT_DIR}/docs/operations.md" "run as the current Linux caller UID/GID by default"
+assert_contains "${ROOT_DIR}/docs/operations.md" "CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1"
+assert_contains "${ROOT_DIR}/docs/operations.md" "not a rootless Docker daemon deployment"
 
 echo "offline runner workflow docs verified"

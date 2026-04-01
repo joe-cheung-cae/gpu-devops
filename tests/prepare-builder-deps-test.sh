@@ -43,6 +43,14 @@ mkdir -p "${MOCK_BIN}"
 cat > "${MOCK_BIN}/docker" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "$1" == "info" ]]; then
+  if [[ "${MOCK_DOCKER_ROOTLESS:-0}" == "1" ]]; then
+    printf 'name=rootless\n'
+  else
+    printf 'name=seccomp\n'
+  fi
+  exit 0
+fi
 printf '%s\n' "$*" >> "${TEST_LOG_FILE:?}"
 exit 0
 EOF
@@ -65,7 +73,7 @@ run_prepare() {
   local log_file="$1"
   local stdout_file="$2"
   shift 2
-  TEST_LOG_FILE="${log_file}" PATH="${MOCK_BIN}:${PATH}" \
+  TEST_LOG_FILE="${log_file}" MOCK_DOCKER_ROOTLESS=1 PATH="${MOCK_BIN}:${PATH}" \
     "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${ENV_FILE}" "$@" > "${stdout_file}"
 }
 
@@ -73,6 +81,7 @@ default_log="${TMP_DIR}/default.log"
 default_stdout="${TMP_DIR}/default.stdout"
 run_prepare "${default_log}" "${default_stdout}" --platform centos7
 assert_contains "${default_log}" "run --rm"
+assert_contains "${default_log}" "--user $(id -u):$(id -g)"
 assert_contains "${default_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
 assert_contains "${default_log}" "${HOST_PROJECT_DIR}:/workspace"
 assert_contains "${default_log}" "${ROOT_DIR}:/toolkit"
@@ -116,6 +125,7 @@ toolchain_log="${TMP_DIR}/toolchain.log"
 toolchain_stdout="${TMP_DIR}/toolchain.stdout"
 run_prepare "${toolchain_log}" "${toolchain_stdout}" --platform ubuntu2204 --deps eigen3,openmpi
 assert_contains "${toolchain_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+assert_contains "${toolchain_log}" "--user $(id -u):$(id -g)"
 assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
 assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
 assert_not_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
@@ -133,6 +143,22 @@ if text.index("/toolkit/docker/cuda-builder/install-hdf5.sh") > text.index("/too
     raise SystemExit("hdf5 should be installed before h5engine")
 PY
 assert_contains "${h5engine_stdout}" "Dependencies: hdf5,h5engine"
+
+set +e
+TEST_LOG_FILE="${TMP_DIR}/rootful.log" PATH="${MOCK_BIN}:${PATH}" \
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${ENV_FILE}" --platform centos7 > "${TMP_DIR}/rootful.stdout" 2> "${TMP_DIR}/rootful.stderr"
+status=$?
+set -e
+if [[ ${status} -eq 0 ]]; then
+  fail "prepare-builder-deps.sh should reject non-rootless docker by default"
+fi
+assert_contains "${TMP_DIR}/rootful.stderr" "Rootless Docker is required"
+assert_contains "${TMP_DIR}/rootful.stderr" "CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1"
+
+TEST_LOG_FILE="${TMP_DIR}/override.log" CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1 PATH="${MOCK_BIN}:${PATH}" \
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${ENV_FILE}" --platform centos7 > "${TMP_DIR}/override.stdout" 2> "${TMP_DIR}/override.stderr"
+assert_contains "${TMP_DIR}/override.stderr" "Proceeding with rootful Docker because CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1"
+assert_contains "${TMP_DIR}/override.log" "run --rm"
 
 assert_file_exists "${ROOT_DIR}/scripts/prepare-builder-deps.sh"
 
