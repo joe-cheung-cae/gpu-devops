@@ -6,6 +6,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 # shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/docker-rootless-common.sh"
+# shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/image-bundle-common.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/progress-common.sh"
@@ -13,12 +15,14 @@ source "${ROOT_DIR}/scripts/progress-common.sh"
 ENV_FILE="${ROOT_DIR}/.env"
 PLATFORM=""
 DEPS_CSV="$(third_party_all_deps_csv)"
+CUDA_CXX_ALLOW_ROOTFUL_DOCKER="${CUDA_CXX_ALLOW_ROOTFUL_DOCKER:-0}"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/prepare-builder-deps.sh [--env-file PATH] [--platform centos7|rocky8|ubuntu2204] [--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx]
 
 Prepares the project-local dependency cache used by docker compose and shell-runner Linux jobs.
+Linux project-side Docker workflows require rootless Docker by default. Set CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1 only when you need to bypass this check for a legacy host.
 EOF
 }
 
@@ -63,6 +67,7 @@ progress_init 5
 progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
+require_rootless_docker
 
 PLATFORM="${PLATFORM:-${BUILDER_DEFAULT_PLATFORM}}"
 if ! builder_platform_supported "${PLATFORM}"; then
@@ -74,6 +79,8 @@ ENV_BASE_DIR="$(cd "$(dirname "${ENV_FILE}")" && pwd)"
 HOST_PROJECT_DIR_VALUE="${HOST_PROJECT_DIR:-.}"
 HOST_PROJECT_DIR="$(normalize_host_path "${ENV_BASE_DIR}" "${HOST_PROJECT_DIR_VALUE}")"
 CUDA_CXX_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}"
+RUN_UID="${CUDA_CXX_RUN_UID:-$(id -u)}"
+RUN_GID="${CUDA_CXX_RUN_GID:-$(id -g)}"
 
 if [[ "${CUDA_CXX_DEPS_ROOT}" = /* ]]; then
   HOST_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT}"
@@ -110,6 +117,7 @@ COMMAND_STRING="${COMMAND_STRING% && }"
 
 progress_step "Preparing builder dependency cache"
 docker run --rm \
+  --user "${RUN_UID}:${RUN_GID}" \
   -v "${HOST_PROJECT_DIR}:/workspace" \
   -v "${ROOT_DIR}:/toolkit" \
   "${EXTRA_MOUNT[@]}" \
