@@ -5,6 +5,8 @@
 - 平台运维人员：负责部署共享 GitLab GPU Runner 并完成注册
 - 研发工程师：负责使用标准 builder 镜像或本地 Compose 流程构建 CUDA/CMake 项目
 
+bundle 相关脚本的内部实现已按 `scripts/export/`、`scripts/import/`、`scripts/common/` 分类，但对外仍保持原有顶层包装命令作为正式入口。
+
 ## 1. 平台运维使用流程
 
 ### 步骤 1：准备宿主机和配置文件

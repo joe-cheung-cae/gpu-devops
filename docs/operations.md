@@ -8,6 +8,8 @@
 4. Install NVIDIA Container Toolkit and configure Docker to expose the `nvidia` runtime.
 5. Reboot or restart Docker if runtime changes are not visible.
 
+Bundle-related implementation is now grouped under `scripts/export/`, `scripts/import/`, and `scripts/common/`. Operators should keep using the existing top-level wrapper commands for compatibility.
+
 ## Bootstrap
 
 ```bash

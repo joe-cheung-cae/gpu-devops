@@ -90,6 +90,8 @@ For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_
 
 The same tags can be used by the optional shell-runner path. In that mode, the job runs as the Linux user `gitlab-runner` and calls `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` instead of using GitLab's Docker executor directly.
 
+Internally, bundle-related implementations are now grouped under `scripts/export/`, `scripts/import/`, and `scripts/common/`, while the existing top-level commands remain the stable operator-facing entrypoints.
+
 Single-GPU jobs should use `gpu`, `cuda`, `cuda-11`.
 
 Multi-GPU jobs should use `gpu-multi`, `cuda`, `cuda-11`. The initial implementation treats the multi-GPU pool as a separate Runner registration with stricter concurrency.

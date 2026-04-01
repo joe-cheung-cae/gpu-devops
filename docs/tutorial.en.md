@@ -28,6 +28,7 @@ Default tag policy:
 - `docker/cuda-builder/`: standard CUDA builder image definition
 - `runner/`: runner config template and registration script
 - `scripts/`: image build, compose wrapper, and host verification scripts
+- `scripts/export/`, `scripts/import/`, `scripts/common/`: internal grouping for bundle-related script implementations
 - `examples/`: minimal CUDA/CMake example and GitLab CI example
 - `docs/`: operations, contract, and validation documents
 

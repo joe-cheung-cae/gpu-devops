@@ -5,6 +5,8 @@ This guide is a quick step-by-step reference for the two main ways to use this r
 - platform operators who deploy and register the shared GitLab GPU Runner
 - R&D engineers who build CUDA/CMake projects with the published builder image or local Compose workflow
 
+Internally, bundle-related implementations are grouped under `scripts/export/`, `scripts/import/`, and `scripts/common/`, but the existing top-level wrapper commands remain the supported entrypoints.
+
 ## 1. Platform operator workflow
 
 ### Step 1: Prepare the host

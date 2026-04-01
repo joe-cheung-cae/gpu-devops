@@ -117,6 +117,9 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/compose.sh"
+      assert_file_exists "${test_dir}/assets/scripts/common/env.sh"
+      assert_file_exists "${test_dir}/assets/scripts/export/images.sh"
+      assert_file_exists "${test_dir}/assets/scripts/import/project-bundle.sh"
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/export-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
@@ -195,6 +198,9 @@ write_import_bundle() {
       "${bundle_root}/assets/examples/gitlab-ci" \
       "${bundle_root}/assets/docs" \
       "${bundle_root}/assets/scripts" \
+      "${bundle_root}/assets/scripts/common" \
+      "${bundle_root}/assets/scripts/export" \
+      "${bundle_root}/assets/scripts/import" \
       "${bundle_root}/assets/runner" \
       "${bundle_root}/assets/docker/gitlab-runner" \
       "${bundle_root}/assets/docker/cuda-builder/deps"
@@ -206,8 +212,17 @@ write_import_bundle() {
     cp "${ROOT_DIR}/docs/offline-env-configuration.md" "${bundle_root}/assets/docs/offline-env-configuration.md"
     cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
     cp "${ROOT_DIR}/scripts/export-images.sh" "${bundle_root}/assets/scripts/export-images.sh"
+    cp "${ROOT_DIR}/scripts/export/images.sh" "${bundle_root}/assets/scripts/export/images.sh"
+    cp "${ROOT_DIR}/scripts/export/project-bundle.sh" "${bundle_root}/assets/scripts/export/project-bundle.sh"
     cp "${ROOT_DIR}/scripts/import-images.sh" "${bundle_root}/assets/scripts/import-images.sh"
+    cp "${ROOT_DIR}/scripts/import/images.sh" "${bundle_root}/assets/scripts/import/images.sh"
+    cp "${ROOT_DIR}/scripts/import/project-bundle.sh" "${bundle_root}/assets/scripts/import/project-bundle.sh"
     cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
+    cp "${ROOT_DIR}/scripts/common/env.sh" "${bundle_root}/assets/scripts/common/env.sh"
+    cp "${ROOT_DIR}/scripts/common/images.sh" "${bundle_root}/assets/scripts/common/images.sh"
+    cp "${ROOT_DIR}/scripts/common/archive.sh" "${bundle_root}/assets/scripts/common/archive.sh"
+    cp "${ROOT_DIR}/scripts/common/project-bundle.sh" "${bundle_root}/assets/scripts/common/project-bundle.sh"
+    cp "${ROOT_DIR}/scripts/common/progress.sh" "${bundle_root}/assets/scripts/common/progress.sh"
     cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
     cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${bundle_root}/assets/scripts/prepare-builder-deps.sh"
@@ -288,6 +303,9 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/common/env.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/export/images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/import/project-bundle.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/export-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"

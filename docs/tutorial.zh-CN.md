@@ -28,6 +28,7 @@
 - `docker/cuda-builder/`：标准 CUDA builder 镜像定义
 - `runner/`：Runner 配置模板和注册脚本
 - `scripts/`：镜像构建、Compose 启动、宿主机校验脚本
+- `scripts/export/`、`scripts/import/`、`scripts/common/`：bundle 相关脚本的内部分类实现目录
 - `examples/`：最小 CUDA/CMake 示例和 GitLab CI 示例
 - `docs/`：操作文档、平台契约、自检文档
 
