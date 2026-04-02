@@ -24,7 +24,7 @@ scripts/export/images.sh
 
 `scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-third-party-cache.sh --deps chrono` remains as a Chrono-only compatibility wrapper.
 
-The published builder images now keep only the common toolchain baseline. Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
+The published builder images now keep only the common toolchain baseline. Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `third_party/<platform>` with:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
@@ -80,7 +80,7 @@ HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.
 CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build
 CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install
-CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party
 CUDA_CXX_CMAKE_GENERATOR=Ninja
 CUDA_CXX_CMAKE_ARGS=
 CUDA_CXX_BUILD_ARGS=
@@ -121,7 +121,7 @@ scripts/import/project-bundle.sh --target-dir /path/to/other/project
 
 The imported files are installed under `/path/to/other/project/.gpu-devops/` by default.
 
-The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree. The generated file now includes `CUDA_CXX_BUILD_ROOT`, `CUDA_CXX_INSTALL_ROOT`, and `CUDA_CXX_DEPS_ROOT`.
+The importer also generates `/path/to/other/project/.gpu-devops/.env` so the copied `compose.sh` mounts the target project root and treats that root as the default source tree. The generated file now includes `CUDA_CXX_BUILD_ROOT`, `CUDA_CXX_INSTALL_ROOT`, and `CUDA_CXX_THIRD_PARTY_ROOT`.
 
 The imported `.gpu-devops/` directory now behaves as a functional operator toolkit, not just a minimal project integration stub. It includes:
 
@@ -181,7 +181,7 @@ All third-party entrypoints now use the shared registry under `scripts/common/th
 
 If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example).
 
-The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`, install outputs are written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and the prepared dependency cache is reused from `CUDA_CXX_DEPS_ROOT/<platform>`.
+The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`, install outputs are written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and the prepared third_party tree is reused from `CUDA_CXX_THIRD_PARTY_ROOT/<platform>`.
 
 If those target directories are not writable by the calling user, the compose workflow now fails with a normal permission error instead of falling back to container `root`.
 

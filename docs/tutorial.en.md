@@ -68,7 +68,7 @@ Platform notes:
 - `centos7` remains available for compatibility and uses `vault.centos.org`
 - `centos7` keeps `urllib3<2` for OpenSSL compatibility
 - all platforms keep the base image limited to the common CUDA/C++ toolchain
-- project dependencies are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>`
+- project dependencies are prepared later into `${CUDA_CXX_THIRD_PARTY_ROOT}/<platform>`
 
 ## 5. Configure environment variables
 
@@ -114,7 +114,7 @@ for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-third-party
 remains as a Chrono-only compatibility wrapper.
 
 Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and
-muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
+muparserx are prepared later into `CUDA_CXX_THIRD_PARTY_ROOT/<platform>` with:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7

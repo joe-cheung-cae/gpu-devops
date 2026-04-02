@@ -45,7 +45,7 @@ scripts/build-builder-image.sh --all-platforms
 
 `scripts/prepare-third-party-cache.sh` is optional. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-third-party-cache.sh --deps chrono` stays available as a Chrono-only compatibility wrapper.
 
-The published builder images keep only the generic CUDA/C++ toolchain baseline. Project dependencies such as `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
+The published builder images keep only the generic CUDA/C++ toolchain baseline. Project dependencies such as `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` are prepared later into `third_party/<platform>` with:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7
@@ -160,7 +160,7 @@ Point `.env` at your project tree:
 - `CUDA_CXX_PROJECT_DIR=.`
 - `CUDA_CXX_BUILD_ROOT=./artifacts/cuda-cxx-build`
 - `CUDA_CXX_INSTALL_ROOT=./artifacts/cuda-cxx-install`
-- `CUDA_CXX_DEPS_ROOT=./artifacts/deps`
+- `CUDA_CXX_THIRD_PARTY_ROOT=./third_party`
 
 Prepare the dependency cache:
 
@@ -181,7 +181,7 @@ Run multiple platform builds:
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`, and heavy dependency caches are reused from `${CUDA_CXX_DEPS_ROOT}/<platform>`.
+Build outputs are written under `${CUDA_CXX_BUILD_ROOT}/<platform>`, install outputs are written under `${CUDA_CXX_INSTALL_ROOT}/<platform>`, and project dependencies are reused from `${CUDA_CXX_THIRD_PARTY_ROOT}/<platform>`.
 
 Project containers started through `scripts/compose.sh` and `scripts/prepare-builder-deps.sh` run as the current Linux caller UID/GID by default. These project-side entrypoints require a rootless Docker daemon on Linux unless you explicitly set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` for a legacy host. This keeps generated files owned by that caller and reduces cross-user access in shared Docker hosts. It is not the same as running a rootless Docker daemon automatically for you.
 
@@ -205,7 +205,7 @@ script:
   - .gpu-devops/scripts/compose.sh run --rm "cuda-cxx-${BUILD_PLATFORM}"
 ```
 
-Those project containers inherit the shell runner user's UID/GID. The same Linux jobs expect rootless Docker by default; only set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` if you must keep a legacy rootful daemon during migration. If `${CUDA_CXX_DEPS_ROOT}`, `${CUDA_CXX_BUILD_ROOT}`, or `${CUDA_CXX_INSTALL_ROOT}` is not writable by that Linux user, the job fails on permissions instead of silently running the builder container as `root`.
+Those project containers inherit the shell runner user's UID/GID. The same Linux jobs expect rootless Docker by default; only set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` if you must keep a legacy rootful daemon during migration. If `${CUDA_CXX_THIRD_PARTY_ROOT}`, `${CUDA_CXX_BUILD_ROOT}`, or `${CUDA_CXX_INSTALL_ROOT}` is not writable by that Linux user, the job fails on permissions instead of silently running the builder container as `root`.
 
 The example keeps this Linux default:
 
@@ -215,7 +215,7 @@ Linux shell-runner builds support `centos7`, `rocky8`, and `ubuntu2204`. A separ
 
 The example adds a dedicated Linux `prepare` stage that runs `.gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"` before build. It keeps `test` and `deploy` stages for both Linux and Windows, so teams can extend the same shell-runner pipeline from dependency preparation into build verification, test execution, and deployment handoff.
 In the Linux deploy job, `BUILD_PLATFORM` is used again to choose the platform-specific deployment shell, for example `./scripts/deploy-centos7.sh`, `./scripts/deploy-rocky8.sh`, or `./scripts/deploy-ubuntu2204.sh`.
-For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`, `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`, and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`.
+For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_THIRD_PARTY_ROOT}/${BUILD_PLATFORM}`, `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`, and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`.
 For offline `.env` details and generated defaults, see [offline-env-configuration.md](offline-env-configuration.md).
 
 ### Option C: Import the integration bundle into another project

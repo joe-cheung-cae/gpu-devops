@@ -16,8 +16,8 @@
 - The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
 - All builder platforms include only the common CUDA/C++ toolchain baseline: UUID headers, `ccache`, CMake, Conan, and Ninja.
-- Project dependencies such as Eigen3, OpenMPI, Project Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` by `scripts/prepare-builder-deps.sh`.
-- If `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the dependency-preparation workflow consumes that local Chrono source archive before falling back to git.
+- Project dependencies such as Eigen3, OpenMPI, Project Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_THIRD_PARTY_ROOT}/<platform>` by `scripts/prepare-builder-deps.sh`.
+- If `${CUDA_CXX_THIRD_PARTY_ROOT}/cache/chrono-source.tar.gz` exists, the project-level third_party preparation workflow consumes that local Chrono source archive before falling back to git.
 - Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`.
 - HDF5 still requires the matching zlib development package inside the base image so the later dependency-preparation step can build it successfully.
 - `rocky8` uses the Rocky Linux 8 CUDA image and installs Python 3 from the system package set.
@@ -40,7 +40,7 @@ The standard builder image includes:
 - `python3` and `pip`
 - `conan`
 
-The standard local dependency cache adds:
+The standard local third_party tree adds:
 
 - `Eigen3 3.4.0`
 - `OpenMPI 4.1.6`

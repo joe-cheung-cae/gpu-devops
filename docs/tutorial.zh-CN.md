@@ -66,7 +66,7 @@ scripts/verify-host.sh
 
 - `centos7` 仍保留兼容性，仓库会改写到 `vault.centos.org`
 - 所有平台的基础镜像只包含通用 CUDA/C++ 工具链
-- 项目依赖会后置到 `${CUDA_CXX_DEPS_ROOT}/<platform>`
+- 项目依赖会后置到 `${CUDA_CXX_THIRD_PARTY_ROOT}/<platform>`
 
 ## 5. 配置 `.env`
 
@@ -107,7 +107,7 @@ scripts/build-builder-image.sh --all-platforms
 `scripts/prepare-third-party-cache.sh` 会准备 `chrono`、`eigen3`、`openmpi`、
 `muparserx` 的本地归档（可选但推荐）。
 
-项目依赖通过以下步骤准备到 `CUDA_CXX_DEPS_ROOT/<platform>`：
+项目依赖通过以下步骤准备到 `CUDA_CXX_THIRD_PARTY_ROOT/<platform>`：
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7

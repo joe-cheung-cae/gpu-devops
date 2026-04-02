@@ -1,12 +1,13 @@
 # Shared GitLab GPU Build Platform
 
-This repository provides a shared CUDA/CMake build platform plus a shell-runner workflow for GitLab jobs. It keeps the project build path, offline image export/import, and portable bundle tooling. It does not provide a Docker-based GitLab Runner deployment anymore.
+This repository provides a shared CUDA/CMake build platform plus a shell-runner workflow for GitLab jobs. It keeps the project build path, offline image export/import, and portable bundle tooling. It also delivers a project-local `third_party` tree for target repositories. It does not provide a Docker-based GitLab Runner deployment anymore.
 
 ## What it ships
 
 - A standard CUDA builder image family for project jobs
 - Builder platform variants: `centos7`, `rocky8`, `ubuntu2204`
 - A local CUDA/C++ Compose workflow for one or more builder platforms
+- A project-local `third_party` delivery flow for dependency tarballs and install recipes
 - A shell-runner registration path for hosts that run jobs as the Linux user `gitlab-runner`
 - Image export/import and portable project bundle tooling
 - Example GitLab CI and a minimal CUDA/CMake smoke project
@@ -14,7 +15,7 @@ This repository provides a shared CUDA/CMake build platform plus a shell-runner 
 The builder images keep only the common CUDA/C++ toolchain baseline:
 
 - CUDA compiler, CMake, Conan, Ninja, UUID development headers, and `ccache`
-- project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>`
+- project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `third_party/<platform>`
 
 ## Tutorials
 
@@ -26,11 +27,12 @@ The builder images keep only the common CUDA/C++ toolchain baseline:
 ## Platform contract
 
 - Projects consume the published builder image directly from `.gitlab-ci.yml` or the shell-runner example
-- The platform guarantees a standard CUDA/CMake toolchain baseline, not project-specific dependencies
+- The platform guarantees a standard CUDA/CMake toolchain baseline, while project-specific dependencies live in the delivered `third_party` tree
+- The target project repository owns its own `third_party` submodule or snapshot; this repository only delivers the content
 
 ## Directory layout
 
-- `docker/cuda-builder/`: standard CUDA builder image and dependency installers
+- `docker/cuda-builder/`: standard CUDA builder image and dependency installers used to prepare project `third_party` content
 - `runner/`: shell-runner registration script
 - `scripts/`: operator scripts for setup, image build, and verification
 - `examples/`: example GitLab CI config and CUDA/CMake smoke test
@@ -50,18 +52,18 @@ The builder images keep only the common CUDA/C++ toolchain baseline:
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh --all-platforms`.
 4. If the target host is air-gapped, export the deployment images with `scripts/export/images.sh`.
-5. Prepare the project-local dependency cache with `scripts/prepare-builder-deps.sh --platform centos7`.
+5. Prepare or refresh the project-local `third_party` tree with `scripts/prepare-builder-deps.sh --platform centos7` or `scripts/install-third-party.sh --host linux --platform centos7`.
 6. Register the shell runner with `runner/register-shell-runner.sh gpu`.
 7. Validate the deployment with [docs/self-check.md](docs/self-check.md).
 
 ## Compose files
 
-- [docker-compose.yml](docker-compose.yml): local CUDA/C++ project build and dependency-cache preparation
+- [docker-compose.yml](docker-compose.yml): local CUDA/C++ project build and project `third_party` consumption
 - [compose.sh](scripts/compose.sh) targets `docker-compose.yml`
 
 Project build containers started through `scripts/compose.sh` run as the current host caller UID/GID by default. This does not change the Docker daemon itself into rootless mode. On Linux, the project-side Docker entrypoints still expect rootless-style container access by default. Set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` only when you need to keep a legacy rootful host temporarily.
 
-Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in [docs/offline-env-configuration.md](docs/offline-env-configuration.md).
+Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in [docs/offline-env-configuration.md](docs/offline-env-configuration.md). The imported bundle writes project assets under `.gpu-devops/`, including `.gpu-devops/third_party/`.
 
 Local project build examples:
 
@@ -69,7 +71,7 @@ Local project build examples:
 - Multiple platforms: `scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204`
 - Profile-based selection: `docker compose --profile centos7 --profile rocky8 -f docker-compose.yml up`
 
-The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`, install output is written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and heavy dependency caches live under `CUDA_CXX_DEPS_ROOT/<platform>`.
+The build Compose file mounts the current host working tree into `/workspace`. `CUDA_CXX_PROJECT_DIR` is then resolved inside that workspace, build output is written to `CUDA_CXX_BUILD_ROOT/<platform>`, install output is written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and project dependencies are resolved from `CUDA_CXX_THIRD_PARTY_ROOT/<platform>`.
 
 For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](examples/env/cuda-cxx.env.example).
 
@@ -123,7 +125,7 @@ scripts/install-third-party.sh --host linux --platform centos7
 scripts/install-third-party.sh --host windows
 ```
 
-The third-party entrypoints now resolve dependencies from a shared registry. `--deps` selects the target packages, and the scripts automatically add required upstream packages and run them in dependency order.
+The third-party entrypoints resolve dependencies from a shared registry. `--deps` selects the target packages, and the scripts automatically add required upstream packages and run them in dependency order. The resulting install trees are delivered into the project-local `third_party` directory instead of a base-image cache.
 
 ## Offline image bundle
 
@@ -166,7 +168,9 @@ The imported `.gpu-devops/` directory is a functional operator toolkit. It inclu
 - builder image build scripts plus `docker/cuda-builder/`
 - shell-runner registration assets under `runner/`
 - the existing Compose wrappers and docs
+- delivered project `third_party` content ready for the target repository to consume
 
+When the target project repository receives the delivered assets, it owns the `third_party` submodule or snapshot in its own tree. This repository only ships the content that can be placed under `third_party/`.
 ## Project usage
 
 See [examples/gitlab-ci/shared-gpu-shell-runner.yml](examples/gitlab-ci/shared-gpu-shell-runner.yml) for a complete example.

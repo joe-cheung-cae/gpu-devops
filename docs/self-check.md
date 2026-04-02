@@ -30,7 +30,7 @@ scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
 docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null && ! command -v mpicc >/dev/null'
 scripts/prepare-builder-deps.sh --platform centos7
-docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./artifacts/deps/centos7/openmpi-install/bin/mpicc" && test -f "./artifacts/deps/centos7/openmpi-install/lib/libmpi.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./third_party/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./third_party/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./third_party/centos7/openmpi-install/bin/mpicc" && test -f "./third_party/centos7/openmpi-install/lib/libmpi.so" && test -f "./third_party/centos7/hdf5-install/lib/libhdf5.so" && test -f "./third_party/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./third_party/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./third_party/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -42,15 +42,15 @@ Expected:
 - If proxy settings are present, all builder platforms consume the same proxy input and `centos7` still completes its `yum` steps
 - `/usr/include/uuid/uuid.h` and `ccache` exist in the base builder image
 - `mpicc` is not present before the project-local dependency cache is prepared
-- `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
-- `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
-- `./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core` exists
-- `./artifacts/deps/centos7/openmpi-install/bin/mpicc` exists
-- `./artifacts/deps/centos7/openmpi-install/lib/libmpi.so` exists
-- `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
-- `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
-- `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
-- `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` exists
+- `scripts/prepare-builder-deps.sh --platform centos7` fills `./third_party/centos7`
+- `./third_party/centos7/chrono-install/lib/libChronoEngine.so` exists
+- `./third_party/centos7/eigen3-install/include/eigen3/Eigen/Core` exists
+- `./third_party/centos7/openmpi-install/bin/mpicc` exists
+- `./third_party/centos7/openmpi-install/lib/libmpi.so` exists
+- `./third_party/centos7/hdf5-install/lib/libhdf5.so` exists
+- `./third_party/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
+- `./third_party/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
+- `./third_party/centos7/muparserx-install/lib/libmuparserx.so*` exists
 
 ## 3. Validate local project build Compose
 
@@ -65,7 +65,7 @@ Expected:
 
 - The sample CUDA/C++ project configures successfully
 - The sample CUDA/C++ project builds successfully
-- The prepared dependency cache under `${CUDA_CXX_DEPS_ROOT}/centos7` is reused
+- The prepared third_party tree under `${CUDA_CXX_THIRD_PARTY_ROOT}/centos7` is reused
 - Build output is written under `${CUDA_CXX_BUILD_ROOT}/centos7`
 
 ## 4. Register shell runner entries
