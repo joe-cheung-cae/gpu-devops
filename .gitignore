@@ -18,4 +18,5 @@ artifacts/*.tar.gz
 artifacts/*.tar.gz.sha256
 artifacts/*.images.txt
 artifacts/cuda-cxx-build/
+.worktrees/
 *.log
