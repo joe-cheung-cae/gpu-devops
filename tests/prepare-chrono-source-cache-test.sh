@@ -48,17 +48,40 @@ EXPECTED_REF="$(
 
 CACHE_DIR="${TMP_DIR}/chrono-cache"
 ARCHIVE_PATH="${TMP_DIR}/chrono-source.tar.gz"
+cmake_archive="${TMP_DIR}/cmake-3.26.0-linux-x86_64.tar.gz"
+
+mkdir -p "${TMP_DIR}/bin"
+cat > "${TMP_DIR}/bin/curl" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+output=""
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    -o)
+      output="${2:?Missing output for -o}"
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+mkdir -p "$(dirname "${output}")"
+printf 'placeholder cmake archive\n' > "${output}"
+EOF
+chmod +x "${TMP_DIR}/bin/curl"
 
 CHRONO_GIT_URL="${SOURCE_REPO}" \
 CHRONO_GIT_REF="${EXPECTED_REF}" \
 CHRONO_CACHE_DIR="${CACHE_DIR}" \
 CHRONO_ARCHIVE_OUTPUT="${ARCHIVE_PATH}" \
-  "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" > "${TMP_DIR}/stdout.log"
+CMAKE_ARCHIVE_OUTPUT="${cmake_archive}" \
+PATH="${TMP_DIR}/bin:${PATH}" \
+  "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps chrono > "${TMP_DIR}/stdout.log"
 
 assert_file_exists "${ARCHIVE_PATH}"
-assert_contains "${TMP_DIR}/stdout.log" "Prepared Chrono source archive"
-assert_contains "${TMP_DIR}/stdout.log" "${ARCHIVE_PATH}"
-assert_contains "${TMP_DIR}/stdout.log" "${EXPECTED_REF}"
+assert_contains "${TMP_DIR}/stdout.log" "Prepared third-party archives"
+assert_file_exists "${cmake_archive}"
 
 if tar -tzf "${ARCHIVE_PATH}" | grep -q '^.git'; then
   fail "archive should not contain .git metadata"

@@ -85,7 +85,7 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-images.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
+  "${ROOT_DIR}/scripts/export/images.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.images.txt"
@@ -145,7 +145,7 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-images.sh" \
+  "${ROOT_DIR}/scripts/export/images.sh" \
     --env-file "${test_dir}/.env" \
     --output "${test_dir}/bundle.tar.gz" \
     --only-build-images > "${test_dir}/stdout.log"
@@ -192,7 +192,7 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-images.sh" \
+  "${ROOT_DIR}/scripts/export/images.sh" \
     --env-file "${test_dir}/.env" \
     --output "${test_dir}/bundle.tar.gz" \
     --only-build-images \
@@ -233,7 +233,7 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
+  "${ROOT_DIR}/scripts/import/images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" > "${test_dir}/stdout.log"
 
   assert_contains "${test_dir}/logs/docker.log" "load"
   assert_contains "${test_dir}/stdout.log" "[3/4] Loading image archive into Docker"
@@ -264,7 +264,7 @@ EOF
   set +e
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" >"${test_dir}/stdout.log" 2>"${test_dir}/stderr.log"
+  "${ROOT_DIR}/scripts/import/images.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" >"${test_dir}/stdout.log" 2>"${test_dir}/stderr.log"
   local status=$?
   set -e
 
@@ -311,11 +311,11 @@ EOF
 
   TEST_LOG_FILE="${test_dir}/logs/export.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/export.stdout.log"
+  "${ROOT_DIR}/scripts/export/project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/export.stdout.log"
 
   TEST_LOG_FILE="${test_dir}/logs/import.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-project-bundle.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/import.stdout.log"
+  "${ROOT_DIR}/scripts/import/project-bundle.sh" --env-file "${test_dir}/.env" --input "${test_dir}/bundle.tar.gz" --mode images > "${test_dir}/import.stdout.log"
 
   assert_contains "${test_dir}/logs/export.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"

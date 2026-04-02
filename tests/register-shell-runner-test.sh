@@ -64,7 +64,7 @@ EOF
 
 run_gpu_mode_test() {
   local test_dir="${TMP_DIR}/gpu-mode"
-  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts" "${test_dir}/home"
+  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts/common" "${test_dir}/home"
   local shell_user
   shell_user="$(id -un)"
 
@@ -72,7 +72,7 @@ run_gpu_mode_test() {
   write_runner_mock "${test_dir}/bin/gitlab-runner"
 
   cp "${ROOT_DIR}/runner/register-shell-runner.sh" "${test_dir}/runner/register-shell-runner.sh"
-  cp "${ROOT_DIR}/scripts/progress-common.sh" "${test_dir}/scripts/progress-common.sh"
+  cp "${ROOT_DIR}/scripts/common/progress.sh" "${test_dir}/scripts/common/progress.sh"
   chmod +x "${test_dir}/runner/register-shell-runner.sh"
 
   (
@@ -95,7 +95,7 @@ run_gpu_mode_test() {
 
 run_multi_mode_tls_test() {
   local test_dir="${TMP_DIR}/multi-mode-tls"
-  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts" "${test_dir}/certs" "${test_dir}/home"
+  mkdir -p "${test_dir}/bin" "${test_dir}/runner" "${test_dir}/scripts/common" "${test_dir}/certs" "${test_dir}/home"
   local shell_user
   shell_user="$(id -un)"
 
@@ -108,7 +108,7 @@ EOF
   write_runner_mock "${test_dir}/bin/gitlab-runner"
 
   cp "${ROOT_DIR}/runner/register-shell-runner.sh" "${test_dir}/runner/register-shell-runner.sh"
-  cp "${ROOT_DIR}/scripts/progress-common.sh" "${test_dir}/scripts/progress-common.sh"
+  cp "${ROOT_DIR}/scripts/common/progress.sh" "${test_dir}/scripts/common/progress.sh"
   chmod +x "${test_dir}/runner/register-shell-runner.sh"
 
   (

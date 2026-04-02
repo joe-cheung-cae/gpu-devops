@@ -45,22 +45,22 @@ assert_file_exists "${ROOT_DIR}/scripts/common/progress.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 assert_file_exists "${ROOT_DIR}/scripts/prepare-third-party-cache.sh"
 assert_file_exists "${ROOT_DIR}/scripts/install-third-party.sh"
-
-assert_contains "${ROOT_DIR}/scripts/export-images.sh" 'exec bash "${ROOT_DIR}/scripts/export/images.sh" "$@"'
-assert_contains "${ROOT_DIR}/scripts/export-project-bundle.sh" 'exec bash "${ROOT_DIR}/scripts/export/project-bundle.sh" "$@"'
-assert_contains "${ROOT_DIR}/scripts/import-images.sh" 'exec bash "${ROOT_DIR}/scripts/import/images.sh" "$@"'
-assert_contains "${ROOT_DIR}/scripts/import-project-bundle.sh" 'exec bash "${ROOT_DIR}/scripts/import/project-bundle.sh" "$@"'
-
-assert_not_contains "${ROOT_DIR}/scripts/export-images.sh" "load_image_bundle_env"
-assert_not_contains "${ROOT_DIR}/scripts/import-images.sh" "load_image_bundle_env"
-assert_not_contains "${ROOT_DIR}/scripts/export-project-bundle.sh" "project_bundle_assets"
-assert_not_contains "${ROOT_DIR}/scripts/import-project-bundle.sh" "import_image_archive"
-
-assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
-assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/images.sh"'
-assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
-assert_contains "${ROOT_DIR}/scripts/image-bundle-common.sh" 'source "${ROOT_DIR}/scripts/common/project-bundle.sh"'
-assert_contains "${ROOT_DIR}/scripts/progress-common.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
-assert_contains "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" 'exec "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps chrono "$@"'
+assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/images.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/images.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/images.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/images.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/images.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/third-party-registry.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/project-bundle.sh"'
+assert_contains "${ROOT_DIR}/scripts/export/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/archive.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/project-bundle.sh"'
+assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
 
 echo "script layout tests passed"

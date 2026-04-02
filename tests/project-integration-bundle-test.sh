@@ -172,22 +172,15 @@ run_export_third_party_cache_test() {
   cp -a "${ROOT_DIR}/scripts/common/project-bundle.sh" "${repo_dir}/scripts/common/project-bundle.sh"
   cp -a "${ROOT_DIR}/scripts/common/progress.sh" "${repo_dir}/scripts/common/progress.sh"
   cp -a "${ROOT_DIR}/scripts/common/third-party-registry.sh" "${repo_dir}/scripts/common/third-party-registry.sh"
-  cp -a "${ROOT_DIR}/scripts/export-images.sh" "${repo_dir}/scripts/export-images.sh"
-  cp -a "${ROOT_DIR}/scripts/export-project-bundle.sh" "${repo_dir}/scripts/export-project-bundle.sh"
-  cp -a "${ROOT_DIR}/scripts/export/project-bundle.sh" "${repo_dir}/scripts/export/project-bundle.sh"
   cp -a "${ROOT_DIR}/scripts/export/images.sh" "${repo_dir}/scripts/export/images.sh"
-  cp -a "${ROOT_DIR}/scripts/import-images.sh" "${repo_dir}/scripts/import-images.sh"
-  cp -a "${ROOT_DIR}/scripts/import/project-bundle.sh" "${repo_dir}/scripts/import/project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/export/project-bundle.sh" "${repo_dir}/scripts/export/project-bundle.sh"
   cp -a "${ROOT_DIR}/scripts/import/images.sh" "${repo_dir}/scripts/import/images.sh"
-  cp -a "${ROOT_DIR}/scripts/import-project-bundle.sh" "${repo_dir}/scripts/import-project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/import/project-bundle.sh" "${repo_dir}/scripts/import/project-bundle.sh"
   cp -a "${ROOT_DIR}/scripts/compose.sh" "${repo_dir}/scripts/compose.sh"
   cp -a "${ROOT_DIR}/scripts/install-third-party.sh" "${repo_dir}/scripts/install-third-party.sh"
   cp -a "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" "${repo_dir}/scripts/prepare-third-party-cache.sh"
-  cp -a "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${repo_dir}/scripts/prepare-chrono-source-cache.sh"
   cp -a "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${repo_dir}/scripts/prepare-builder-deps.sh"
   cp -a "${ROOT_DIR}/scripts/build-builder-image.sh" "${repo_dir}/scripts/build-builder-image.sh"
-  cp -a "${ROOT_DIR}/scripts/image-bundle-common.sh" "${repo_dir}/scripts/image-bundle-common.sh"
-  cp -a "${ROOT_DIR}/scripts/progress-common.sh" "${repo_dir}/scripts/progress-common.sh"
   cp -a "${ROOT_DIR}/scripts/verify-host.sh" "${repo_dir}/scripts/verify-host.sh"
   cp -a "${ROOT_DIR}/docs/offline-env-configuration.md" "${repo_dir}/docs/offline-env-configuration.md"
   cp -a "${ROOT_DIR}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md" "${repo_dir}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
@@ -217,7 +210,7 @@ run_export_third_party_cache_test() {
 
   TEST_LOG_FILE="${test_dir}/logs/prepare.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${repo_dir}/scripts/export-project-bundle.sh" \
+  "${repo_dir}/scripts/export/project-bundle.sh" \
     --env-file "${test_dir}/.env" \
     --output "${test_dir}/bundle.tar.gz" \
     --mode assets > "${test_dir}/stdout.log"
@@ -248,7 +241,7 @@ run_export_test() {
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/export-project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}" > "${test_dir}/stdout.log"
+  "${ROOT_DIR}/scripts/export/project-bundle.sh" --env-file "${test_dir}/.env" --output "${test_dir}/bundle.tar.gz" --mode "${mode}" > "${test_dir}/stdout.log"
 
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
@@ -264,13 +257,10 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/common/third-party-registry.sh"
       assert_file_exists "${test_dir}/assets/scripts/export/images.sh"
       assert_file_exists "${test_dir}/assets/scripts/import/project-bundle.sh"
-      assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
-      assert_file_exists "${test_dir}/assets/scripts/export-images.sh"
-      assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
-      assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
+      assert_file_exists "${test_dir}/assets/scripts/import/images.sh"
+      assert_file_exists "${test_dir}/assets/scripts/common/progress.sh"
       assert_file_exists "${test_dir}/assets/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/install-third-party.sh"
-      assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
@@ -297,9 +287,8 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/.env.example"
       assert_file_exists "${test_dir}/assets/docker-compose.yml"
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
-      assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
-      assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
-      assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${test_dir}/assets/scripts/common/progress.sh"
+      assert_file_exists "${test_dir}/assets/scripts/import/images.sh"
       assert_file_exists "${test_dir}/assets/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
@@ -353,13 +342,10 @@ write_import_bundle() {
     cp "${ROOT_DIR}/docs/offline-env-configuration.md" "${bundle_root}/assets/docs/offline-env-configuration.md"
     cp "${ROOT_DIR}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md" "${bundle_root}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
     cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
-    cp "${ROOT_DIR}/scripts/export-images.sh" "${bundle_root}/assets/scripts/export-images.sh"
     cp "${ROOT_DIR}/scripts/export/images.sh" "${bundle_root}/assets/scripts/export/images.sh"
     cp "${ROOT_DIR}/scripts/export/project-bundle.sh" "${bundle_root}/assets/scripts/export/project-bundle.sh"
-    cp "${ROOT_DIR}/scripts/import-images.sh" "${bundle_root}/assets/scripts/import-images.sh"
     cp "${ROOT_DIR}/scripts/import/images.sh" "${bundle_root}/assets/scripts/import/images.sh"
     cp "${ROOT_DIR}/scripts/import/project-bundle.sh" "${bundle_root}/assets/scripts/import/project-bundle.sh"
-    cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
     cp "${ROOT_DIR}/scripts/install-third-party.sh" "${bundle_root}/assets/scripts/install-third-party.sh"
     cp "${ROOT_DIR}/scripts/common/env.sh" "${bundle_root}/assets/scripts/common/env.sh"
     cp "${ROOT_DIR}/scripts/common/images.sh" "${bundle_root}/assets/scripts/common/images.sh"
@@ -368,12 +354,10 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/common/third-party-registry.sh" "${bundle_root}/assets/scripts/common/third-party-registry.sh"
     cp "${ROOT_DIR}/scripts/common/project-bundle.sh" "${bundle_root}/assets/scripts/common/project-bundle.sh"
     cp "${ROOT_DIR}/scripts/common/progress.sh" "${bundle_root}/assets/scripts/common/progress.sh"
-    cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" "${bundle_root}/assets/scripts/prepare-third-party-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${bundle_root}/assets/scripts/prepare-builder-deps.sh"
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
-    cp "${ROOT_DIR}/scripts/progress-common.sh" "${bundle_root}/assets/scripts/progress-common.sh"
     cp "${ROOT_DIR}/runner/register-shell-runner.sh" "${bundle_root}/assets/runner/register-shell-runner.sh"
     cp "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${bundle_root}/assets/docker/cuda-builder/centos7.Dockerfile"
     cp "${ROOT_DIR}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
@@ -428,14 +412,14 @@ run_import_test() {
   if [[ "${mode}" == "images" ]]; then
     TEST_LOG_FILE="${test_dir}/logs/docker.log" \
     PATH="${test_dir}/bin:${PATH}" \
-    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+    "${ROOT_DIR}/scripts/import/project-bundle.sh" \
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
       --mode "${mode}" > "${test_dir}/stdout.log"
   else
     TEST_LOG_FILE="${test_dir}/logs/docker.log" \
     PATH="${test_dir}/bin:${PATH}" \
-    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+    "${ROOT_DIR}/scripts/import/project-bundle.sh" \
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
       --target-dir "${target_dir}" \
@@ -452,13 +436,10 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/third-party-registry.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/export/images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import/project-bundle.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/export-images.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/import/images.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/common/progress.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
@@ -485,15 +466,15 @@ run_import_test() {
 
       assert_contains "${test_dir}/logs/docker.log" "compose --env-file ${target_dir}/.gpu-devops/.env -f ${target_dir}/.gpu-devops/docker-compose.yml config"
 
-      "${target_dir}/.gpu-devops/scripts/import-images.sh" --help > "${test_dir}/import-images-help.log"
-      "${target_dir}/.gpu-devops/scripts/export-images.sh" --help > "${test_dir}/export-images-help.log"
+      "${target_dir}/.gpu-devops/scripts/import/images.sh" --help > "${test_dir}/import-images-help.log"
+      "${target_dir}/.gpu-devops/scripts/export/images.sh" --help > "${test_dir}/export-images-help.log"
       "${target_dir}/.gpu-devops/scripts/build-builder-image.sh" --help > "${test_dir}/build-builder-help.log"
-      "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh" --help > "${test_dir}/prepare-chrono-help.log"
+      "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh" --deps chrono --help > "${test_dir}/prepare-chrono-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh" --help > "${test_dir}/prepare-builder-deps-help.log"
-      assert_contains "${test_dir}/import-images-help.log" "Usage: scripts/import-images.sh"
-      assert_contains "${test_dir}/export-images-help.log" "Usage: scripts/export-images.sh"
+      assert_contains "${test_dir}/import-images-help.log" "Usage: scripts/import/images.sh"
+      assert_contains "${test_dir}/export-images-help.log" "Usage: scripts/export/images.sh"
       assert_contains "${test_dir}/build-builder-help.log" "Usage: scripts/build-builder-image.sh"
-      assert_contains "${test_dir}/prepare-chrono-help.log" "Usage: scripts/prepare-chrono-source-cache.sh"
+      assert_contains "${test_dir}/prepare-chrono-help.log" "Usage: scripts/prepare-third-party-cache.sh"
       assert_contains "${test_dir}/prepare-builder-deps-help.log" "Usage: scripts/prepare-builder-deps.sh"
       ;;
     images)
@@ -504,10 +485,9 @@ run_import_test() {
       assert_not_exists "${test_dir}/logs/docker.log"
       assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/common/progress.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/third-party-registry.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/import/images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
@@ -542,7 +522,7 @@ run_import_assets_with_spaces_test() {
 
   TEST_LOG_FILE="${test_dir}/logs/docker.log" \
   PATH="${test_dir}/bin:${PATH}" \
-  "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+  "${ROOT_DIR}/scripts/import/project-bundle.sh" \
     --env-file "${test_dir}/.env" \
     --input "${test_dir}/bundle.tar.gz" \
     --target-dir "${target_dir}" \
@@ -574,14 +554,14 @@ run_import_hash_failure_test() {
   if [[ "${mode}" == "images" ]]; then
     TEST_LOG_FILE="${test_dir}/logs/docker.log" \
     PATH="${test_dir}/bin:${PATH}" \
-    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+    "${ROOT_DIR}/scripts/import/project-bundle.sh" \
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
       --mode "${mode}" >"${test_dir}/stdout.log" 2>"${test_dir}/stderr.log"
   else
     TEST_LOG_FILE="${test_dir}/logs/docker.log" \
     PATH="${test_dir}/bin:${PATH}" \
-    "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+    "${ROOT_DIR}/scripts/import/project-bundle.sh" \
       --env-file "${test_dir}/.env" \
       --input "${test_dir}/bundle.tar.gz" \
       --target-dir "${target_dir}" \
