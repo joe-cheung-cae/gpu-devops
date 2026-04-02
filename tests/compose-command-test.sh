@@ -21,6 +21,17 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local file="$1"
+  local unexpected="$2"
+  if grep -Fq -- "${unexpected}" "${file}"; then
+    echo "Did not expect to find: ${unexpected}" >&2
+    echo "In file: ${file}" >&2
+    cat "${file}" >&2 || true
+    fail "unexpected content present"
+  fi
+}
+
 MOCK_BIN="${TMP_DIR}/bin"
 mkdir -p "${MOCK_BIN}"
 cat > "${MOCK_BIN}/docker" <<'EOF'
@@ -51,8 +62,8 @@ TEST_LOG_FILE="${LOG_FILE}" TEST_ENV_FILE="${ENV_LOG_FILE}" MOCK_DOCKER_ROOTLESS
 
 assert_contains "${LOG_FILE}" "compose"
 assert_contains "${LOG_FILE}" "-f ${ROOT_DIR}/docker-compose.yml config"
-assert_contains "${ENV_LOG_FILE}" "CUDA_CXX_RUN_UID=$(id -u)"
-assert_contains "${ENV_LOG_FILE}" "CUDA_CXX_RUN_GID=$(id -g)"
+assert_not_contains "${ENV_LOG_FILE}" "CUDA_CXX_RUN_UID=$(id -u)"
+assert_not_contains "${ENV_LOG_FILE}" "CUDA_CXX_RUN_GID=$(id -g)"
 
 set +e
 TEST_LOG_FILE="${TMP_DIR}/rootful.log" TEST_ENV_FILE="${TMP_DIR}/rootful.env" PATH="${MOCK_BIN}:${PATH}" \

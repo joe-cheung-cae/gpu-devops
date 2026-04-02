@@ -2,7 +2,6 @@ services:
   cuda-cxx-centos7:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
     profiles: ["centos7"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
@@ -37,7 +36,6 @@ services:
   cuda-cxx-deps-centos7:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-centos7
     profiles: ["centos7"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
@@ -64,7 +62,6 @@ services:
   cuda-cxx-rocky8:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
     profiles: ["rocky8"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
@@ -99,7 +96,6 @@ services:
   cuda-cxx-deps-rocky8:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-rocky8
     profiles: ["rocky8"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
@@ -126,7 +122,6 @@ services:
   cuda-cxx-ubuntu2204:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
     profiles: ["ubuntu2204"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace
@@ -161,7 +156,6 @@ services:
   cuda-cxx-deps-ubuntu2204:
     image: ${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder:cuda11.7-cmake3.26}-ubuntu2204
     profiles: ["ubuntu2204"]
-    user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"
     working_dir: /workspace
     volumes:
       - ${HOST_PROJECT_DIR:-.}:/workspace

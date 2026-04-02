@@ -84,8 +84,6 @@ ENV_BASE_DIR="$(cd "$(dirname "${ENV_FILE}")" && pwd)"
 HOST_PROJECT_DIR_VALUE="${HOST_PROJECT_DIR:-.}"
 HOST_PROJECT_DIR="$(normalize_host_path "${ENV_BASE_DIR}" "${HOST_PROJECT_DIR_VALUE}")"
 CUDA_CXX_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}"
-RUN_UID="${CUDA_CXX_RUN_UID:-$(id -u)}"
-RUN_GID="${CUDA_CXX_RUN_GID:-$(id -g)}"
 CONTAINER_HOME="/tmp/cuda-cxx-home"
 
 if [[ "${CUDA_CXX_DEPS_ROOT}" = /* ]]; then
@@ -124,7 +122,6 @@ COMMAND_STRING="mkdir -p '${CONTAINER_HOME}/.ccache' && ${COMMAND_STRING}"
 
 progress_step "Preparing builder dependency cache"
 docker run --rm \
-  --user "${RUN_UID}:${RUN_GID}" \
   -v "${HOST_PROJECT_DIR}:/workspace" \
   -v "${ROOT_DIR}:/toolkit" \
   "${EXTRA_MOUNT[@]}" \
