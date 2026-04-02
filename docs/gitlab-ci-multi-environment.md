@@ -303,4 +303,4 @@ If your project is built on this platform today, start with:
 
 Only add Windows or Linux shell jobs when they solve a real project need beyond the three published Linux builder images.
 
-For a working shell-runner example, see [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml).
+For a working shell-runner example, see [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml).

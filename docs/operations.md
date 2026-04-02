@@ -160,7 +160,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 
 Each exported project bundle also produces a sibling `.sha256` file, and the importer verifies it by default before unpacking. In `all` and `images` mode, the nested image archive is verified as well. Use `--skip-hash-check` only if you need to bypass those checks deliberately.
 
-For a field-by-field explanation of offline `.env` values, including Docker executor, shell runner, and self-signed GitLab HTTPS setup, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
+For a field-by-field explanation of offline `.env` values, including Docker executor, shell runner, and self-signed GitLab HTTPS setup, see [offline-env-configuration.md](offline-env-configuration.md).
 
 ## Runner registration
 
@@ -195,7 +195,7 @@ For Windows/MSVC hosts, use `scripts/install-third-party.sh --host windows`. Tha
 
 All third-party entrypoints now use the shared registry under `scripts/common/third-party-registry.sh`. When you pass `--deps`, the scripts automatically expand required upstream dependencies and execute them in dependency order.
 
-If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
+If you want a ready-made `.env` example that already customizes `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, start from [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example).
 
 The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`, build outputs are written to `CUDA_CXX_BUILD_ROOT/<platform>`, install outputs are written to `CUDA_CXX_INSTALL_ROOT/<platform>`, and the prepared dependency cache is reused from `CUDA_CXX_DEPS_ROOT/<platform>`.
 

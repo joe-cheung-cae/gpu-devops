@@ -51,4 +51,9 @@ assert_contains "${ROOT_DIR}/docs/operations.md" "run as the current Linux calle
 assert_contains "${ROOT_DIR}/docs/operations.md" "CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1"
 assert_contains "${ROOT_DIR}/docs/operations.md" "not a rootless Docker daemon deployment"
 
+if rg -n "/home/joe/repo/gpu-devops" "${ROOT_DIR}/README.md" "${ROOT_DIR}/docs" >/dev/null; then
+  echo "Absolute repository paths should not appear in README or docs" >&2
+  exit 1
+fi
+
 echo "offline runner workflow docs verified"

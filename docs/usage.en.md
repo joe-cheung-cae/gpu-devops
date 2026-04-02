@@ -98,7 +98,7 @@ tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
-Then create `.gpu-devops/.env` from [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md), and import the image archive:
+Then create `.gpu-devops/.env` from [offline-env-configuration.md](offline-env-configuration.md), and import the image archive:
 
 ```bash
 scripts/import-images.sh --input artifacts/offline-images.tar.gz
@@ -166,9 +166,9 @@ That path expects:
 scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
-Then use [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) in a test project and confirm that `gpu-smoke`, `cuda-cmake-build`, and `multi-gpu-smoke` succeed.
+Then use [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml) in a test project and confirm that `gpu-smoke`, `cuda-cmake-build`, and `multi-gpu-smoke` succeed.
 
-For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. The Windows side uses `scripts/install-third-party.sh --host windows` and installs `MS-MPI` instead of `OpenMPI`. That Linux default belongs to the CI example, not `.env`. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
+For the shell-runner path, start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml). It keeps Linux and Windows jobs side by side in one pipeline, and uses `BUILD_PLATFORM=centos7` by default for the Linux compose-driven build. The Windows side uses `scripts/install-third-party.sh --host windows` and installs `MS-MPI` instead of `OpenMPI`. That Linux default belongs to the CI example, not `.env`. `rocky8` and `ubuntu2204` remain supported Linux alternatives.
 
 ## 2. R&D engineer workflow
 
@@ -216,9 +216,9 @@ The Linux builder images also include UUID development headers for projects that
 
 ### Option B: Use the shared Runner in `.gitlab-ci.yml`
 
-Start from [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml).
+Start from [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml).
 
-If the same project also needs Linux physical-machine jobs or Windows jobs, see the mixed-runner organization guide: [gitlab-ci-multi-environment.md](/home/joe/repo/gpu-devops/docs/gitlab-ci-multi-environment.md).
+If the same project also needs Linux physical-machine jobs or Windows jobs, see the mixed-runner organization guide: [gitlab-ci-multi-environment.md](gitlab-ci-multi-environment.md).
 
 Use the published builder image:
 
@@ -235,7 +235,7 @@ Switch the image suffix to `rocky8` or `ubuntu2204` if your project depends on t
 
 ### Option C: Use a shell runner and invoke `docker compose` from the job
 
-Start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml).
+Start from [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml).
 
 This path is for projects whose GitLab jobs must run as the Linux user `gitlab-runner` through a normal shell executor. The job itself does not use `image:`. Instead, it calls:
 
@@ -255,7 +255,7 @@ Linux shell-runner builds support `centos7`, `rocky8`, and `ubuntu2204`. A separ
 The example also adds a dedicated Linux `prepare` stage that runs `.gpu-devops/scripts/prepare-builder-deps.sh --platform "${BUILD_PLATFORM}"` before build. It keeps `test` and `deploy` stages for both Linux and Windows, so teams can extend the same shell-runner pipeline from dependency preparation into build verification, test execution, and deployment handoff.
 In the Linux deploy job, `BUILD_PLATFORM` is used again to choose the platform-specific deployment shell, for example `./scripts/deploy-centos7.sh`, `./scripts/deploy-rocky8.sh`, or `./scripts/deploy-ubuntu2204.sh`.
 For Linux jobs, the example keeps per-platform artifacts under `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`, `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`, and `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`.
-For offline `.env` details, including generated defaults, Docker executor, shell runner, and self-signed HTTPS GitLab setup, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
+For offline `.env` details, including generated defaults, Docker executor, shell runner, and self-signed HTTPS GitLab setup, see [offline-env-configuration.md](offline-env-configuration.md).
 
 ### Option D: Import the integration bundle into another project
 

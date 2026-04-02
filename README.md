@@ -20,10 +20,10 @@ The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 
 ## Tutorials
 
-- Chinese guide: [docs/tutorial.zh-CN.md](/home/joe/repo/gpu-devops/docs/tutorial.zh-CN.md)
-- English guide: [docs/tutorial.en.md](/home/joe/repo/gpu-devops/docs/tutorial.en.md)
-- Step-by-step usage guide: [docs/usage.en.md](/home/joe/repo/gpu-devops/docs/usage.en.md)
-- 中文步骤指南: [docs/usage.zh-CN.md](/home/joe/repo/gpu-devops/docs/usage.zh-CN.md)
+- Chinese guide: [docs/tutorial.zh-CN.md](docs/tutorial.zh-CN.md)
+- English guide: [docs/tutorial.en.md](docs/tutorial.en.md)
+- Step-by-step usage guide: [docs/usage.en.md](docs/usage.en.md)
+- 中文步骤指南: [docs/usage.zh-CN.md](docs/usage.zh-CN.md)
 
 ## Platform contract
 
@@ -49,7 +49,7 @@ The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 
 ## Quick start
 
-1. Copy [.env.example](/home/joe/repo/gpu-devops/.env.example) to `.env` and fill in GitLab values.
+1. Copy [.env.example](.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh`.
    Optional dependency cache staging: `scripts/prepare-third-party-cache.sh`
@@ -63,13 +63,13 @@ The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 
 ## Compose files
 
-- [runner-compose.yml](/home/joe/repo/gpu-devops/runner-compose.yml): Runner deployment only. It defines the `gitlab-runner` service used for registration and steady-state operation.
-- [docker-compose.yml](/home/joe/repo/gpu-devops/docker-compose.yml): local CUDA/C++ project build and dependency-cache preparation. It defines one build container and one dependency-preparation container per supported Linux builder platform.
+- [runner-compose.yml](runner-compose.yml): Runner deployment only. It defines the `gitlab-runner` service used for registration and steady-state operation.
+- [docker-compose.yml](docker-compose.yml): local CUDA/C++ project build and dependency-cache preparation. It defines one build container and one dependency-preparation container per supported Linux builder platform.
 
 Wrapper scripts:
 
-- [runner-compose.sh](/home/joe/repo/gpu-devops/scripts/runner-compose.sh) targets `runner-compose.yml`
-- [compose.sh](/home/joe/repo/gpu-devops/scripts/compose.sh) targets `docker-compose.yml`
+- [runner-compose.sh](scripts/runner-compose.sh) targets `runner-compose.yml`
+- [compose.sh](scripts/compose.sh) targets `docker-compose.yml`
 
 Project build containers started through `scripts/compose.sh` now run as the current host caller UID/GID by default. On Linux, the project-side Docker entrypoints also require a rootless Docker daemon by default. This limits cross-user access to bind-mounted project files in shared Linux Docker environments, but it does not change the Docker daemon itself into rootless mode for you. Set `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` only when you need to keep a legacy rootful host temporarily. `runner-compose.yml` keeps its existing service behavior.
 
@@ -83,7 +83,7 @@ The build Compose file mounts the current host working tree into `/workspace`. `
 
 Because these project containers now run with the caller's UID/GID, generated files on the host stay owned by that caller instead of container `root`. If the target build, install, or dependency directories are not writable by that user, the compose run fails explicitly instead of silently bypassing permissions as `root`.
 
-For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
+For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](examples/env/cuda-cxx.env.example).
 
 ## Shared tag policy
 
@@ -214,9 +214,9 @@ tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
-Then create `.gpu-devops/.env` by following [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
+Then create `.gpu-devops/.env` by following [docs/offline-env-configuration.md](docs/offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
 
-Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md). Linux project-side Docker entrypoints now require rootless Docker by default; `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` is only a temporary compatibility bypass for legacy hosts.
+Before using `.gpu-devops/scripts/compose.sh` or `.gpu-devops/scripts/prepare-builder-deps.sh` on the offline host, finish the rootless Docker setup described in [docs/offline-env-configuration.md](docs/offline-env-configuration.md). Linux project-side Docker entrypoints now require rootless Docker by default; `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` is only a temporary compatibility bypass for legacy hosts.
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
@@ -284,16 +284,16 @@ When assets are imported, the importer also writes `<target>/.gpu-devops/.env` w
 
 ## Project usage
 
-See [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) for a complete example.
+See [examples/gitlab-ci/shared-gpu-runner.yml](examples/gitlab-ci/shared-gpu-runner.yml) for a complete example.
 
 Additional reference docs:
 
-- [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
-- [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
-- [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
-- [docs/project-devops-capability-assessment.md](/home/joe/repo/gpu-devops/docs/project-devops-capability-assessment.md)
-- [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
-- [docs/offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)
+- [docs/operations.md](docs/operations.md)
+- [docs/self-check.md](docs/self-check.md)
+- [docs/platform-contract.md](docs/platform-contract.md)
+- [docs/project-devops-capability-assessment.md](docs/project-devops-capability-assessment.md)
+- [docs/operations.md](docs/operations.md)
+- [docs/offline-env-configuration.md](docs/offline-env-configuration.md)
 
 ## Limitations
 

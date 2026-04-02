@@ -214,7 +214,7 @@ tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
-Then fill `.gpu-devops/.env` according to [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
+Then fill `.gpu-devops/.env` according to [offline-env-configuration.md](offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
@@ -250,7 +250,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 
 Each exported project bundle also produces a sibling `.sha256` file. The importer verifies that file by default before unpacking, and in `all` or `images` mode it also verifies the nested `images/offline-images.tar.gz`. Use `--skip-hash-check` only when you explicitly need to bypass those checks.
 
-For a complete offline `.env` reference, including Docker executor, shell runner, and self-signed GitLab HTTPS scenarios, see [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md).
+For a complete offline `.env` reference, including Docker executor, shell runner, and self-signed GitLab HTTPS scenarios, see [offline-env-configuration.md](offline-env-configuration.md).
 
 The image includes:
 
@@ -322,7 +322,7 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source tree inside that workspace, and `CUDA_CXX_BUILD_ROOT` stores output per platform.
 
-For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example).
+For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example).
 
 The main runner container image is `RUNNER_SERVICE_IMAGE`, which should already exist locally before you start `runner-compose.yml` on an offline host.
 
@@ -415,7 +415,7 @@ Change the image suffix to `rocky8` or `ubuntu2204` when your project needs one 
 
 Full example:
 
-- [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml)
+- [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml)
 
 ### 8.1 Single-GPU job example
 
@@ -457,8 +457,8 @@ Important note:
 
 The repository includes a minimal CUDA example:
 
-- [examples/cuda-smoke/CMakeLists.txt](/home/joe/repo/gpu-devops/examples/cuda-smoke/CMakeLists.txt)
-- [examples/cuda-smoke/main.cu](/home/joe/repo/gpu-devops/examples/cuda-smoke/main.cu)
+- [examples/cuda-smoke/CMakeLists.txt](../examples/cuda-smoke/CMakeLists.txt)
+- [examples/cuda-smoke/main.cu](../examples/cuda-smoke/main.cu)
 
 Inside CI, the build can run as:
 
@@ -696,6 +696,6 @@ docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu20.04 nvidia-smi
 
 ## 12. Reference documents
 
-- [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
-- [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
-- [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
+- [docs/operations.md](operations.md)
+- [docs/self-check.md](self-check.md)
+- [docs/platform-contract.md](platform-contract.md)

@@ -17,7 +17,7 @@ Expected:
 - `nvidia-smi` prints the installed GPU
 - Docker runtimes include `nvidia`
 
-If this step fails because Docker does not expose the `nvidia` runtime, or because offline `nvidia-container-toolkit` installation reports `_apt` permission warnings, see the troubleshooting section in [tutorial.zh-CN.md](/home/joe/repo/gpu-devops/docs/tutorial.zh-CN.md) or [tutorial.en.md](/home/joe/repo/gpu-devops/docs/tutorial.en.md).
+If this step fails because Docker does not expose the `nvidia` runtime, or because offline `nvidia-container-toolkit` installation reports `_apt` permission warnings, see the troubleshooting section in [tutorial.zh-CN.md](tutorial.zh-CN.md) or [tutorial.en.md](tutorial.en.md).
 
 ## 2. Build the standard builder image
 
@@ -98,7 +98,7 @@ Expected:
 
 ## 5. Validate pipeline contract
 
-Use [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml) in a test project.
+Use [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml) in a test project.
 
 Expected:
 

@@ -214,7 +214,7 @@ tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
-之后按 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md) 补齐 `.gpu-devops/.env`，再在 `/path/to/project/.gpu-devops/` 下继续执行：
+之后按 [offline-env-configuration.md](offline-env-configuration.md) 补齐 `.gpu-devops/.env`，再在 `/path/to/project/.gpu-devops/` 下继续执行：
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
@@ -250,7 +250,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 
 每个 project bundle 也会额外生成同名的 `.sha256` 文件。导入时默认会先校验外层 bundle，在 `all` 和 `images` 模式下还会继续校验内部的 `images/offline-images.tar.gz`。只有在你明确要跳过完整性校验时，才应使用 `--skip-hash-check`。
 
-如果你需要按变量维度查看离线 `.env` 应该如何配置，包括 Docker executor、shell runner 和自签名 HTTPS GitLab 场景，请继续参考 [offline-env-configuration.md](/home/joe/repo/gpu-devops/docs/offline-env-configuration.md)。
+如果你需要按变量维度查看离线 `.env` 应该如何配置，包括 Docker executor、shell runner 和自签名 HTTPS GitLab 场景，请继续参考 [offline-env-configuration.md](offline-env-configuration.md)。
 
 镜像内默认包含：
 
@@ -322,7 +322,7 @@ scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu
 
 当前宿主机目录会挂载到容器内的 `/workspace`。`CUDA_CXX_PROJECT_DIR` 用来指定这个工作区里的源码目录，`CUDA_CXX_BUILD_ROOT` 按平台保存构建产物。
 
-如果你想直接参考一个已经设置了 `CUDA_CXX_CMAKE_ARGS` 和 `CUDA_CXX_BUILD_ARGS` 的 `.env` 示例，可以看 [cuda-cxx.env.example](/home/joe/repo/gpu-devops/examples/env/cuda-cxx.env.example)。
+如果你想直接参考一个已经设置了 `CUDA_CXX_CMAKE_ARGS` 和 `CUDA_CXX_BUILD_ARGS` 的 `.env` 示例，可以看 [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example)。
 
 Runner 主容器使用的是 `RUNNER_SERVICE_IMAGE`。在离线环境中启动前，应先确认这个镜像已经通过导入存在于本地 Docker。
 
@@ -415,7 +415,7 @@ default:
 
 完整示例参考：
 
-- [examples/gitlab-ci/shared-gpu-runner.yml](/home/joe/repo/gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml)
+- [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml)
 
 ### 8.1 单卡任务示例
 
@@ -457,8 +457,8 @@ multi-gpu-smoke:
 
 仓库已提供一个最小样例：
 
-- [examples/cuda-smoke/CMakeLists.txt](/home/joe/repo/gpu-devops/examples/cuda-smoke/CMakeLists.txt)
-- [examples/cuda-smoke/main.cu](/home/joe/repo/gpu-devops/examples/cuda-smoke/main.cu)
+- [examples/cuda-smoke/CMakeLists.txt](../examples/cuda-smoke/CMakeLists.txt)
+- [examples/cuda-smoke/main.cu](../examples/cuda-smoke/main.cu)
 
 项目流水线可直接使用：
 
@@ -696,6 +696,6 @@ docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu20.04 nvidia-smi
 
 ## 12. 参考文档
 
-- [docs/operations.md](/home/joe/repo/gpu-devops/docs/operations.md)
-- [docs/self-check.md](/home/joe/repo/gpu-devops/docs/self-check.md)
-- [docs/platform-contract.md](/home/joe/repo/gpu-devops/docs/platform-contract.md)
+- [docs/operations.md](operations.md)
+- [docs/self-check.md](self-check.md)
+- [docs/platform-contract.md](platform-contract.md)
