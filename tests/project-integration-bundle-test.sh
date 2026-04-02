@@ -91,6 +91,153 @@ EOF
   chmod +x "${docker_path}"
 }
 
+write_third_party_prepare_mocks() {
+  local bin_dir="$1"
+  local git_path="${bin_dir}/git"
+  local curl_path="${bin_dir}/curl"
+
+  cat > "${git_path}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+LOG_FILE="${TEST_LOG_FILE:?}"
+printf 'git %s\n' "$*" >> "${LOG_FILE}"
+case "${1:-}" in
+  clone)
+    local_dest="${@: -1}"
+    mkdir -p "${local_dest}/.git"
+    printf 'placeholder\n' > "${local_dest}/placeholder.txt"
+    exit 0
+    ;;
+  fetch|checkout)
+    exit 0
+    ;;
+  rev-parse)
+    if [[ "${2:-}" == "--verify" && "${3:-}" == "FETCH_HEAD" ]]; then
+      printf 'deadbeef\n'
+      exit 0
+    fi
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+  chmod +x "${git_path}"
+
+  cat > "${curl_path}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+LOG_FILE="${TEST_LOG_FILE:?}"
+printf 'curl %s\n' "$*" >> "${LOG_FILE}"
+output=""
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    -o)
+      output="${2:?Missing output for -o}"
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+mkdir -p "$(dirname "${output}")"
+printf 'placeholder archive\n' > "${output}"
+EOF
+  chmod +x "${curl_path}"
+}
+
+run_export_third_party_cache_test() {
+  local test_dir="${TMP_DIR}/export-third-party-cache"
+  local repo_dir="${test_dir}/repo"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  mkdir -p \
+    "${repo_dir}/docker/cuda-builder/deps" \
+    "${repo_dir}/examples/gitlab-ci" \
+    "${repo_dir}/runner" \
+    "${repo_dir}/scripts/common" \
+    "${repo_dir}/scripts/export" \
+    "${repo_dir}/scripts/import" \
+    "${repo_dir}/docs"
+  cp -a "${ROOT_DIR}/.env.example" "${repo_dir}/.env.example"
+  cp -a "${ROOT_DIR}/README.md" "${repo_dir}/README.md"
+  cp -a "${ROOT_DIR}/AGENTS.md" "${repo_dir}/AGENTS.md"
+  cp -a "${ROOT_DIR}/docker-compose.yml" "${repo_dir}/docker-compose.yml"
+  cp -a "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "${repo_dir}/examples/gitlab-ci/shared-gpu-shell-runner.yml"
+  cp -a "${ROOT_DIR}/runner/register-shell-runner.sh" "${repo_dir}/runner/register-shell-runner.sh"
+  cp -a "${ROOT_DIR}/scripts/common/env.sh" "${repo_dir}/scripts/common/env.sh"
+  cp -a "${ROOT_DIR}/scripts/common/images.sh" "${repo_dir}/scripts/common/images.sh"
+  cp -a "${ROOT_DIR}/scripts/common/archive.sh" "${repo_dir}/scripts/common/archive.sh"
+  cp -a "${ROOT_DIR}/scripts/common/docker-rootless-common.sh" "${repo_dir}/scripts/common/docker-rootless-common.sh"
+  cp -a "${ROOT_DIR}/scripts/common/project-bundle.sh" "${repo_dir}/scripts/common/project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/common/progress.sh" "${repo_dir}/scripts/common/progress.sh"
+  cp -a "${ROOT_DIR}/scripts/common/third-party-registry.sh" "${repo_dir}/scripts/common/third-party-registry.sh"
+  cp -a "${ROOT_DIR}/scripts/export-images.sh" "${repo_dir}/scripts/export-images.sh"
+  cp -a "${ROOT_DIR}/scripts/export-project-bundle.sh" "${repo_dir}/scripts/export-project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/export/project-bundle.sh" "${repo_dir}/scripts/export/project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/export/images.sh" "${repo_dir}/scripts/export/images.sh"
+  cp -a "${ROOT_DIR}/scripts/import-images.sh" "${repo_dir}/scripts/import-images.sh"
+  cp -a "${ROOT_DIR}/scripts/import/project-bundle.sh" "${repo_dir}/scripts/import/project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/import/images.sh" "${repo_dir}/scripts/import/images.sh"
+  cp -a "${ROOT_DIR}/scripts/import-project-bundle.sh" "${repo_dir}/scripts/import-project-bundle.sh"
+  cp -a "${ROOT_DIR}/scripts/compose.sh" "${repo_dir}/scripts/compose.sh"
+  cp -a "${ROOT_DIR}/scripts/install-third-party.sh" "${repo_dir}/scripts/install-third-party.sh"
+  cp -a "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" "${repo_dir}/scripts/prepare-third-party-cache.sh"
+  cp -a "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${repo_dir}/scripts/prepare-chrono-source-cache.sh"
+  cp -a "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${repo_dir}/scripts/prepare-builder-deps.sh"
+  cp -a "${ROOT_DIR}/scripts/build-builder-image.sh" "${repo_dir}/scripts/build-builder-image.sh"
+  cp -a "${ROOT_DIR}/scripts/image-bundle-common.sh" "${repo_dir}/scripts/image-bundle-common.sh"
+  cp -a "${ROOT_DIR}/scripts/progress-common.sh" "${repo_dir}/scripts/progress-common.sh"
+  cp -a "${ROOT_DIR}/scripts/verify-host.sh" "${repo_dir}/scripts/verify-host.sh"
+  cp -a "${ROOT_DIR}/docs/offline-env-configuration.md" "${repo_dir}/docs/offline-env-configuration.md"
+  cp -a "${ROOT_DIR}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md" "${repo_dir}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
+  cp -a "${ROOT_DIR}/docs/tutorial.en.md" "${repo_dir}/docs/tutorial.en.md"
+  cp -a "${ROOT_DIR}/docs/tutorial.zh-CN.md" "${repo_dir}/docs/tutorial.zh-CN.md"
+  cp -a "${ROOT_DIR}/docs/operations.md" "${repo_dir}/docs/operations.md"
+  cp -a "${ROOT_DIR}/docs/self-check.md" "${repo_dir}/docs/self-check.md"
+  cp -a "${ROOT_DIR}/docs/gitlab-ci-multi-environment.md" "${repo_dir}/docs/gitlab-ci-multi-environment.md"
+  cp -a "${ROOT_DIR}/docs/usage.en.md" "${repo_dir}/docs/usage.en.md"
+  cp -a "${ROOT_DIR}/docs/usage.zh-CN.md" "${repo_dir}/docs/usage.zh-CN.md"
+  cp -a "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${repo_dir}/docker/cuda-builder/centos7.Dockerfile"
+  cp -a "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" "${repo_dir}/docker/cuda-builder/rocky8.Dockerfile"
+  cp -a "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" "${repo_dir}/docker/cuda-builder/ubuntu2204.Dockerfile"
+  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/h5engine-sph.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/h5engine-dem.tar.gz"
+  rm -f \
+    "${repo_dir}/docker/cuda-builder/deps/chrono-source.tar.gz" \
+    "${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz" \
+    "${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz" \
+    "${repo_dir}/docker/cuda-builder/deps/muparserx-source.tar.gz"
+
+  write_export_env "${test_dir}/.env"
+  write_export_docker_mock "${test_dir}/bin/docker"
+  write_third_party_prepare_mocks "${test_dir}/bin"
+
+  TEST_LOG_FILE="${test_dir}/logs/prepare.log" \
+  PATH="${test_dir}/bin:${PATH}" \
+  "${repo_dir}/scripts/export-project-bundle.sh" \
+    --env-file "${test_dir}/.env" \
+    --output "${test_dir}/bundle.tar.gz" \
+    --mode assets > "${test_dir}/stdout.log"
+
+  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/chrono-source.tar.gz"
+  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
+  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
+  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/muparserx-source.tar.gz"
+  assert_contains "${test_dir}/logs/prepare.log" "git clone https://github.com/projectchrono/chrono.git"
+  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o ${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
+  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.6.tar.gz -o ${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
+  assert_contains "${test_dir}/logs/prepare.log" "git clone https://github.com/joe-cheung-cae/muparserx.git"
+  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
+  assert_not_contains "${test_dir}/logs/prepare.log" "https://github.com/Kitware/CMake/releases/download/v3.26.0/cmake-3.26.0-linux-x86_64.tar.gz"
+  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/chrono-source.tar.gz"
+  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
+  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
+  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/muparserx-source.tar.gz"
+}
+
 run_export_test() {
   local mode="$1"
   local test_dir="${TMP_DIR}/export-${mode}"
@@ -448,6 +595,7 @@ run_import_hash_failure_test() {
   assert_not_exists "${target_dir}"
 }
 
+run_export_third_party_cache_test
 run_export_test all
 run_export_test images
 run_export_test assets

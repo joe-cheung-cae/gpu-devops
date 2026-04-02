@@ -8,6 +8,8 @@ source "${ROOT_DIR}/scripts/common/env.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/images.sh"
 # shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/third-party-registry.sh"
+# shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/archive.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/project-bundle.sh"
@@ -78,6 +80,7 @@ fi
 
 progress_step "Preparing bundled assets"
 if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
+  "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps "$(third_party_all_deps_csv)"
   mapfile -t ASSETS < <(project_bundle_assets)
   mkdir -p "${STAGE_DIR}/assets"
 
