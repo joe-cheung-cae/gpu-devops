@@ -26,7 +26,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/prepare-builder-deps.sh [--env-file PATH] [--platform centos7|rocky8|ubuntu2204] [--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx]
 
-Prepares the project-local dependency cache used by docker compose and shell-runner Linux jobs.
+Prepares the project-local third_party tree used by docker compose and shell-runner Linux jobs.
 Linux project-side Docker workflows require rootless Docker by default. Set CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1 only when you need to bypass this check for a legacy host.
 EOF
 }
@@ -83,21 +83,24 @@ fi
 ENV_BASE_DIR="$(cd "$(dirname "${ENV_FILE}")" && pwd)"
 HOST_PROJECT_DIR_VALUE="${HOST_PROJECT_DIR:-.}"
 HOST_PROJECT_DIR="$(normalize_host_path "${ENV_BASE_DIR}" "${HOST_PROJECT_DIR_VALUE}")"
-CUDA_CXX_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}"
+CUDA_CXX_THIRD_PARTY_ROOT="${CUDA_CXX_THIRD_PARTY_ROOT:-./third_party}"
 CONTAINER_HOME="/tmp/cuda-cxx-home"
 
-if [[ "${CUDA_CXX_DEPS_ROOT}" = /* ]]; then
-  HOST_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT}"
-  CONTAINER_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT}"
-  EXTRA_MOUNT=(-v "${HOST_DEPS_ROOT}:${CONTAINER_DEPS_ROOT}")
+if [[ "${CUDA_CXX_THIRD_PARTY_ROOT}" = /* ]]; then
+  HOST_THIRD_PARTY_ROOT="${CUDA_CXX_THIRD_PARTY_ROOT}"
+  CONTAINER_THIRD_PARTY_ROOT="${CUDA_CXX_THIRD_PARTY_ROOT}"
+  EXTRA_MOUNT=(-v "${HOST_THIRD_PARTY_ROOT}:${CONTAINER_THIRD_PARTY_ROOT}")
 else
-  HOST_DEPS_ROOT="${HOST_PROJECT_DIR}/${CUDA_CXX_DEPS_ROOT}"
-  CONTAINER_DEPS_ROOT="/workspace/${CUDA_CXX_DEPS_ROOT}"
+  HOST_THIRD_PARTY_ROOT="${HOST_PROJECT_DIR}/${CUDA_CXX_THIRD_PARTY_ROOT}"
+  CONTAINER_THIRD_PARTY_ROOT="/workspace/${CUDA_CXX_THIRD_PARTY_ROOT}"
   EXTRA_MOUNT=()
 fi
-CONTAINER_PLATFORM_DEPS_ROOT="${CONTAINER_DEPS_ROOT}/${PLATFORM}"
+HOST_THIRD_PARTY_CACHE_ROOT="${HOST_THIRD_PARTY_ROOT}/cache"
+CONTAINER_THIRD_PARTY_CACHE_ROOT="${CONTAINER_THIRD_PARTY_ROOT}/cache"
+CONTAINER_PLATFORM_THIRD_PARTY_ROOT="${CONTAINER_THIRD_PARTY_ROOT}/${PLATFORM}"
 
-mkdir -p "${HOST_DEPS_ROOT}/${PLATFORM}"
+mkdir -p "${HOST_THIRD_PARTY_ROOT}/${PLATFORM}"
+mkdir -p "${HOST_THIRD_PARTY_CACHE_ROOT}"
 
 progress_step "Resolving builder image"
 BUILDER_IMAGE="$(builder_image_for_platform "${PLATFORM}")"
@@ -113,7 +116,7 @@ fi
 progress_step "Preparing dependency command"
 COMMANDS=()
 for dep in "${DEPS[@]}"; do
-  COMMANDS+=("$(third_party_linux_install_command "${dep}" "${CONTAINER_PLATFORM_DEPS_ROOT}")")
+  COMMANDS+=("$(third_party_linux_install_command "${dep}" "${CONTAINER_PLATFORM_THIRD_PARTY_ROOT}" "${CONTAINER_THIRD_PARTY_CACHE_ROOT}")")
 done
 
 COMMAND_STRING="$(printf '%s && ' "${COMMANDS[@]}")"
@@ -127,16 +130,16 @@ docker run --rm \
   "${EXTRA_MOUNT[@]}" \
   -w /workspace \
   -e "BUILD_PLATFORM=${PLATFORM}" \
-  -e "CUDA_CXX_DEPS_ROOT=${CUDA_CXX_DEPS_ROOT}" \
-  -e "DEPS_ROOT=${CONTAINER_PLATFORM_DEPS_ROOT}" \
+  -e "CUDA_CXX_THIRD_PARTY_ROOT=${CUDA_CXX_THIRD_PARTY_ROOT}" \
+  -e "DEPS_ROOT=${CONTAINER_PLATFORM_THIRD_PARTY_ROOT}" \
   -e "HOME=${CONTAINER_HOME}" \
   -e "CCACHE_DIR=${CONTAINER_HOME}/.ccache" \
-  -e "CHRONO_ARCHIVE=/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" \
+  -e "CHRONO_ARCHIVE=${CONTAINER_THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz" \
   "${BUILDER_IMAGE}" \
   /bin/bash -lc "${COMMAND_STRING}"
 
 progress_done "Prepared builder dependency cache"
 progress_note "Platform: ${PLATFORM}"
 progress_note "Builder image: ${BUILDER_IMAGE}"
-progress_note "Dependency cache root: ${HOST_DEPS_ROOT}/${PLATFORM}"
+progress_note "Third-party root: ${HOST_THIRD_PARTY_ROOT}/${PLATFORM}"
 progress_note "Dependencies: $(IFS=,; printf '%s' "${DEPS[*]}")"

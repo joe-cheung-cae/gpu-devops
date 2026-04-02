@@ -145,24 +145,25 @@ third_party_cache_command() {
 third_party_linux_install_command() {
   local dep="$1"
   local deps_root="$2"
+  local cache_root="$3"
   case "${dep}" in
     chrono)
-      printf "DEPS_ROOT='%s' CHRONO_ARCHIVE='/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-chrono.sh'\n" "${deps_root}"
+      printf "DEPS_ROOT='%s' CHRONO_ARCHIVE='%s/chrono-source.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-chrono.sh'\n" "${deps_root}" "${cache_root}"
       ;;
     eigen3)
-      printf "DEPS_ROOT='%s' EIGEN3_ARCHIVE='/toolkit/docker/cuda-builder/deps/eigen-3.4.0.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-eigen3.sh'\n" "${deps_root}"
+      printf "DEPS_ROOT='%s' EIGEN3_ARCHIVE='%s/eigen-3.4.0.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-eigen3.sh'\n" "${deps_root}" "${cache_root}"
       ;;
     openmpi)
-      printf "DEPS_ROOT='%s' OPENMPI_ARCHIVE='/toolkit/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-openmpi.sh'\n" "${deps_root}"
+      printf "DEPS_ROOT='%s' OPENMPI_ARCHIVE='%s/openmpi-4.1.6.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-openmpi.sh'\n" "${deps_root}" "${cache_root}"
       ;;
     hdf5)
-      printf "DEPS_ROOT='%s' HDF5_ARCHIVE='/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-hdf5.sh'\n" "${deps_root}"
+      printf "DEPS_ROOT='%s' HDF5_ARCHIVE='%s/CMake-hdf5-1.14.1-2.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-hdf5.sh'\n" "${deps_root}" "${cache_root}"
       ;;
     h5engine)
-      printf "DEPS_ROOT='%s' HDF5_INSTALL_PREFIX='%s/hdf5-install' H5ENGINE_SPH_ARCHIVE='/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz' H5ENGINE_DEM_ARCHIVE='/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-h5engine.sh'\n" "${deps_root}" "${deps_root}"
+      printf "DEPS_ROOT='%s' HDF5_INSTALL_PREFIX='%s/hdf5-install' H5ENGINE_SPH_ARCHIVE='%s/h5engine-sph.tar.gz' H5ENGINE_DEM_ARCHIVE='%s/h5engine-dem.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-h5engine.sh'\n" "${deps_root}" "${deps_root}" "${cache_root}" "${cache_root}"
       ;;
     muparserx)
-      printf "DEPS_ROOT='%s' MUPARSERX_ARCHIVE='/toolkit/docker/cuda-builder/deps/muparserx-source.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-muparserx.sh'\n" "${deps_root}"
+      printf "DEPS_ROOT='%s' MUPARSERX_ARCHIVE='%s/muparserx-source.tar.gz' /bin/bash '/toolkit/docker/cuda-builder/install-muparserx.sh'\n" "${deps_root}" "${cache_root}"
       ;;
   esac
 }

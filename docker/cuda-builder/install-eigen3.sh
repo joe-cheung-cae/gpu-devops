@@ -6,7 +6,7 @@ set -euo pipefail
 : "${EIGEN3_PREFIX:=}"
 : "${EIGEN3_INSTALL_PREFIX:=${DEPS_ROOT}/eigen3-install}"
 : "${EIGEN3_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
-: "${EIGEN3_ARCHIVE:=/tmp/deps/eigen-3.4.0.tar.gz}"
+: "${EIGEN3_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/eigen-3.4.0.tar.gz}"
 
 if [[ -n "${EIGEN3_PREFIX}" ]]; then
   EIGEN3_INSTALL_PREFIX="${EIGEN3_PREFIX}"

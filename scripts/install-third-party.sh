@@ -12,15 +12,16 @@ PLATFORM=""
 DEPS_CSV="$(third_party_all_deps_csv)"
 FORCE_REFRESH=false
 OFFLINE_ONLY=false
-WINDOWS_DEPS_ROOT="${ROOT_DIR}/artifacts/deps/windows-msvc"
-MSMPI_SDK_ARCHIVE="${ROOT_DIR}/docker/cuda-builder/deps/msmpi-sdk.zip"
-MSMPI_REDIST_ARCHIVE="${ROOT_DIR}/docker/cuda-builder/deps/msmpi-redist.zip"
+WINDOWS_THIRD_PARTY_ROOT="${ROOT_DIR}/third_party/windows-msvc"
+WINDOWS_THIRD_PARTY_CACHE_ROOT="${ROOT_DIR}/third_party/cache"
+MSMPI_SDK_ARCHIVE="${WINDOWS_THIRD_PARTY_CACHE_ROOT}/msmpi-sdk.zip"
+MSMPI_REDIST_ARCHIVE="${WINDOWS_THIRD_PARTY_CACHE_ROOT}/msmpi-redist.zip"
 
 usage() {
   cat <<'EOF'
 Usage: scripts/install-third-party.sh [--env-file PATH] [--host linux|windows] [--platform centos7|rocky8|ubuntu2204] [--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx] [--offline-only] [--force-refresh]
 
-Prepare third-party caches and install them for Linux via docker compose, or for Windows/MSVC on the host.
+Prepare third-party caches and install them into the project-local third_party tree for Linux via docker compose, or for Windows/MSVC on the host.
 EOF
 }
 
@@ -130,7 +131,7 @@ extract_archive() {
 
 install_windows_eigen3() {
   local deps_root="$1"
-  local archive_path="${ROOT_DIR}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
+  local archive_path="${WINDOWS_THIRD_PARTY_CACHE_ROOT}/eigen-3.4.0.tar.gz"
   local source_root="${deps_root}/eigen3-src"
   local install_root="${deps_root}/eigen3-install"
   extract_archive "${archive_path}" "${source_root}"
@@ -152,15 +153,15 @@ install_windows_msmpi() {
 }
 
 install_windows_chrono() {
-  install_windows_cmake_dep "chrono" "${ROOT_DIR}/docker/cuda-builder/deps/chrono-source.tar.gz" "." "${WINDOWS_DEPS_ROOT}/chrono-install" "-DBUILD_BENCHMARKING=OFF -DBUILD_DEMOS=OFF -DBUILD_TESTING=OFF -DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF"
+  install_windows_cmake_dep "chrono" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz" "." "${WINDOWS_THIRD_PARTY_ROOT}/chrono-install" "-DBUILD_BENCHMARKING=OFF -DBUILD_DEMOS=OFF -DBUILD_TESTING=OFF -DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF"
 }
 
 install_windows_hdf5() {
-  install_windows_cmake_dep "hdf5" "${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" "CMake-hdf5-1.14.1-2/hdf5-1.14.1-2" "${WINDOWS_DEPS_ROOT}/hdf5-install" ""
+  install_windows_cmake_dep "hdf5" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/CMake-hdf5-1.14.1-2.tar.gz" "CMake-hdf5-1.14.1-2/hdf5-1.14.1-2" "${WINDOWS_THIRD_PARTY_ROOT}/hdf5-install" ""
 }
 
 install_windows_muparserx() {
-  install_windows_cmake_dep "muparserx" "${ROOT_DIR}/docker/cuda-builder/deps/muparserx-source.tar.gz" "." "${WINDOWS_DEPS_ROOT}/muparserx-install" ""
+  install_windows_cmake_dep "muparserx" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/muparserx-source.tar.gz" "." "${WINDOWS_THIRD_PARTY_ROOT}/muparserx-install" ""
 }
 
 install_windows_h5engine() {
@@ -174,13 +175,13 @@ install_windows_cmake_dep() {
   local source_subdir="$3"
   local install_prefix="$4"
   local cmake_args="$5"
-  local source_root="${WINDOWS_DEPS_ROOT}/${dep_name}-src"
+  local source_root="${WINDOWS_THIRD_PARTY_ROOT}/${dep_name}-src"
   extract_archive "${source_archive}" "${source_root}"
   run_msvc_command "cmake -S \"${source_root}/${source_subdir}\" -B \"${source_root}/build\" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=\"${install_prefix}\" ${cmake_args} && cmake --build \"${source_root}/build\" --parallel 6 && cmake --install \"${source_root}/build\""
 }
 
 run_windows_install() {
-  local deps_root="${WINDOWS_DEPS_ROOT}"
+  local deps_root="${WINDOWS_THIRD_PARTY_ROOT}"
   local dep install_handler
   require_windows_tools
   mkdir -p "${deps_root}"

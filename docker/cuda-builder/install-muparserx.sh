@@ -8,7 +8,7 @@ set -euo pipefail
 : "${MUPARSERX_BUILD_DIR:=${MUPARSERX_SOURCE_DIR}/build}"
 : "${MUPARSERX_INSTALL_PREFIX:=${DEPS_ROOT}/muparserx-install}"
 : "${MUPARSERX_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
-: "${MUPARSERX_ARCHIVE:=/tmp/deps/muparserx-source.tar.gz}"
+: "${MUPARSERX_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/muparserx-source.tar.gz}"
 
 REF_MARKER="${MUPARSERX_INSTALL_PREFIX}/.muparserx-source-ref"
 

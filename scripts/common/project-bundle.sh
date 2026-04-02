@@ -11,6 +11,7 @@ project_bundle_assets() {
 docker-compose.yml
 examples/gitlab-ci/shared-gpu-shell-runner.yml
 runner/register-shell-runner.sh
+third_party
 docker/cuda-builder
 scripts/build-builder-image.sh
 scripts/common
@@ -65,7 +66,7 @@ write_imported_project_env() {
     printf 'CUDA_CXX_PROJECT_DIR=.\n'
     printf 'CUDA_CXX_BUILD_ROOT=%q\n' "${assets_subdir}/artifacts/cuda-cxx-build"
     printf 'CUDA_CXX_INSTALL_ROOT=%q\n' "${assets_subdir}/artifacts/cuda-cxx-install"
-    printf 'CUDA_CXX_DEPS_ROOT=%q\n' "${assets_subdir}/artifacts/deps"
+    printf 'CUDA_CXX_THIRD_PARTY_ROOT=%q\n' "${assets_subdir}/third_party"
     printf 'CUDA_CXX_CMAKE_GENERATOR=Ninja\n'
     printf 'CUDA_CXX_CMAKE_ARGS=\n'
     printf 'CUDA_CXX_BUILD_ARGS=\n'

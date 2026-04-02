@@ -8,7 +8,7 @@ set -euo pipefail
 : "${CHRONO_BUILD_DIR:=${CHRONO_SOURCE_DIR}/build}"
 : "${CHRONO_INSTALL_PREFIX:=${DEPS_ROOT}/chrono-install}"
 : "${CHRONO_BUILD_PARALLEL:=6}"
-: "${CHRONO_ARCHIVE:=/tmp/deps/chrono-source.tar.gz}"
+: "${CHRONO_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/chrono-source.tar.gz}"
 : "${CHRONO_CMAKE_GENERATOR:=Ninja}"
 
 mkdir -p "$(dirname "${CHRONO_SOURCE_DIR}")" "${CHRONO_INSTALL_PREFIX}"

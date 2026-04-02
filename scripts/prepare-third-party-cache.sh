@@ -12,8 +12,9 @@ OFFLINE_ONLY=false
 
 CHRONO_GIT_URL="${CHRONO_GIT_URL:-https://github.com/projectchrono/chrono.git}"
 CHRONO_GIT_REF="${CHRONO_GIT_REF:-3eb56218b}"
-CHRONO_CACHE_DIR="${CHRONO_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/chrono-cache}"
-CHRONO_ARCHIVE_OUTPUT="${CHRONO_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/chrono-source.tar.gz}"
+THIRD_PARTY_CACHE_ROOT="${THIRD_PARTY_CACHE_ROOT:-${ROOT_DIR}/third_party/cache}"
+CHRONO_CACHE_DIR="${CHRONO_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/chrono-cache}"
+CHRONO_ARCHIVE_OUTPUT="${CHRONO_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz}"
 
 CMAKE_VERSION="${CMAKE_VERSION:-3.26.0}"
 CMAKE_CACHE_DIR="${CMAKE_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/cmake-cache}"
@@ -21,26 +22,26 @@ CMAKE_ARCHIVE_OUTPUT="${CMAKE_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/de
 CMAKE_DOWNLOAD_URL="${CMAKE_DOWNLOAD_URL:-https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
 
 EIGEN3_VERSION="${EIGEN3_VERSION:-3.4.0}"
-EIGEN3_CACHE_DIR="${EIGEN3_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/eigen3-cache}"
-EIGEN3_ARCHIVE_OUTPUT="${EIGEN3_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/eigen-${EIGEN3_VERSION}.tar.gz}"
+EIGEN3_CACHE_DIR="${EIGEN3_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/eigen3-cache}"
+EIGEN3_ARCHIVE_OUTPUT="${EIGEN3_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/eigen-${EIGEN3_VERSION}.tar.gz}"
 EIGEN3_DOWNLOAD_URL="${EIGEN3_DOWNLOAD_URL:-https://gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/eigen-${EIGEN3_VERSION}.tar.gz}"
 
 OPENMPI_VERSION="${OPENMPI_VERSION:-4.1.6}"
-OPENMPI_CACHE_DIR="${OPENMPI_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/openmpi-cache}"
-OPENMPI_ARCHIVE_OUTPUT="${OPENMPI_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/openmpi-${OPENMPI_VERSION}.tar.gz}"
+OPENMPI_CACHE_DIR="${OPENMPI_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/openmpi-cache}"
+OPENMPI_ARCHIVE_OUTPUT="${OPENMPI_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/openmpi-${OPENMPI_VERSION}.tar.gz}"
 OPENMPI_DOWNLOAD_URL="${OPENMPI_DOWNLOAD_URL:-https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-${OPENMPI_VERSION}.tar.gz}"
 
-HDF5_ARCHIVE_OUTPUT="${HDF5_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz}"
-H5ENGINE_SPH_ARCHIVE_OUTPUT="${H5ENGINE_SPH_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/h5engine-sph.tar.gz}"
-H5ENGINE_DEM_ARCHIVE_OUTPUT="${H5ENGINE_DEM_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/h5engine-dem.tar.gz}"
+HDF5_ARCHIVE_OUTPUT="${HDF5_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/CMake-hdf5-1.14.1-2.tar.gz}"
+H5ENGINE_SPH_ARCHIVE_OUTPUT="${H5ENGINE_SPH_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/h5engine-sph.tar.gz}"
+H5ENGINE_DEM_ARCHIVE_OUTPUT="${H5ENGINE_DEM_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/h5engine-dem.tar.gz}"
 
 MUPARSERX_GIT_URL="${MUPARSERX_GIT_URL:-https://github.com/joe-cheung-cae/muparserx.git}"
 MUPARSERX_GIT_BRANCH="${MUPARSERX_GIT_BRANCH:-master}"
-MUPARSERX_CACHE_DIR="${MUPARSERX_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/muparserx-cache}"
-MUPARSERX_ARCHIVE_OUTPUT="${MUPARSERX_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/muparserx-source.tar.gz}"
+MUPARSERX_CACHE_DIR="${MUPARSERX_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/muparserx-cache}"
+MUPARSERX_ARCHIVE_OUTPUT="${MUPARSERX_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/muparserx-source.tar.gz}"
 
-MSMPI_SDK_ARCHIVE_OUTPUT="${MSMPI_SDK_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/msmpi-sdk.zip}"
-MSMPI_REDIST_ARCHIVE_OUTPUT="${MSMPI_REDIST_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/msmpi-redist.zip}"
+MSMPI_SDK_ARCHIVE_OUTPUT="${MSMPI_SDK_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/msmpi-sdk.zip}"
+MSMPI_REDIST_ARCHIVE_OUTPUT="${MSMPI_REDIST_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/msmpi-redist.zip}"
 MSMPI_SDK_URL="${MSMPI_SDK_URL:-}"
 MSMPI_REDIST_URL="${MSMPI_REDIST_URL:-}"
 
@@ -48,7 +49,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/prepare-third-party-cache.sh [--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx] [--force-refresh] [--offline-only]
 
-Prepares local third-party source or release archives under docker/cuda-builder/deps/ for online or offline installs.
+Prepares local third-party source or release archives under third_party/cache/ for online or offline installs.
 EOF
 }
 
@@ -176,10 +177,35 @@ prepare_cache_openmpi() {
 }
 
 prepare_cache_hdf5() {
+  if [[ -f "${HDF5_ARCHIVE_OUTPUT}" ]]; then
+    return 0
+  fi
+
+  local builder_archive="${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
+  if [[ -f "${builder_archive}" ]]; then
+    mkdir -p "$(dirname "${HDF5_ARCHIVE_OUTPUT}")"
+    cp "${builder_archive}" "${HDF5_ARCHIVE_OUTPUT}"
+    return 0
+  fi
+
   ensure_local_archive "${HDF5_ARCHIVE_OUTPUT}"
 }
 
 prepare_cache_h5engine() {
+  if [[ -f "${H5ENGINE_SPH_ARCHIVE_OUTPUT}" ]] && [[ -f "${H5ENGINE_DEM_ARCHIVE_OUTPUT}" ]]; then
+    return 0
+  fi
+
+  local builder_root="${ROOT_DIR}/docker/cuda-builder/deps"
+  if [[ ! -f "${H5ENGINE_SPH_ARCHIVE_OUTPUT}" ]] && [[ -f "${builder_root}/h5engine-sph.tar.gz" ]]; then
+    mkdir -p "$(dirname "${H5ENGINE_SPH_ARCHIVE_OUTPUT}")"
+    cp "${builder_root}/h5engine-sph.tar.gz" "${H5ENGINE_SPH_ARCHIVE_OUTPUT}"
+  fi
+  if [[ ! -f "${H5ENGINE_DEM_ARCHIVE_OUTPUT}" ]] && [[ -f "${builder_root}/h5engine-dem.tar.gz" ]]; then
+    mkdir -p "$(dirname "${H5ENGINE_DEM_ARCHIVE_OUTPUT}")"
+    cp "${builder_root}/h5engine-dem.tar.gz" "${H5ENGINE_DEM_ARCHIVE_OUTPUT}"
+  fi
+
   ensure_local_archive "${H5ENGINE_SPH_ARCHIVE_OUTPUT}"
   ensure_local_archive "${H5ENGINE_DEM_ARCHIVE_OUTPUT}"
 }

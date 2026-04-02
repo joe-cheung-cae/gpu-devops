@@ -107,7 +107,7 @@ if [[ "${MODE}" == "all" || "${MODE}" == "assets" ]]; then
   TARGET_DIR="$(cd "$(dirname "${TARGET_DIR}")" && pwd)/$(basename "${TARGET_DIR}")"
   ASSETS_DEST="${TARGET_DIR}/${ASSETS_SUBDIR}"
 
-  mkdir -p "${TARGET_DIR}" "${ASSETS_DEST}"
+  mkdir -p "${TARGET_DIR}" "${ASSETS_DEST}" "${ASSETS_DEST}/third_party"
   cp -R "${STAGE_DIR}/assets/." "${ASSETS_DEST}/"
   write_imported_project_env "${ASSETS_DEST}/.env" "${TARGET_DIR}" "${ASSETS_SUBDIR}"
 fi

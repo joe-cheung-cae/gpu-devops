@@ -8,6 +8,7 @@ docker/cuda-builder/deps/chrono-source.tar.gz
 docker/cuda-builder/deps/eigen3-cache/
 docker/cuda-builder/deps/openmpi-cache/
 docker/cuda-builder/deps/muparserx-cache/
+third_party/
 docker/cuda-builder/deps/eigen-3.4.0.tar.gz
 docker/cuda-builder/deps/openmpi-4.1.6.tar.gz
 docker/cuda-builder/deps/muparserx-source.tar.gz

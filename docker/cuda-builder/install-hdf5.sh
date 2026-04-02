@@ -2,7 +2,7 @@
 set -euo pipefail
 
 : "${DEPS_ROOT:=${HOME}/deps}"
-: "${HDF5_ARCHIVE:=docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz}"
+: "${HDF5_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/CMake-hdf5-1.14.1-2.tar.gz}"
 : "${HDF5_INSTALL_PREFIX:=${DEPS_ROOT}/hdf5-install}"
 : "${HDF5_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
 

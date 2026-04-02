@@ -5,7 +5,7 @@ set -euo pipefail
 : "${DEPS_ROOT:=${HOME}/deps}"
 : "${OPENMPI_INSTALL_PREFIX:=${DEPS_ROOT}/openmpi-install}"
 : "${OPENMPI_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
-: "${OPENMPI_ARCHIVE:=/tmp/deps/openmpi-4.1.6.tar.gz}"
+: "${OPENMPI_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/openmpi-4.1.6.tar.gz}"
 
 ARCHIVE="openmpi-${OPENMPI_VERSION}.tar.gz"
 SOURCE_DIR="$(dirname "${DEPS_ROOT}")/openmpi-${OPENMPI_VERSION}"

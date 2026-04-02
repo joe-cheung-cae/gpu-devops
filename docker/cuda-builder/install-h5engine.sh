@@ -5,8 +5,8 @@ set -euo pipefail
 : "${HDF5_INSTALL_PREFIX:=${DEPS_ROOT}/hdf5-install}"
 : "${H5ENGINE_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
 : "${H5ENGINE_OUTPUT_ROOT:=${DEPS_ROOT}}"
-: "${H5ENGINE_SPH_ARCHIVE:=docker/cuda-builder/deps/h5engine-sph.tar.gz}"
-: "${H5ENGINE_DEM_ARCHIVE:=docker/cuda-builder/deps/h5engine-dem.tar.gz}"
+: "${H5ENGINE_SPH_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/h5engine-sph.tar.gz}"
+: "${H5ENGINE_DEM_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/h5engine-dem.tar.gz}"
 
 test -f "${HDF5_INSTALL_PREFIX}/lib/libhdf5.so"
 
