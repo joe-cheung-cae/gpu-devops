@@ -33,6 +33,11 @@ assert_not_contains() {
   fi
 }
 
+assert_executable() {
+  local path="$1"
+  [[ -x "${path}" ]] || fail "expected file to be executable: ${path}"
+}
+
 assert_file_exists "${ROOT_DIR}/scripts/export/images.sh"
 assert_file_exists "${ROOT_DIR}/scripts/export/project-bundle.sh"
 assert_file_exists "${ROOT_DIR}/scripts/import/images.sh"
@@ -44,6 +49,21 @@ assert_file_exists "${ROOT_DIR}/scripts/common/project-bundle.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/progress.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 assert_file_exists "${ROOT_DIR}/scripts/prepare-third-party-cache.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-third-party.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-chrono.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-eigen3.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-openmpi.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-hdf5.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-h5engine.sh"
+assert_file_exists "${ROOT_DIR}/third_party/install-muparserx.sh"
+assert_file_exists "${ROOT_DIR}/docker/cuda-builder/install-third-party.sh"
+assert_executable "${ROOT_DIR}/third_party/install-third-party.sh"
+assert_executable "${ROOT_DIR}/third_party/install-chrono.sh"
+assert_executable "${ROOT_DIR}/third_party/install-eigen3.sh"
+assert_executable "${ROOT_DIR}/third_party/install-openmpi.sh"
+assert_executable "${ROOT_DIR}/third_party/install-hdf5.sh"
+assert_executable "${ROOT_DIR}/third_party/install-h5engine.sh"
+assert_executable "${ROOT_DIR}/third_party/install-muparserx.sh"
 assert_file_exists "${ROOT_DIR}/scripts/prepare-offline-project-sandbox.sh"
 assert_file_exists "${ROOT_DIR}/scripts/install-third-party.sh"
 assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'

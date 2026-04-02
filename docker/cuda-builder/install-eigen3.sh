@@ -12,12 +12,9 @@ if [[ -n "${EIGEN3_PREFIX}" ]]; then
   EIGEN3_INSTALL_PREFIX="${EIGEN3_PREFIX}"
 fi
 
-ARCHIVE="eigen-${EIGEN3_VERSION}.tar.gz"
 SOURCE_DIR="$(dirname "${DEPS_ROOT}")/eigen-${EIGEN3_VERSION}"
 BUILD_DIR="${SOURCE_DIR}/build"
-URL="https://gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/${ARCHIVE}"
 VERSION_MARKER="${EIGEN3_INSTALL_PREFIX}/.eigen3-source-version"
-ARCHIVE_PATH="${EIGEN3_ARCHIVE}"
 
 mkdir -p "$(dirname "${SOURCE_DIR}")" "${EIGEN3_INSTALL_PREFIX}"
 
@@ -27,16 +24,13 @@ if [[ -f "${VERSION_MARKER}" ]] && \
   exit 0
 fi
 
-if test -f "${EIGEN3_ARCHIVE}"; then
-  ARCHIVE_PATH="${EIGEN3_ARCHIVE}"
-else
-  ARCHIVE_PATH="/tmp/${ARCHIVE}"
-  curl -fsSL "${URL}" -o "${ARCHIVE_PATH}"
+if [[ ! -f "${EIGEN3_ARCHIVE}" ]]; then
+  echo "Expected archive to exist: ${EIGEN3_ARCHIVE}" >&2
+  exit 1
 fi
 
-test -f "${ARCHIVE_PATH}"
 rm -rf "${SOURCE_DIR}"
-tar --no-same-owner --no-same-permissions -xzf "${ARCHIVE_PATH}" -C "$(dirname "${SOURCE_DIR}")" -m
+tar --no-same-owner --no-same-permissions -xzf "${EIGEN3_ARCHIVE}" -C "$(dirname "${SOURCE_DIR}")" -m
 
 cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
   -DCMAKE_BUILD_TYPE=Release \

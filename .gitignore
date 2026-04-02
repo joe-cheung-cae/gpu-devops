@@ -9,6 +9,7 @@ third_party/cache/*-cache/
 third_party/cache/*
 !third_party/cache/*.tar.gz
 !third_party/cache/*.zip
+!third_party/*.sh
 artifacts/*.tar
 artifacts/*.tar.gz
 artifacts/*.tar.gz.sha256

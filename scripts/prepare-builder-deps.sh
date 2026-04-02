@@ -114,14 +114,7 @@ if [[ "${#DEPS[@]}" -eq 0 ]]; then
 fi
 
 progress_step "Preparing dependency command"
-COMMANDS=()
-for dep in "${DEPS[@]}"; do
-  COMMANDS+=("$(third_party_linux_install_command "${dep}" "${CONTAINER_PLATFORM_THIRD_PARTY_ROOT}" "${CONTAINER_THIRD_PARTY_CACHE_ROOT}")")
-done
-
-COMMAND_STRING="$(printf '%s && ' "${COMMANDS[@]}")"
-COMMAND_STRING="${COMMAND_STRING% && }"
-COMMAND_STRING="mkdir -p '${CONTAINER_HOME}/.ccache' && ${COMMAND_STRING}"
+COMMAND_STRING="mkdir -p '${CONTAINER_HOME}/.ccache' && DEPS_ROOT='${CONTAINER_PLATFORM_THIRD_PARTY_ROOT}' THIRD_PARTY_CACHE_ROOT='${CONTAINER_THIRD_PARTY_CACHE_ROOT}' /toolkit/third_party/install-third-party.sh --deps ${RESOLVED_DEPS_CSV}"
 
 progress_step "Preparing builder dependency cache"
 docker run --rm \
@@ -132,9 +125,9 @@ docker run --rm \
   -e "BUILD_PLATFORM=${PLATFORM}" \
   -e "CUDA_CXX_THIRD_PARTY_ROOT=${CUDA_CXX_THIRD_PARTY_ROOT}" \
   -e "DEPS_ROOT=${CONTAINER_PLATFORM_THIRD_PARTY_ROOT}" \
+  -e "THIRD_PARTY_CACHE_ROOT=${CONTAINER_THIRD_PARTY_CACHE_ROOT}" \
   -e "HOME=${CONTAINER_HOME}" \
   -e "CCACHE_DIR=${CONTAINER_HOME}/.ccache" \
-  -e "CHRONO_ARCHIVE=${CONTAINER_THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz" \
   "${BUILDER_IMAGE}" \
   /bin/bash -lc "${COMMAND_STRING}"
 

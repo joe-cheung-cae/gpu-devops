@@ -95,54 +95,32 @@ assert_contains "${default_log}" "${HOST_PROJECT_DIR}:/workspace"
 assert_contains "${default_log}" "${ROOT_DIR}:/toolkit"
 assert_contains "${default_log}" "CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party"
 assert_contains "${default_log}" "DEPS_ROOT=/workspace/.gpu-devops/third_party/centos7"
+assert_contains "${default_log}" "THIRD_PARTY_CACHE_ROOT=/workspace/.gpu-devops/third_party/cache"
 assert_contains "${default_log}" "HOME=/tmp/cuda-cxx-home"
 assert_contains "${default_log}" "CCACHE_DIR=/tmp/cuda-cxx-home/.ccache"
-assert_contains "${default_log}" "CHRONO_ARCHIVE=/workspace/.gpu-devops/third_party/cache/chrono-source.tar.gz"
 assert_contains "${default_log}" "mkdir -p '/tmp/cuda-cxx-home/.ccache'"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
-assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-muparserx.sh"
+assert_contains "${default_log}" "/toolkit/third_party/install-third-party.sh"
+assert_contains "${default_log}" "--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx"
 assert_contains "${default_stdout}" "[1/5] Loading environment"
 assert_contains "${default_stdout}" "[5/5] Prepared builder dependency cache"
 assert_contains "${default_stdout}" "Dependencies: chrono,eigen3,openmpi,hdf5,h5engine,muparserx"
-python3 - "${default_log}" <<'PY'
-import sys
-text = open(sys.argv[1]).read()
-needles = [
-    "/toolkit/docker/cuda-builder/install-eigen3.sh",
-    "/toolkit/docker/cuda-builder/install-openmpi.sh",
-    "/toolkit/docker/cuda-builder/install-hdf5.sh",
-    "/toolkit/docker/cuda-builder/install-h5engine.sh",
-]
-positions = [text.index(n) for n in needles]
-if positions != sorted(positions):
-    raise SystemExit("dependency commands are not emitted in registry order")
-PY
 
 subset_log="${TMP_DIR}/subset.log"
 subset_stdout="${TMP_DIR}/subset.stdout"
 run_prepare "${subset_log}" "${subset_stdout}" --platform rocky8 --deps chrono,muparserx
 assert_contains "${subset_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
-assert_contains "${subset_log}" "/workspace/.gpu-devops/third_party/cache/chrono-source.tar.gz"
-assert_contains "${subset_log}" "/workspace/.gpu-devops/third_party/cache/muparserx-source.tar.gz"
-assert_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
-assert_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-muparserx.sh"
-assert_not_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
-assert_not_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
+assert_contains "${subset_log}" "THIRD_PARTY_CACHE_ROOT=/workspace/.gpu-devops/third_party/cache"
+assert_contains "${subset_log}" "/toolkit/third_party/install-third-party.sh"
+assert_contains "${subset_log}" "--deps chrono,muparserx"
 assert_contains "${subset_stdout}" "Dependencies: chrono,muparserx"
 
 toolchain_log="${TMP_DIR}/toolchain.log"
 toolchain_stdout="${TMP_DIR}/toolchain.stdout"
 run_prepare "${toolchain_log}" "${toolchain_stdout}" --platform ubuntu2204 --deps eigen3,openmpi
 assert_contains "${toolchain_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
-assert_contains "${toolchain_log}" "/workspace/.gpu-devops/third_party/cache/eigen-3.4.0.tar.gz"
-assert_contains "${toolchain_log}" "/workspace/.gpu-devops/third_party/cache/openmpi-4.1.6.tar.gz"
-assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
-assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
-assert_not_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
+assert_contains "${toolchain_log}" "THIRD_PARTY_CACHE_ROOT=/workspace/.gpu-devops/third_party/cache"
+assert_contains "${toolchain_log}" "/toolkit/third_party/install-third-party.sh"
+assert_contains "${toolchain_log}" "--deps eigen3,openmpi"
 assert_contains "${toolchain_stdout}" "Dependencies: eigen3,openmpi"
 
 default_root_log="${TMP_DIR}/default-root.log"
@@ -151,22 +129,14 @@ TEST_LOG_FILE="${default_root_log}" MOCK_DOCKER_ROOTLESS=1 PATH="${MOCK_BIN}:${P
   "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${ENV_FILE_DEFAULT}" --platform centos7 > "${default_root_stdout}"
 assert_contains "${default_root_log}" "CUDA_CXX_THIRD_PARTY_ROOT=./third_party"
 assert_contains "${default_root_log}" "DEPS_ROOT=/workspace/./third_party/centos7"
-assert_contains "${default_root_log}" "CHRONO_ARCHIVE=/workspace/./third_party/cache/chrono-source.tar.gz"
+assert_contains "${default_root_log}" "THIRD_PARTY_CACHE_ROOT=/workspace/./third_party/cache"
 
 h5engine_log="${TMP_DIR}/h5engine.log"
 h5engine_stdout="${TMP_DIR}/h5engine.stdout"
 run_prepare "${h5engine_log}" "${h5engine_stdout}" --platform centos7 --deps h5engine
-assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
-assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/h5engine-sph.tar.gz"
-assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/h5engine-dem.tar.gz"
-assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
-assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
-python3 - "${h5engine_log}" <<'PY'
-import sys
-text = open(sys.argv[1]).read()
-if text.index("/toolkit/docker/cuda-builder/install-hdf5.sh") > text.index("/toolkit/docker/cuda-builder/install-h5engine.sh"):
-    raise SystemExit("hdf5 should be installed before h5engine")
-PY
+assert_contains "${h5engine_log}" "THIRD_PARTY_CACHE_ROOT=/workspace/.gpu-devops/third_party/cache"
+assert_contains "${h5engine_log}" "/toolkit/third_party/install-third-party.sh"
+assert_contains "${h5engine_log}" "--deps hdf5,h5engine"
 assert_contains "${h5engine_stdout}" "Dependencies: hdf5,h5engine"
 
 set +e
