@@ -7,7 +7,7 @@
 执行：
 
 ```bash
-scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+scripts/import/project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
 或手工解压 operator toolkit 之后，`.gpu-devops/.env` 至少应包含这些默认值：

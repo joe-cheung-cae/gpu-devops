@@ -49,7 +49,7 @@ The builder images keep only the common CUDA/C++ toolchain baseline:
 1. Copy [.env.example](.env.example) to `.env` and fill in GitLab values.
 2. Run `scripts/verify-host.sh` to validate the host.
 3. Build and publish the shared builder image with `scripts/build-builder-image.sh --all-platforms`.
-4. If the target host is air-gapped, export the deployment images with `scripts/export-images.sh`.
+4. If the target host is air-gapped, export the deployment images with `scripts/export/images.sh`.
 5. Prepare the project-local dependency cache with `scripts/prepare-builder-deps.sh --platform centos7`.
 6. Register the shell runner with `runner/register-shell-runner.sh gpu`.
 7. Validate the deployment with [docs/self-check.md](docs/self-check.md).
@@ -127,13 +127,13 @@ The third-party entrypoints now resolve dependencies from a shared registry. `--
 
 ## Offline image bundle
 
-For air-gapped deployment, `scripts/export-images.sh` writes a compressed archive containing the builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import-images.sh`.
+For air-gapped deployment, `scripts/export/images.sh` writes a compressed archive containing the builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`. It also writes a sibling SHA256 file at `<archive>.sha256`. Copy both files to the target host and load the archive with `scripts/import/images.sh`.
 
 If you only need part of that image set, you can export a smaller archive:
 
 ```bash
-scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
-scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
+scripts/export/images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export/images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
 The image-only scripts and the project bundle scripts share the same underlying image export/import implementation, so the difference between them is output format and installed assets, not a separate Docker save/load path.
@@ -142,8 +142,8 @@ The image-only scripts and the project bundle scripts share the same underlying 
 
 Use the project bundle scripts when another project lives outside this repository and still needs exported images, ready-to-use integration assets, or both:
 
-- `scripts/export-project-bundle.sh`
-- `scripts/import-project-bundle.sh --target-dir /path/to/other/project`
+- `scripts/export/project-bundle.sh`
+- `scripts/import/project-bundle.sh --target-dir /path/to/other/project`
 
 The bundle scripts support three modes:
 
@@ -155,7 +155,7 @@ If you receive the portable toolkit as an archive, unpack it first:
 
 ```bash
 tar -xzf artifacts/project-operator-toolkit.tar.gz
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/import/images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 ```

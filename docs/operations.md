@@ -19,10 +19,10 @@ scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
-scripts/export-images.sh
+scripts/export/images.sh
 ```
 
-`scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-chrono-source-cache.sh` remains as a Chrono-only compatibility wrapper.
+`scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-third-party-cache.sh --deps chrono` remains as a Chrono-only compatibility wrapper.
 
 The published builder images now keep only the common toolchain baseline. Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
 
@@ -34,7 +34,7 @@ scripts/install-third-party.sh --host linux --platform centos7
 If the destination host is air-gapped, copy the archive referenced by `IMAGE_ARCHIVE_PATH` to that host and run:
 
 ```bash
-scripts/import-images.sh
+scripts/import/images.sh
 ```
 
 For a complete online-to-offline deployment workflow, use this order:
@@ -44,10 +44,10 @@ For a complete online-to-offline deployment workflow, use this order:
    - fill `GITLAB_URL`, `RUNNER_REGISTRATION_TOKEN`, and published image names
    - `scripts/verify-host.sh`
    - `scripts/build-builder-image.sh --all-platforms`
-   - `scripts/export-images.sh`
+   - `scripts/export/images.sh`
 2. Transfer `IMAGE_ARCHIVE_PATH` and `${IMAGE_ARCHIVE_PATH}.sha256` to the offline host.
 3. Offline host:
-   - `scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"`
+   - `scripts/import/images.sh --input "${IMAGE_ARCHIVE_PATH}"`
    - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/install-third-party.sh --host linux --platform centos7`
    - `runner/register-shell-runner.sh gpu`
@@ -57,13 +57,13 @@ For a complete online-to-offline deployment workflow, use this order:
 If the offline host keeps a full checkout of this repository, export the operator toolkit on the online host:
 
 ```bash
-scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/export/project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 ```
 
 Then import it on the offline host with the repository script:
 
 ```bash
-scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+scripts/import/project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
 Continue all later commands from `/path/to/project/.gpu-devops/`.
@@ -90,7 +90,7 @@ EOF
 Then continue from `/path/to/project/.gpu-devops/`:
 
 ```bash
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/import/images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -99,13 +99,13 @@ Then continue from `/path/to/project/.gpu-devops/`:
 
 If your GitLab HTTPS endpoint uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` in `.env` before running `runner/register-shell-runner.sh`. The registration script copies that PEM file into `~/.gitlab-runner/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration command automatically.
 
-`scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
+`scripts/export/images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import/images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
 
-When you do not need the full image set, `scripts/export-images.sh` also supports:
+When you do not need the full image set, `scripts/export/images.sh` also supports:
 
 ```bash
-scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
-scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
+scripts/export/images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export/images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
 Use `--only-build-images` when you want only the builder image matrix. Add `--platform <name>` when you want a single builder tag such as `centos7`.
@@ -115,8 +115,8 @@ These image-only scripts share the same image export/import implementation as th
 To move the same images and integration assets into another project directory outside this repository, run:
 
 ```bash
-scripts/export-project-bundle.sh
-scripts/import-project-bundle.sh --target-dir /path/to/other/project
+scripts/export/project-bundle.sh
+scripts/import/project-bundle.sh --target-dir /path/to/other/project
 ```
 
 The imported files are installed under `/path/to/other/project/.gpu-devops/` by default.
@@ -133,11 +133,11 @@ The imported `.gpu-devops/` directory now behaves as a functional operator toolk
 The project bundle scripts also support partial flows:
 
 ```bash
-scripts/export-project-bundle.sh --mode images
-scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+scripts/export/project-bundle.sh --mode images
+scripts/import/project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
 
-scripts/export-project-bundle.sh --mode assets
-scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+scripts/export/project-bundle.sh --mode assets
+scripts/import/project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
 
 `--mode images` does not require `--target-dir`. `--mode assets` skips Docker image import and only installs the copied files.

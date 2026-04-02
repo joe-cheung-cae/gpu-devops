@@ -119,19 +119,19 @@ scripts/install-third-party.sh --host linux --platform centos7
 联网环境：
 
 ```bash
-scripts/export-images.sh
+scripts/export/images.sh
 ```
 
 离线环境：
 
 ```bash
-scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"
+scripts/import/images.sh --input "${IMAGE_ARCHIVE_PATH}"
 ```
 
 如果离线主机没有仓库 checkout，先导出并解压 operator toolkit：
 
 ```bash
-scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/export/project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 ```
 
 然后：
@@ -147,7 +147,7 @@ cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 之后在 `/path/to/project/.gpu-devops/` 下执行：
 
 ```bash
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/import/images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -157,8 +157,8 @@ cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 如果其他项目也要使用同一套镜像和工具包：
 
 ```bash
-scripts/export-project-bundle.sh
-scripts/import-project-bundle.sh --target-dir /path/to/other/project
+scripts/export/project-bundle.sh
+scripts/import/project-bundle.sh --target-dir /path/to/other/project
 ```
 
 ## 8. 注册 shell runner

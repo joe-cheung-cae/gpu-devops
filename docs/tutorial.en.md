@@ -110,7 +110,7 @@ scripts/build-builder-image.sh --all-platforms
 ```
 
 `scripts/prepare-third-party-cache.sh` is optional. It stages local archives
-for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh`
+for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-third-party-cache.sh --deps chrono`
 remains as a Chrono-only compatibility wrapper.
 
 Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and
@@ -126,21 +126,21 @@ scripts/install-third-party.sh --host linux --platform centos7
 On a connected host:
 
 ```bash
-scripts/export-images.sh
+scripts/export/images.sh
 ```
 
 The export writes `${IMAGE_ARCHIVE_PATH}` plus a sibling `.sha256`. Import on
 the offline host with:
 
 ```bash
-scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"
+scripts/import/images.sh --input "${IMAGE_ARCHIVE_PATH}"
 ```
 
 If the offline host does not keep a repository checkout, export the operator
 toolkit and unpack it on the target host:
 
 ```bash
-scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/export/project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 ```
 
 Then:
@@ -156,7 +156,7 @@ Fill `.gpu-devops/.env` according to [offline-env-configuration.md](offline-env-
 then continue from `/path/to/project/.gpu-devops/`:
 
 ```bash
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/import/images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -166,8 +166,8 @@ then continue from `/path/to/project/.gpu-devops/`:
 If another project needs the same images and integration assets, use:
 
 ```bash
-scripts/export-project-bundle.sh
-scripts/import-project-bundle.sh --target-dir /path/to/other/project
+scripts/export/project-bundle.sh
+scripts/import/project-bundle.sh --target-dir /path/to/other/project
 ```
 
 ## 8. Register shell runners

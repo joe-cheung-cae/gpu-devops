@@ -43,7 +43,7 @@ Build all supported platforms:
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-third-party-cache.sh` is optional. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-chrono-source-cache.sh` stays available as a Chrono-only compatibility wrapper.
+`scripts/prepare-third-party-cache.sh` is optional. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-third-party-cache.sh --deps chrono` stays available as a Chrono-only compatibility wrapper.
 
 The published builder images keep only the generic CUDA/C++ toolchain baseline. Project dependencies such as `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
 
@@ -57,7 +57,7 @@ scripts/install-third-party.sh --host linux --platform centos7
 In a connected environment, export the builder images:
 
 ```bash
-scripts/export-images.sh
+scripts/export/images.sh
 ```
 
 This produces:
@@ -69,8 +69,8 @@ This produces:
 Selective export examples:
 
 ```bash
-scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
-scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
+scripts/export/images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
+scripts/export/images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
 `--only-build-images` exports only the builder image matrix. Add `--platform <name>` if you want just one builder platform such as `centos7`.
@@ -80,13 +80,13 @@ scripts/export-images.sh --only-build-images --platform centos7 --output artifac
 If the offline host does not keep a full clone of this repository, export the operator toolkit:
 
 ```bash
-scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
+scripts/export/project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
 ```
 
 On the offline host, import the toolkit into a project directory:
 
 ```bash
-scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
+scripts/import/project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
 If the offline host has no checkout, unpack the toolkit manually:
@@ -101,13 +101,13 @@ cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 Then create `.gpu-devops/.env` from [offline-env-configuration.md](offline-env-configuration.md) and import the image archive:
 
 ```bash
-scripts/import-images.sh --input artifacts/offline-images.tar.gz
+scripts/import/images.sh --input artifacts/offline-images.tar.gz
 ```
 
 If you unpacked the toolkit manually, run:
 
 ```bash
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
+.gpu-devops/scripts/import/images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/runner/register-shell-runner.sh gpu
@@ -223,8 +223,8 @@ For offline `.env` details and generated defaults, see [offline-env-configuratio
 From this repository:
 
 ```bash
-scripts/export-project-bundle.sh
-scripts/import-project-bundle.sh --target-dir /path/to/other/project
+scripts/export/project-bundle.sh
+scripts/import/project-bundle.sh --target-dir /path/to/other/project
 ```
 
 The target project receives `.gpu-devops/` with the Compose files, operator scripts, runner assets, Docker build assets, docs, example CI config, and a generated `.env`.
@@ -232,11 +232,11 @@ The target project receives `.gpu-devops/` with the Compose files, operator scri
 If you only want images or only want files, use:
 
 ```bash
-scripts/export-project-bundle.sh --mode images
-scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
+scripts/export/project-bundle.sh --mode images
+scripts/import/project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
 
-scripts/export-project-bundle.sh --mode assets
-scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+scripts/export/project-bundle.sh --mode assets
+scripts/import/project-bundle.sh --mode assets --target-dir /path/to/other/project
 ```
 
 Both image bundles and project bundles generate a sibling `.sha256` file. The import scripts verify that hash by default before loading or unpacking the bundle. Use `--skip-hash-check` only when you intentionally want to bypass integrity checking.
