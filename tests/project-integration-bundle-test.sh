@@ -124,8 +124,10 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/export-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
+      assert_file_exists "${test_dir}/assets/scripts/install-third-party.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${test_dir}/assets/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
@@ -221,6 +223,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/import/images.sh" "${bundle_root}/assets/scripts/import/images.sh"
     cp "${ROOT_DIR}/scripts/import/project-bundle.sh" "${bundle_root}/assets/scripts/import/project-bundle.sh"
     cp "${ROOT_DIR}/scripts/image-bundle-common.sh" "${bundle_root}/assets/scripts/image-bundle-common.sh"
+    cp "${ROOT_DIR}/scripts/install-third-party.sh" "${bundle_root}/assets/scripts/install-third-party.sh"
     cp "${ROOT_DIR}/scripts/common/env.sh" "${bundle_root}/assets/scripts/common/env.sh"
     cp "${ROOT_DIR}/scripts/common/images.sh" "${bundle_root}/assets/scripts/common/images.sh"
     cp "${ROOT_DIR}/scripts/common/archive.sh" "${bundle_root}/assets/scripts/common/archive.sh"
@@ -228,6 +231,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/common/progress.sh" "${bundle_root}/assets/scripts/common/progress.sh"
     cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
     cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
+    cp "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" "${bundle_root}/assets/scripts/prepare-third-party-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${bundle_root}/assets/scripts/prepare-builder-deps.sh"
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
@@ -313,8 +317,10 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/export-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
@@ -372,6 +378,8 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/progress-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/import-images.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
@@ -385,6 +393,38 @@ run_import_test() {
 
   assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
   assert_contains "${test_dir}/stdout.log" "[5/5] Imported project bundle"
+}
+
+run_import_assets_with_spaces_test() {
+  local test_dir="${TMP_DIR}/import-assets-with-spaces"
+  local target_dir="${TMP_DIR}/external project with spaces"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+  write_import_env "${test_dir}/.env"
+  write_import_bundle "${test_dir}/bundle" assets
+  tar -czf "${test_dir}/bundle.tar.gz" -C "${test_dir}/bundle" .
+  (
+    cd "${test_dir}"
+    sha256sum bundle.tar.gz > bundle.tar.gz.sha256
+  )
+
+  write_import_docker_mocks "${test_dir}/bin/docker" "${test_dir}/bin/docker-compose"
+
+  TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+  PATH="${test_dir}/bin:${PATH}" \
+  "${ROOT_DIR}/scripts/import-project-bundle.sh" \
+    --env-file "${test_dir}/.env" \
+    --input "${test_dir}/bundle.tar.gz" \
+    --target-dir "${target_dir}" \
+    --mode assets > "${test_dir}/stdout.log"
+
+  local quoted_target_dir
+  quoted_target_dir="$(printf '%q' "${target_dir}")"
+
+  assert_file_exists "${target_dir}/.gpu-devops/.env"
+  assert_contains "${target_dir}/.gpu-devops/.env" "HOST_PROJECT_DIR=${quoted_target_dir}"
+
+  bash -lc "set -euo pipefail; source '${target_dir}/.gpu-devops/.env'; [[ \"\${HOST_PROJECT_DIR}\" == '${target_dir}' ]]"
 }
 
 run_import_hash_failure_test() {
@@ -431,6 +471,7 @@ run_export_test assets
 run_import_test all
 run_import_test images
 run_import_test assets
+run_import_assets_with_spaces_test
 run_import_hash_failure_test all
 run_import_hash_failure_test images
 

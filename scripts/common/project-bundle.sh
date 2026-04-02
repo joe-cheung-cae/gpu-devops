@@ -29,7 +29,9 @@ scripts/image-bundle-common.sh
 scripts/import
 scripts/import-images.sh
 scripts/import-project-bundle.sh
+scripts/install-third-party.sh
 scripts/prepare-runner-service-image.sh
+scripts/prepare-third-party-cache.sh
 scripts/progress-common.sh
 scripts/runner-compose.sh
 scripts/verify-host.sh
@@ -67,14 +69,14 @@ write_imported_project_env() {
   local target_dir="$2"
   local assets_subdir="$3"
 
-  cat > "${env_path}" <<EOF
-HOST_PROJECT_DIR=${target_dir}
-CUDA_CXX_PROJECT_DIR=.
-CUDA_CXX_BUILD_ROOT=${assets_subdir}/artifacts/cuda-cxx-build
-CUDA_CXX_INSTALL_ROOT=${assets_subdir}/artifacts/cuda-cxx-install
-CUDA_CXX_DEPS_ROOT=${assets_subdir}/artifacts/deps
-CUDA_CXX_CMAKE_GENERATOR=Ninja
-CUDA_CXX_CMAKE_ARGS=
-CUDA_CXX_BUILD_ARGS=
-EOF
+  {
+    printf 'HOST_PROJECT_DIR=%q\n' "${target_dir}"
+    printf 'CUDA_CXX_PROJECT_DIR=.\n'
+    printf 'CUDA_CXX_BUILD_ROOT=%q\n' "${assets_subdir}/artifacts/cuda-cxx-build"
+    printf 'CUDA_CXX_INSTALL_ROOT=%q\n' "${assets_subdir}/artifacts/cuda-cxx-install"
+    printf 'CUDA_CXX_DEPS_ROOT=%q\n' "${assets_subdir}/artifacts/deps"
+    printf 'CUDA_CXX_CMAKE_GENERATOR=Ninja\n'
+    printf 'CUDA_CXX_CMAKE_ARGS=\n'
+    printf 'CUDA_CXX_BUILD_ARGS=\n'
+  } > "${env_path}"
 }
