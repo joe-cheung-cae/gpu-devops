@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/import-images.sh [--env-file PATH] [--input PATH] [--skip-hash-check]
+Usage: scripts/import/images.sh [--env-file PATH] [--input PATH] [--skip-hash-check]
 
 Loads a compressed offline image bundle into the local Docker daemon.
 EOF

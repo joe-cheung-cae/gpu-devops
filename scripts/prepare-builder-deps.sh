@@ -8,9 +8,14 @@ source "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/docker-rootless-common.sh"
 # shellcheck disable=SC1091
-source "${ROOT_DIR}/scripts/image-bundle-common.sh"
 # shellcheck disable=SC1091
-source "${ROOT_DIR}/scripts/progress-common.sh"
+source "${ROOT_DIR}/scripts/common/env.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/images.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/archive.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/progress.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 PLATFORM=""

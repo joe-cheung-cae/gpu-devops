@@ -7,7 +7,7 @@ SELECTED_PLATFORM=""
 BUILD_ALL=0
 
 # shellcheck disable=SC1091
-source "${ROOT_DIR}/scripts/progress-common.sh"
+source "${ROOT_DIR}/scripts/common/progress.sh"
 
 while [[ $# -gt 0 ]]; do
   case "${1}" in

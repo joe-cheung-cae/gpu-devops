@@ -6,7 +6,7 @@ ENV_FILE="${ROOT_DIR}/.env"
 CUDA_CXX_ALLOW_ROOTFUL_DOCKER="${CUDA_CXX_ALLOW_ROOTFUL_DOCKER:-0}"
 
 # shellcheck disable=SC1091
-source "${ROOT_DIR}/scripts/progress-common.sh"
+source "${ROOT_DIR}/scripts/common/progress.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/docker-rootless-common.sh"
 

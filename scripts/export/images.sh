@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/export-images.sh [--env-file PATH] [--output PATH]
+Usage: scripts/export/images.sh [--env-file PATH] [--output PATH]
                                  [--only-build-images]
                                  [--platform NAME]
 

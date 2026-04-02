@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # shellcheck disable=SC1091
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/progress-common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts/common/progress.sh"
 
 progress_init 5
 progress_step "Checking Docker"

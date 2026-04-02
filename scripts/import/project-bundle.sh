@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/import-project-bundle.sh [--target-dir PATH] [--env-file PATH] [--input PATH] [--assets-subdir DIR] [--mode all|images|assets] [--skip-hash-check]
+Usage: scripts/import/project-bundle.sh [--target-dir PATH] [--env-file PATH] [--input PATH] [--assets-subdir DIR] [--mode all|images|assets] [--skip-hash-check]
 
 Imports bundled images, integration assets, or both.
 EOF

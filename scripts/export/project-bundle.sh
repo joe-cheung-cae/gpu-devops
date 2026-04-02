@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/export-project-bundle.sh [--env-file PATH] [--output PATH] [--mode all|images|assets]
+Usage: scripts/export/project-bundle.sh [--env-file PATH] [--output PATH] [--mode all|images|assets]
 
 Exports images, integration assets, or both into one portable bundle.
 EOF
