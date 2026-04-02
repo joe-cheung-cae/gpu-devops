@@ -22,7 +22,7 @@ BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=${TEST_PLATFORMS}
 BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
 HOST_PROJECT_DIR=${ROOT_DIR}
-CUDA_CXX_DEPS_ROOT=./artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=./third_party
 EOF
 
 for platform in "${PLATFORMS[@]}"; do
@@ -31,12 +31,12 @@ for platform in "${PLATFORMS[@]}"; do
   "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps hdf5 >/dev/null
   docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
-    test -f "./artifacts/deps/'"${platform}"'/hdf5-install/lib/libhdf5.so"
-    test -x "./artifacts/deps/'"${platform}"'/hdf5-install/bin/h5cc"
-    ldd_output="$(ldd "./artifacts/deps/'"${platform}"'/hdf5-install/lib/libhdf5.so")"
+    test -f "./third_party/'"${platform}"'/hdf5-install/lib/libhdf5.so"
+    test -x "./third_party/'"${platform}"'/hdf5-install/bin/h5cc"
+    ldd_output="$(ldd "./third_party/'"${platform}"'/hdf5-install/lib/libhdf5.so")"
     printf "%s\n" "${ldd_output}"
     printf "%s\n" "${ldd_output}" | grep -E "libz(\.so)?"
-    "./artifacts/deps/'"${platform}"'/hdf5-install/bin/h5cc" -showconfig >/dev/null
+    "./third_party/'"${platform}"'/hdf5-install/bin/h5cc" -showconfig >/dev/null
   '
 done
 

@@ -24,7 +24,7 @@ assert_contains() {
 assert_contains "${DOC_PATH}" "HOST_PROJECT_DIR"
 assert_contains "${DOC_PATH}" "CUDA_CXX_BUILD_ROOT"
 assert_contains "${DOC_PATH}" "CUDA_CXX_INSTALL_ROOT"
-assert_contains "${DOC_PATH}" "CUDA_CXX_DEPS_ROOT"
+assert_contains "${DOC_PATH}" "CUDA_CXX_THIRD_PARTY_ROOT"
 assert_contains "${DOC_PATH}" "RUNNER_TLS_CA_FILE"
 assert_contains "${DOC_PATH}" "shell runner"
 assert_contains "${DOC_PATH}" ".gpu-devops/.env"

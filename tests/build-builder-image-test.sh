@@ -173,16 +173,17 @@ assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'ARG
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_VERSION:=3.4.0'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'DEPS_ROOT:=${HOME}/deps'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_INSTALL_PREFIX:=${DEPS_ROOT}/eigen3-install'
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_ARCHIVE:=/tmp/deps/eigen-3.4.0.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/eigen-3.4.0.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" '.eigen3-source-version'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'test -f "${EIGEN3_ARCHIVE}"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'gitlab.com/libeigen/eigen/-/archive/${EIGEN3_VERSION}/${ARCHIVE}'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" '--no-same-owner'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" '--no-same-permissions'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'cmake --install "${BUILD_DIR}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/eigen-3.4.0.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" 'DEPS_ROOT:=${HOME}/deps'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" 'OPENMPI_INSTALL_PREFIX:=${DEPS_ROOT}/openmpi-install'
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" 'OPENMPI_ARCHIVE:=/tmp/deps/openmpi-4.1.6.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" 'OPENMPI_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/openmpi-4.1.6.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" '.openmpi-source-version'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" 'test -f "${OPENMPI_ARCHIVE}"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-openmpi.sh" '--no-same-owner'
@@ -198,7 +199,7 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'DEPS_ROOT:=
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_SOURCE_DIR:=${DEPS_ROOT}/chrono'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_INSTALL_PREFIX:=${DEPS_ROOT}/chrono-install'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_BUILD_PARALLEL:=6'
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_ARCHIVE:=/tmp/deps/chrono-source.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/chrono-source.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'CHRONO_CMAKE_GENERATOR:=Ninja'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" '.chrono-source-ref'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'test -f "${CHRONO_ARCHIVE}"'
@@ -213,7 +214,7 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh" 'cmake -G "$
 if grep -Fq -- 'git fetch --all --tags' "${ROOT_DIR}/docker/cuda-builder/install-chrono.sh"; then
   fail "install-chrono.sh should not use git fetch --all --tags"
 fi
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_ARCHIVE:=docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/CMake-hdf5-1.14.1-2.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'DEPS_ROOT:=${HOME}/deps'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_INSTALL_PREFIX:=${DEPS_ROOT}/hdf5-install'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'HDF5_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}'
@@ -227,8 +228,8 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'make -j"${HDF
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" 'ldd "${HDF5_INSTALL_PREFIX}/lib/libhdf5.so"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-hdf5.sh" '.hdf5-source-version'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}'
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_SPH_ARCHIVE:=docker/cuda-builder/deps/h5engine-sph.tar.gz'
-assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_DEM_ARCHIVE:=docker/cuda-builder/deps/h5engine-dem.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_SPH_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/h5engine-sph.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_DEM_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/h5engine-dem.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'DEPS_ROOT:=${HOME}/deps'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'test -f "${HDF5_INSTALL_PREFIX}/lib/libhdf5.so"'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'H5ENGINE_OUTPUT_ROOT:=${DEPS_ROOT}'
@@ -249,6 +250,7 @@ assert_not_contains "${ROOT_DIR}/docker/cuda-builder/install-h5engine.sh" 'build
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_GIT_URL:=https://github.com/joe-cheung-cae/muparserx.git'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_GIT_BRANCH:=master'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'DEPS_ROOT:=${HOME}/deps'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_ARCHIVE:=$(dirname "${DEPS_ROOT}")/cache/muparserx-source.tar.gz'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_SOURCE_DIR:=${DEPS_ROOT}/muparserx'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_INSTALL_PREFIX:=${DEPS_ROOT}/muparserx-install'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" 'MUPARSERX_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}'
@@ -262,7 +264,7 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/install-muparserx.sh" '.muparse
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" 'Usage: scripts/prepare-builder-deps.sh'
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" '--platform centos7|rocky8|ubuntu2204'
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" '--deps chrono,eigen3,openmpi,hdf5,h5engine,muparserx'
-assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" 'CUDA_CXX_DEPS_ROOT'
+assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" 'CUDA_CXX_THIRD_PARTY_ROOT'
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" 'CUDA_CXX_ALLOW_ROOTFUL_DOCKER'
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" 'CONTAINER_HOME="/tmp/cuda-cxx-home"'
 assert_contains "${ROOT_DIR}/scripts/prepare-builder-deps.sh" '-e "HOME=${CONTAINER_HOME}"'
@@ -304,9 +306,16 @@ assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "/bin/bash 
 assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "/bin/bash '/toolkit/docker/cuda-builder/install-hdf5.sh'"
 assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "/bin/bash '/toolkit/docker/cuda-builder/install-h5engine.sh'"
 assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "/bin/bash '/toolkit/docker/cuda-builder/install-muparserx.sh'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "CHRONO_ARCHIVE='%s/chrono-source.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "EIGEN3_ARCHIVE='%s/eigen-3.4.0.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "OPENMPI_ARCHIVE='%s/openmpi-4.1.6.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "HDF5_ARCHIVE='%s/CMake-hdf5-1.14.1-2.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "H5ENGINE_SPH_ARCHIVE='%s/h5engine-sph.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "H5ENGINE_DEM_ARCHIVE='%s/h5engine-dem.tar.gz'"
+assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" "MUPARSERX_ARCHIVE='%s/muparserx-source.tar.gz'"
 assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" 'third_party_linux_install_command'
 assert_contains "${ROOT_DIR}/scripts/common/third-party-registry.sh" 'third_party_windows_install_function'
-assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_DEPS_ROOT'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_THIRD_PARTY_ROOT'
 assert_not_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_RUN_UID'
 assert_not_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_RUN_GID'
 assert_not_contains "${ROOT_DIR}/docker-compose.yml" 'user: "${CUDA_CXX_RUN_UID}:${CUDA_CXX_RUN_GID}"'
@@ -334,14 +343,28 @@ assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubun
 assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export OPENMPI_ROOT='
 assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export H5ENGINE_SPH_ROOT='
 assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export H5ENGINE_DEM_ROOT='
-assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install'
-assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install'
-assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/bin'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_THIRD_PARTY_ROOT/chrono-install'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_THIRD_PARTY_ROOT/eigen3-install'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_THIRD_PARTY_ROOT/openmpi-install/bin'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/chrono-source.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/eigen-3.4.0.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/openmpi-4.1.6.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/h5engine-sph.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/h5engine-dem.tar.gz'
+assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/third_party/cache/muparserx-source.tar.gz'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-centos7'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-rocky8'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-ubuntu2204'
 assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/install-eigen3.sh'
 assert_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/install-openmpi.sh'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/eigen-3.4.0.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/h5engine-sph.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/h5engine-dem.tar.gz'
+assert_not_contains "${ROOT_DIR}/docker-compose.yml" '/toolkit/docker/cuda-builder/deps/muparserx-source.tar.gz'
 
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG http_proxy'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG HTTP_PROXY'
@@ -357,8 +380,10 @@ assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/eigen3-cache/
 assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/openmpi-cache/'
 assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/eigen-3.4.0.tar.gz'
 assert_contains "${ROOT_DIR}/.gitignore" 'docker/cuda-builder/deps/openmpi-4.1.6.tar.gz'
+assert_contains "${ROOT_DIR}/.gitignore" 'third_party/'
 assert_contains "${ROOT_DIR}/.dockerignore" 'docker/cuda-builder/deps/chrono-cache'
 assert_contains "${ROOT_DIR}/.dockerignore" 'docker/cuda-builder/deps/eigen3-cache'
 assert_contains "${ROOT_DIR}/.dockerignore" 'docker/cuda-builder/deps/openmpi-cache'
+assert_contains "${ROOT_DIR}/.dockerignore" 'third_party'
 
 echo "build builder image tests passed"

@@ -63,4 +63,15 @@ assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_D
 assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/project-bundle.sh"'
 assert_contains "${ROOT_DIR}/scripts/import/project-bundle.sh" 'source "${ROOT_DIR}/scripts/common/progress.sh"'
 
+for pattern in \
+  "git submodule add" \
+  "git submodule update" \
+  "git submodule sync" \
+  "submodule foreach"
+do
+  if rg -n --fixed-strings --glob '!docs/plans/*' --glob '!tests/script-layout-test.sh' "${pattern}" "${ROOT_DIR}" >/dev/null; then
+    fail "submodule write/update command should not appear: ${pattern}"
+  fi
+done
+
 echo "script layout tests passed"

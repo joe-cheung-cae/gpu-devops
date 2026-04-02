@@ -57,6 +57,7 @@ EOF
 chmod +x "${MOCK_BIN}/docker"
 
 ENV_FILE="${TMP_DIR}/.env"
+ENV_FILE_DEFAULT="${TMP_DIR}/.env.default"
 HOST_PROJECT_DIR="${TMP_DIR}/project"
 mkdir -p "${HOST_PROJECT_DIR}"
 cat > "${ENV_FILE}" <<'EOF'
@@ -65,9 +66,17 @@ BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
 BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 HOST_PROJECT_DIR=__HOST_PROJECT_DIR__
-CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party
 EOF
 sed -i "s#__HOST_PROJECT_DIR__#${HOST_PROJECT_DIR}#" "${ENV_FILE}"
+cat > "${ENV_FILE_DEFAULT}" <<'EOF'
+BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
+BUILDER_DEFAULT_PLATFORM=centos7
+BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
+BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
+HOST_PROJECT_DIR=__HOST_PROJECT_DIR__
+EOF
+sed -i "s#__HOST_PROJECT_DIR__#${HOST_PROJECT_DIR}#" "${ENV_FILE_DEFAULT}"
 
 run_prepare() {
   local log_file="$1"
@@ -84,11 +93,11 @@ assert_contains "${default_log}" "run --rm"
 assert_contains "${default_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
 assert_contains "${default_log}" "${HOST_PROJECT_DIR}:/workspace"
 assert_contains "${default_log}" "${ROOT_DIR}:/toolkit"
-assert_contains "${default_log}" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
-assert_contains "${default_log}" "DEPS_ROOT=/workspace/.gpu-devops/artifacts/deps/centos7"
+assert_contains "${default_log}" "CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party"
+assert_contains "${default_log}" "DEPS_ROOT=/workspace/.gpu-devops/third_party/centos7"
 assert_contains "${default_log}" "HOME=/tmp/cuda-cxx-home"
 assert_contains "${default_log}" "CCACHE_DIR=/tmp/cuda-cxx-home/.ccache"
-assert_contains "${default_log}" "CHRONO_ARCHIVE=/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz"
+assert_contains "${default_log}" "CHRONO_ARCHIVE=/workspace/.gpu-devops/third_party/cache/chrono-source.tar.gz"
 assert_contains "${default_log}" "mkdir -p '/tmp/cuda-cxx-home/.ccache'"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
 assert_contains "${default_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
@@ -117,6 +126,8 @@ subset_log="${TMP_DIR}/subset.log"
 subset_stdout="${TMP_DIR}/subset.stdout"
 run_prepare "${subset_log}" "${subset_stdout}" --platform rocky8 --deps chrono,muparserx
 assert_contains "${subset_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
+assert_contains "${subset_log}" "/workspace/.gpu-devops/third_party/cache/chrono-source.tar.gz"
+assert_contains "${subset_log}" "/workspace/.gpu-devops/third_party/cache/muparserx-source.tar.gz"
 assert_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
 assert_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-muparserx.sh"
 assert_not_contains "${subset_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
@@ -127,14 +138,27 @@ toolchain_log="${TMP_DIR}/toolchain.log"
 toolchain_stdout="${TMP_DIR}/toolchain.stdout"
 run_prepare "${toolchain_log}" "${toolchain_stdout}" --platform ubuntu2204 --deps eigen3,openmpi
 assert_contains "${toolchain_log}" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+assert_contains "${toolchain_log}" "/workspace/.gpu-devops/third_party/cache/eigen-3.4.0.tar.gz"
+assert_contains "${toolchain_log}" "/workspace/.gpu-devops/third_party/cache/openmpi-4.1.6.tar.gz"
 assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-eigen3.sh"
 assert_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-openmpi.sh"
 assert_not_contains "${toolchain_log}" "/toolkit/docker/cuda-builder/install-chrono.sh"
 assert_contains "${toolchain_stdout}" "Dependencies: eigen3,openmpi"
 
+default_root_log="${TMP_DIR}/default-root.log"
+default_root_stdout="${TMP_DIR}/default-root.stdout"
+TEST_LOG_FILE="${default_root_log}" MOCK_DOCKER_ROOTLESS=1 PATH="${MOCK_BIN}:${PATH}" \
+  "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${ENV_FILE_DEFAULT}" --platform centos7 > "${default_root_stdout}"
+assert_contains "${default_root_log}" "CUDA_CXX_THIRD_PARTY_ROOT=./third_party"
+assert_contains "${default_root_log}" "DEPS_ROOT=/workspace/./third_party/centos7"
+assert_contains "${default_root_log}" "CHRONO_ARCHIVE=/workspace/./third_party/cache/chrono-source.tar.gz"
+
 h5engine_log="${TMP_DIR}/h5engine.log"
 h5engine_stdout="${TMP_DIR}/h5engine.stdout"
 run_prepare "${h5engine_log}" "${h5engine_stdout}" --platform centos7 --deps h5engine
+assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
+assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/h5engine-sph.tar.gz"
+assert_contains "${h5engine_log}" "/workspace/.gpu-devops/third_party/cache/h5engine-dem.tar.gz"
 assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-hdf5.sh"
 assert_contains "${h5engine_log}" "/toolkit/docker/cuda-builder/install-h5engine.sh"
 python3 - "${h5engine_log}" <<'PY'

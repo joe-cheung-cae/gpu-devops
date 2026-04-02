@@ -34,14 +34,14 @@ assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '.g
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "BUILD_PLATFORM: centos7"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_BUILD_ROOT: .gpu-devops/artifacts/cuda-cxx-build"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_INSTALL_ROOT: .gpu-devops/artifacts/cuda-cxx-install"
-assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_DEPS_ROOT: .gpu-devops/artifacts/deps"
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "CUDA_CXX_THIRD_PARTY_ROOT: .gpu-devops/third_party"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" 'cuda-cxx-${BUILD_PLATFORM}'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" 'if [[ ! " centos7 rocky8 ubuntu2204 " =~ " ${BUILD_PLATFORM} " ]]; then'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:verify:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:build:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:test:linux"
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "shell-runner:deploy:linux"
-assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}/'
+assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_THIRD_PARTY_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" '${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}/'
 assert_contains "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "artifacts:"
@@ -63,7 +63,7 @@ if grep -Fq -- "cmake --install" "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shel
   fail "cmake --install should be handled by docker-compose.yml, not the shell-runner example"
 fi
 assert_contains "${ROOT_DIR}/docker-compose.yml" "CUDA_CXX_INSTALL_ROOT"
-assert_contains "${ROOT_DIR}/docker-compose.yml" "CUDA_CXX_DEPS_ROOT"
+assert_contains "${ROOT_DIR}/docker-compose.yml" "CUDA_CXX_THIRD_PARTY_ROOT"
 assert_contains "${ROOT_DIR}/docker-compose.yml" "CMAKE_PREFIX_PATH"
 assert_contains "${ROOT_DIR}/docker-compose.yml" "LD_LIBRARY_PATH"
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-centos7'

@@ -116,8 +116,10 @@ PATH="${MOCK_BIN}:${PATH}" \
 HDF5_ARCHIVE_OUTPUT="${TMP_DIR}/missing-hdf5.tar.gz" \
 H5ENGINE_SPH_ARCHIVE_OUTPUT="${TMP_DIR}/missing-h5engine-sph.tar.gz" \
 H5ENGINE_DEM_ARCHIVE_OUTPUT="${TMP_DIR}/missing-h5engine-dem.tar.gz" \
-  "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps h5engine > "${TMP_DIR}/h5engine.stdout" 2> "${TMP_DIR}/h5engine.stderr" || true
-assert_contains "${TMP_DIR}/h5engine.stderr" "Expected archive to exist"
+  "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps h5engine > "${TMP_DIR}/h5engine.stdout"
+assert_file_exists "${TMP_DIR}/missing-hdf5.tar.gz"
+assert_file_exists "${TMP_DIR}/missing-h5engine-sph.tar.gz"
+assert_file_exists "${TMP_DIR}/missing-h5engine-dem.tar.gz"
 
 assert_file_exists "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 

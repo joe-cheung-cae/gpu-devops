@@ -22,7 +22,7 @@ BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=${TEST_PLATFORMS}
 BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
 HOST_PROJECT_DIR=${ROOT_DIR}
-CUDA_CXX_DEPS_ROOT=./artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=./third_party
 EOF
 
 for platform in "${PLATFORMS[@]}"; do
@@ -31,14 +31,14 @@ for platform in "${PLATFORMS[@]}"; do
   "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps muparserx >/dev/null
   docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
-    test -d "./artifacts/deps/'"${platform}"'/muparserx/.git"
+    test -d "./third_party/'"${platform}"'/muparserx/.git"
     (
-      cd "./artifacts/deps/'"${platform}"'/muparserx"
+      cd "./third_party/'"${platform}"'/muparserx"
       git rev-parse --abbrev-ref HEAD
     ) | grep -Fx "master"
-    test -f "./artifacts/deps/'"${platform}"'/muparserx/build/libmuparserx.so"
-    ldd "./artifacts/deps/'"${platform}"'/muparserx/build/libmuparserx.so"
-    find "./artifacts/deps/'"${platform}"'/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .
+    test -f "./third_party/'"${platform}"'/muparserx/build/libmuparserx.so"
+    ldd "./third_party/'"${platform}"'/muparserx/build/libmuparserx.so"
+    find "./third_party/'"${platform}"'/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .
   '
 done
 

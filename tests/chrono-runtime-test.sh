@@ -22,7 +22,7 @@ BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=${TEST_PLATFORMS}
 BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
 HOST_PROJECT_DIR=${ROOT_DIR}
-CUDA_CXX_DEPS_ROOT=./artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=./third_party
 EOF
 
 for platform in "${PLATFORMS[@]}"; do
@@ -31,12 +31,12 @@ for platform in "${PLATFORMS[@]}"; do
   "${ROOT_DIR}/scripts/prepare-builder-deps.sh" --env-file "${TEST_ENV_FILE}" --platform "${platform}" --deps chrono >/dev/null
   docker run --rm -v "${ROOT_DIR}:/workspace" -w /workspace "${image}" sh -lc '
     set -e
-    test -d "./artifacts/deps/'"${platform}"'/chrono"
-    test -f "./artifacts/deps/'"${platform}"'/chrono/.chrono-source-ref"
-    grep -Fx "3eb56218b" "./artifacts/deps/'"${platform}"'/chrono/.chrono-source-ref"
-    test -f "./artifacts/deps/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
-    ldd "./artifacts/deps/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
-    chrono_config="$(find "./artifacts/deps/'"${platform}"'/chrono-install" \( -name ChronoConfig.cmake -o -name chrono-config.cmake \) -print -quit)"
+    test -d "./third_party/'"${platform}"'/chrono"
+    test -f "./third_party/'"${platform}"'/chrono/.chrono-source-ref"
+    grep -Fx "3eb56218b" "./third_party/'"${platform}"'/chrono/.chrono-source-ref"
+    test -f "./third_party/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
+    ldd "./third_party/'"${platform}"'/chrono-install/lib/libChronoEngine.so"
+    chrono_config="$(find "./third_party/'"${platform}"'/chrono-install" \( -name ChronoConfig.cmake -o -name chrono-config.cmake \) -print -quit)"
     test -n "${chrono_config}"
     workdir="$(mktemp -d)"
     cat > "${workdir}/CMakeLists.txt" <<'"'"'EOF'"'"'

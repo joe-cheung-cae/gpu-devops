@@ -37,6 +37,11 @@ assert_file_exists() {
   [[ -f "${path}" ]] || fail "expected file to exist: ${path}"
 }
 
+assert_dir_exists() {
+  local path="$1"
+  [[ -d "${path}" ]] || fail "expected directory to exist: ${path}"
+}
+
 assert_executable() {
   local path="$1"
   [[ -x "${path}" ]] || fail "expected file to be executable: ${path}"
@@ -53,6 +58,23 @@ assert_equals() {
   if [[ "${expected}" != "${actual}" ]]; then
     fail "expected '${expected}', got '${actual}'"
   fi
+}
+
+assert_tar_contains() {
+  local archive="$1"
+  local expected="$2"
+  local contents
+
+  contents="$(mktemp)"
+  tar -tzf "${archive}" > "${contents}"
+  if ! grep -Fq -- "${expected}" "${contents}"; then
+    echo "Expected to find: ${expected}" >&2
+    echo "In archive: ${archive}" >&2
+    tar -tzf "${archive}" >&2 || true
+    rm -f "${contents}"
+    fail "missing expected archive content"
+  fi
+  rm -f "${contents}"
 }
 
 write_export_env() {
@@ -158,7 +180,9 @@ run_export_third_party_cache_test() {
     "${repo_dir}/scripts/common" \
     "${repo_dir}/scripts/export" \
     "${repo_dir}/scripts/import" \
-    "${repo_dir}/docs"
+    "${repo_dir}/docs" \
+    "${repo_dir}/third_party/cache" \
+    "${repo_dir}/third_party/centos7/chrono-install/lib"
   cp -a "${ROOT_DIR}/.env.example" "${repo_dir}/.env.example"
   cp -a "${ROOT_DIR}/README.md" "${repo_dir}/README.md"
   cp -a "${ROOT_DIR}/AGENTS.md" "${repo_dir}/AGENTS.md"
@@ -194,15 +218,21 @@ run_export_third_party_cache_test() {
   cp -a "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${repo_dir}/docker/cuda-builder/centos7.Dockerfile"
   cp -a "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" "${repo_dir}/docker/cuda-builder/rocky8.Dockerfile"
   cp -a "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" "${repo_dir}/docker/cuda-builder/ubuntu2204.Dockerfile"
+  rm -rf "${repo_dir}/third_party"
+  mkdir -p "${repo_dir}/third_party/cache" "${repo_dir}/third_party/centos7/chrono-install/lib"
   printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
-  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
-  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/h5engine-sph.tar.gz"
-  printf 'placeholder\n' > "${repo_dir}/docker/cuda-builder/deps/h5engine-dem.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/chrono-source.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/eigen-3.4.0.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/openmpi-4.1.6.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/h5engine-sph.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/h5engine-dem.tar.gz"
+  printf 'placeholder\n' > "${repo_dir}/third_party/cache/muparserx-source.tar.gz"
   rm -f \
-    "${repo_dir}/docker/cuda-builder/deps/chrono-source.tar.gz" \
-    "${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz" \
-    "${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz" \
-    "${repo_dir}/docker/cuda-builder/deps/muparserx-source.tar.gz"
+    "${repo_dir}/third_party/cache/chrono-source.tar.gz" \
+    "${repo_dir}/third_party/cache/eigen-3.4.0.tar.gz" \
+    "${repo_dir}/third_party/cache/openmpi-4.1.6.tar.gz" \
+    "${repo_dir}/third_party/cache/muparserx-source.tar.gz"
 
   write_export_env "${test_dir}/.env"
   write_export_docker_mock "${test_dir}/bin/docker"
@@ -215,20 +245,26 @@ run_export_third_party_cache_test() {
     --output "${test_dir}/bundle.tar.gz" \
     --mode assets > "${test_dir}/stdout.log"
 
-  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/chrono-source.tar.gz"
-  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
-  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
-  assert_file_exists "${repo_dir}/docker/cuda-builder/deps/muparserx-source.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/chrono-source.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/eigen-3.4.0.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/openmpi-4.1.6.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/h5engine-sph.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/h5engine-dem.tar.gz"
+  assert_file_exists "${repo_dir}/third_party/cache/muparserx-source.tar.gz"
   assert_contains "${test_dir}/logs/prepare.log" "git clone https://github.com/projectchrono/chrono.git"
-  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o ${repo_dir}/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
-  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.6.tar.gz -o ${repo_dir}/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
+  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o ${repo_dir}/third_party/cache/eigen-3.4.0.tar.gz"
+  assert_contains "${test_dir}/logs/prepare.log" "curl -fsSL https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.6.tar.gz -o ${repo_dir}/third_party/cache/openmpi-4.1.6.tar.gz"
   assert_contains "${test_dir}/logs/prepare.log" "git clone https://github.com/joe-cheung-cae/muparserx.git"
   assert_file_exists "${repo_dir}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
   assert_not_contains "${test_dir}/logs/prepare.log" "https://github.com/Kitware/CMake/releases/download/v3.26.0/cmake-3.26.0-linux-x86_64.tar.gz"
-  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/chrono-source.tar.gz"
-  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/eigen-3.4.0.tar.gz"
-  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/openmpi-4.1.6.tar.gz"
-  tar -tzf "${test_dir}/bundle.tar.gz" | grep -Fq "assets/docker/cuda-builder/deps/muparserx-source.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/chrono-source.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/eigen-3.4.0.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/openmpi-4.1.6.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/h5engine-sph.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/h5engine-dem.tar.gz"
+  assert_tar_contains "${test_dir}/bundle.tar.gz" "assets/third_party/cache/muparserx-source.tar.gz"
 }
 
 run_export_test() {
@@ -266,6 +302,8 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
+      assert_file_exists "${test_dir}/assets/third_party/cache/chrono-source.tar.gz"
+      assert_file_exists "${test_dir}/assets/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/centos7.Dockerfile"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
@@ -292,6 +330,8 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
+      assert_file_exists "${test_dir}/assets/third_party/cache/chrono-source.tar.gz"
+      assert_file_exists "${test_dir}/assets/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${test_dir}/assets/docs/offline-env-configuration.md"
       assert_file_exists "${test_dir}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
       assert_not_exists "${test_dir}/images"
@@ -335,6 +375,8 @@ write_import_bundle() {
       "${bundle_root}/assets/scripts/export" \
       "${bundle_root}/assets/scripts/import" \
       "${bundle_root}/assets/runner" \
+      "${bundle_root}/assets/third_party/cache" \
+      "${bundle_root}/assets/third_party/centos7/chrono-install/lib" \
       "${bundle_root}/assets/docker/cuda-builder/deps"
     cp "${ROOT_DIR}/docker-compose.yml" "${bundle_root}/assets/docker-compose.yml"
     cp "${ROOT_DIR}/.env.example" "${bundle_root}/assets/.env.example"
@@ -359,6 +401,13 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
     cp "${ROOT_DIR}/runner/register-shell-runner.sh" "${bundle_root}/assets/runner/register-shell-runner.sh"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/chrono-source.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/eigen-3.4.0.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/openmpi-4.1.6.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/h5engine-sph.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/h5engine-dem.tar.gz"
+    printf 'placeholder\n' > "${bundle_root}/assets/third_party/cache/muparserx-source.tar.gz"
     cp "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${bundle_root}/assets/docker/cuda-builder/centos7.Dockerfile"
     cp "${ROOT_DIR}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
     cp "${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
@@ -445,6 +494,8 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/third_party/cache/chrono-source.tar.gz"
+      assert_file_exists "${target_dir}/.gpu-devops/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/centos7.Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
@@ -455,7 +506,8 @@ run_import_test() {
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_PROJECT_DIR=."
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ROOT=.gpu-devops/artifacts/cuda-cxx-build"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install"
-      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party"
+      assert_dir_exists "${target_dir}/.gpu-devops/third_party"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_CMAKE_GENERATOR=Ninja"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_CMAKE_ARGS="
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_BUILD_ARGS="
@@ -493,11 +545,14 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
+      assert_file_exists "${target_dir}/.gpu-devops/third_party/cache/chrono-source.tar.gz"
+      assert_file_exists "${target_dir}/.gpu-devops/third_party/cache/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docs/offline-env-configuration.md"
       assert_file_exists "${target_dir}/.gpu-devops/.env"
       assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_INSTALL_ROOT=.gpu-devops/artifacts/cuda-cxx-install"
-      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_DEPS_ROOT=.gpu-devops/artifacts/deps"
+      assert_contains "${target_dir}/.gpu-devops/.env" "CUDA_CXX_THIRD_PARTY_ROOT=.gpu-devops/third_party"
+      assert_dir_exists "${target_dir}/.gpu-devops/third_party"
       ;;
   esac
 

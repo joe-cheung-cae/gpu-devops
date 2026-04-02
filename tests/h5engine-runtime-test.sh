@@ -22,7 +22,7 @@ BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=${TEST_PLATFORMS}
 BUILDER_IMAGE=${BUILDER_IMAGE_FAMILY}-centos7
 HOST_PROJECT_DIR=${ROOT_DIR}
-CUDA_CXX_DEPS_ROOT=./artifacts/deps
+CUDA_CXX_THIRD_PARTY_ROOT=./third_party
 EOF
 
 for platform in "${PLATFORMS[@]}"; do
@@ -34,7 +34,7 @@ for platform in "${PLATFORMS[@]}"; do
 
     check_package() {
       local package_name="$1"
-      local package_dir="./artifacts/deps/'"${platform}"'/${package_name}"
+      local package_dir="./third_party/'"${platform}"'/${package_name}"
       local lib_path="${package_dir}/build/h5Engine/libh5Engine.so"
       local test_path="${package_dir}/build/testHdf5"
       local ldd_output
