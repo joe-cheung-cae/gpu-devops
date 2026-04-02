@@ -44,6 +44,7 @@ assert_file_exists "${ROOT_DIR}/scripts/common/project-bundle.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/progress.sh"
 assert_file_exists "${ROOT_DIR}/scripts/common/third-party-registry.sh"
 assert_file_exists "${ROOT_DIR}/scripts/prepare-third-party-cache.sh"
+assert_file_exists "${ROOT_DIR}/scripts/prepare-offline-project-sandbox.sh"
 assert_file_exists "${ROOT_DIR}/scripts/install-third-party.sh"
 assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/env.sh"'
 assert_contains "${ROOT_DIR}/scripts/export/images.sh" 'source "${ROOT_DIR}/scripts/common/images.sh"'

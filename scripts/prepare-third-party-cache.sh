@@ -17,8 +17,8 @@ CHRONO_CACHE_DIR="${CHRONO_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/chrono-cache}"
 CHRONO_ARCHIVE_OUTPUT="${CHRONO_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz}"
 
 CMAKE_VERSION="${CMAKE_VERSION:-3.26.0}"
-CMAKE_CACHE_DIR="${CMAKE_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/cmake-cache}"
-CMAKE_ARCHIVE_OUTPUT="${CMAKE_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
+CMAKE_CACHE_DIR="${CMAKE_CACHE_DIR:-${THIRD_PARTY_CACHE_ROOT}/cmake-cache}"
+CMAKE_ARCHIVE_OUTPUT="${CMAKE_ARCHIVE_OUTPUT:-${THIRD_PARTY_CACHE_ROOT}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
 CMAKE_DOWNLOAD_URL="${CMAKE_DOWNLOAD_URL:-https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
 
 EIGEN3_VERSION="${EIGEN3_VERSION:-3.4.0}"
@@ -181,7 +181,7 @@ prepare_cache_hdf5() {
     return 0
   fi
 
-  local builder_archive="${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
+  local builder_archive="${THIRD_PARTY_CACHE_ROOT}/CMake-hdf5-1.14.1-2.tar.gz"
   if [[ -f "${builder_archive}" ]]; then
     mkdir -p "$(dirname "${HDF5_ARCHIVE_OUTPUT}")"
     cp "${builder_archive}" "${HDF5_ARCHIVE_OUTPUT}"
@@ -196,7 +196,7 @@ prepare_cache_h5engine() {
     return 0
   fi
 
-  local builder_root="${ROOT_DIR}/docker/cuda-builder/deps"
+  local builder_root="${THIRD_PARTY_CACHE_ROOT}"
   if [[ ! -f "${H5ENGINE_SPH_ARCHIVE_OUTPUT}" ]] && [[ -f "${builder_root}/h5engine-sph.tar.gz" ]]; then
     mkdir -p "$(dirname "${H5ENGINE_SPH_ARCHIVE_OUTPUT}")"
     cp "${builder_root}/h5engine-sph.tar.gz" "${H5ENGINE_SPH_ARCHIVE_OUTPUT}"

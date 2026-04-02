@@ -46,7 +46,7 @@ scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-third-party-cache.sh` 是可选步骤。它会在宿主机下准备 `chrono`、`eigen3`、`openmpi`、`muparserx` 的本地归档，供 Linux 和 Windows 离线安装复用。`scripts/prepare-third-party-cache.sh --deps chrono` 继续保留为只处理 Chrono 的兼容入口。
+`scripts/prepare-third-party-cache.sh` 是可选步骤。它会在宿主机下准备 `chrono`、`eigen3`、`openmpi`、`muparserx` 和共享 builder tarball 的本地归档，统一放到 `third_party/cache/`，供 Linux 和 Windows 离线安装复用。`scripts/prepare-third-party-cache.sh --deps chrono` 继续保留为只处理 Chrono 的兼容入口。
 
 当前发布的 builder image 只保留通用 CUDA/C++ 工具链基线。`Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine`、`muparserx` 都需要通过依赖缓存流程准备到 `third_party/<platform>`，对应入口是 `scripts/prepare-builder-deps.sh` 或 `scripts/install-third-party.sh --host linux --platform <name>`。
 

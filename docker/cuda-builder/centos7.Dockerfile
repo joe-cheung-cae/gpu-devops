@@ -51,7 +51,7 @@ ENV LD_LIBRARY_PATH="/opt/rh/devtoolset-11/root/usr/lib64:${LD_LIBRARY_PATH}"
 RUN ln -sf /opt/rh/rh-python38/root/usr/bin/python3 /usr/local/bin/python3 && \
     ln -sf /opt/rh/rh-python38/root/usr/bin/pip3 /usr/local/bin/pip3
 
-COPY docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
+COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 

@@ -43,7 +43,7 @@ Build all supported platforms:
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-third-party-cache.sh` is optional. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-third-party-cache.sh --deps chrono` stays available as a Chrono-only compatibility wrapper.
+`scripts/prepare-third-party-cache.sh` is optional. It stages local archives for `chrono`, `eigen3`, `openmpi`, `muparserx`, and the shared builder tarballs under `third_party/cache/` so Linux and Windows installs can reuse them offline. `scripts/prepare-third-party-cache.sh --deps chrono` stays available as a Chrono-only compatibility wrapper.
 
 The published builder images keep only the generic CUDA/C++ toolchain baseline. Project dependencies such as `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` are prepared later into `third_party/<platform>` with:
 

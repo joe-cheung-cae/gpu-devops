@@ -105,7 +105,8 @@ scripts/build-builder-image.sh --all-platforms
 ```
 
 `scripts/prepare-third-party-cache.sh` 会准备 `chrono`、`eigen3`、`openmpi`、
-`muparserx` 的本地归档（可选但推荐）。
+`muparserx` 和共享 builder tarball 的本地归档，并统一放到
+`third_party/cache/`（可选但推荐）。
 
 项目依赖通过以下步骤准备到 `CUDA_CXX_THIRD_PARTY_ROOT/<platform>`：
 

@@ -110,7 +110,8 @@ scripts/build-builder-image.sh --all-platforms
 ```
 
 `scripts/prepare-third-party-cache.sh` is optional. It stages local archives
-for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-third-party-cache.sh --deps chrono`
+for `chrono`, `eigen3`, `openmpi`, `muparserx`, and the shared builder tarballs
+under `third_party/cache/`. `scripts/prepare-third-party-cache.sh --deps chrono`
 remains as a Chrono-only compatibility wrapper.
 
 Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and

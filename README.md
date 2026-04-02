@@ -171,6 +171,24 @@ The imported `.gpu-devops/` directory is a functional operator toolkit. It inclu
 - delivered project `third_party` content ready for the target repository to consume
 
 When the target project repository receives the delivered assets, it owns the `third_party` submodule or snapshot in its own tree. This repository only ships the content that can be placed under `third_party/`.
+
+## Offline project sandbox
+
+If you want to materialize a local, ignored target-repository layout inside this checkout, run:
+
+```bash
+scripts/prepare-offline-project-sandbox.sh
+```
+
+The script creates `.offline-project/` and populates `.offline-project/.gpu-devops/` with the same delivery shape that `scripts/import/project-bundle.sh` uses for offline target repositories. The sandbox includes:
+
+- `.gpu-devops/docker-compose.yml`
+- `.gpu-devops/scripts/`
+- `.gpu-devops/third_party/`
+- `.gpu-devops/.env` with offline-friendly project-relative paths
+
+The directory is ignored by git and can be deleted and recreated at any time.
+
 ## Project usage
 
 See [examples/gitlab-ci/shared-gpu-shell-runner.yml](examples/gitlab-ci/shared-gpu-shell-runner.yml) for a complete example.

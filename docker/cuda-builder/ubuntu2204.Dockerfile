@@ -28,7 +28,7 @@ RUN apt-get update && \
       zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
-COPY docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
+COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 

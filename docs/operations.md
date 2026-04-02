@@ -22,7 +22,7 @@ scripts/build-builder-image.sh --all-platforms
 scripts/export/images.sh
 ```
 
-`scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-third-party-cache.sh --deps chrono` remains as a Chrono-only compatibility wrapper.
+`scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, `muparserx`, and the shared builder tarballs under `third_party/cache/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-third-party-cache.sh --deps chrono` remains as a Chrono-only compatibility wrapper.
 
 The published builder images now keep only the common toolchain baseline. Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into `third_party/<platform>` with:
 

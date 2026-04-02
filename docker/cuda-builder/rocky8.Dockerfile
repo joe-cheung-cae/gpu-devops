@@ -36,7 +36,7 @@ RUN dnf install -y epel-release && \
 ENV PATH="/opt/rh/gcc-toolset-11/root/usr/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/rh/gcc-toolset-11/root/usr/lib64:${LD_LIBRARY_PATH}"
 
-COPY docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
+COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 
