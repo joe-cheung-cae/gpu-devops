@@ -15,10 +15,8 @@
 - `centos7` is still supported for compatibility, but it is end-of-life.
 - The CentOS 7 Dockerfile rewrites base repositories and SCL repositories to `vault.centos.org`.
 - The CentOS 7 image uses `rh-python38` and keeps `urllib3<2` for compatibility with the older OpenSSL stack.
-- All builder platforms install Eigen3 `3.4.0` from source to `/usr/local`, so downstream CMake discovery stays consistent.
-- All builder platforms include the common CUDA/C++ toolchain baseline only: OpenMPI, Eigen3, UUID headers, `ccache`, CMake, Conan, and Ninja.
-- The project-local dependency cache can also stage matching copies of Eigen3 and OpenMPI when an offline install or Windows/MSVC handoff needs them.
-- Heavy dependencies such as Project Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` by `scripts/prepare-builder-deps.sh`.
+- All builder platforms include only the common CUDA/C++ toolchain baseline: UUID headers, `ccache`, CMake, Conan, and Ninja.
+- Project dependencies such as Eigen3, OpenMPI, Project Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` by `scripts/prepare-builder-deps.sh`.
 - If `docker/cuda-builder/deps/chrono-source.tar.gz` exists, the dependency-preparation workflow consumes that local Chrono source archive before falling back to git.
 - Chrono is configured with `-DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF`.
 - HDF5 still requires the matching zlib development package inside the base image so the later dependency-preparation step can build it successfully.
@@ -35,8 +33,6 @@ The standard builder image includes:
 - `cmake`
 - `ninja`
 - `gcc/g++`
-- `Eigen3 3.4.0`
-- `OpenMPI 4.1.6` with static libraries and C/C++ wrappers
 - UUID development headers
 - `ccache`
 - `git`
@@ -46,6 +42,8 @@ The standard builder image includes:
 
 The standard local dependency cache adds:
 
+- `Eigen3 3.4.0`
+- `OpenMPI 4.1.6`
 - `Project Chrono` at commit `3eb56218b`
 - `HDF5 1.14.1-2` with zlib compression support
 - `h5engine-sph` rebuilt against the prepared HDF5 runtime

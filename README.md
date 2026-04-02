@@ -14,9 +14,9 @@ The first release targets a single host with NVIDIA GPUs and shared Runner usage
 
 The shared builder images now keep only the common CUDA/C++ toolchain baseline:
 
-- OpenMPI, Eigen3, CMake, Conan, Ninja, UUID development headers, and `ccache`
+- CUDA compiler, CMake, Conan, Ninja, UUID development headers, and `ccache`
 - a smaller base image that is faster to rebuild and export
-- heavy project dependencies such as Chrono, HDF5, h5engine, and muparserx are prepared later into a project-local cache under `CUDA_CXX_DEPS_ROOT/<platform>`
+- project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and muparserx are prepared later into a project-local cache under `CUDA_CXX_DEPS_ROOT/<platform>`
 
 ## Tutorials
 
@@ -126,7 +126,7 @@ scripts/prepare-third-party-cache.sh
 
 This cache now covers `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh` remains as a compatibility wrapper for the Chrono-only path.
 
-Heavy project dependencies are no longer baked into the base builder image. The same dependency-cache workflow can also prepare project-local copies of `Eigen3` and `OpenMPI` when an offline or cross-host install needs them:
+Heavy project dependencies are no longer baked into the base builder image. `Eigen3` and `OpenMPI` now follow the same project-local install path as Chrono, HDF5, h5engine, and muparserx:
 
 ```bash
 scripts/prepare-builder-deps.sh --platform centos7

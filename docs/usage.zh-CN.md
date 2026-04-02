@@ -48,7 +48,7 @@ scripts/build-builder-image.sh --all-platforms
 
 `scripts/prepare-third-party-cache.sh` 是可选步骤。它会在宿主机下准备 `chrono`、`eigen3`、`openmpi`、`muparserx` 的本地归档，供 Linux 和 Windows 离线安装复用。`scripts/prepare-chrono-source-cache.sh` 继续保留为只处理 Chrono 的兼容入口。
 
-当前发布的 builder image 仍然保留通用 CUDA/C++ 工具链基线，其中包括 `Eigen3` 和 `OpenMPI`。依赖缓存流程还可以额外把 `Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine`、`muparserx` 准备到 `CUDA_CXX_DEPS_ROOT/<platform>`，对应入口是 `scripts/prepare-builder-deps.sh` 或 `scripts/install-third-party.sh --host linux --platform <name>`。
+当前发布的 builder image 只保留通用 CUDA/C++ 工具链基线。`Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine`、`muparserx` 都需要通过依赖缓存流程准备到 `CUDA_CXX_DEPS_ROOT/<platform>`，对应入口是 `scripts/prepare-builder-deps.sh` 或 `scripts/install-third-party.sh --host linux --platform <name>`。
 
 ### 步骤 3：准备 Runner 服务镜像并导出离线包
 

@@ -258,9 +258,7 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
-- `Eigen3 3.4.0`
-- 以静态库方式构建的 `OpenMPI 4.1.6`，并提供 C/C++ wrapper
-- `Project Chrono`、`HDF5`、`h5engine-sph`、`h5engine-dem`、`muparserx` 不再预装到 base image
+- `Project Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine-sph`、`h5engine-dem`、`muparserx` 都不再预装到 base image
 - 改为通过 `scripts/prepare-builder-deps.sh` 准备到 `${CUDA_CXX_DEPS_ROOT}/<platform>`
 - `git`
 - `gdb`
@@ -274,9 +272,9 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null && ! command -v mpicc >/dev/null'
 scripts/prepare-builder-deps.sh --platform centos7
-docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./artifacts/deps/centos7/openmpi-install/bin/mpicc" && test -f "./artifacts/deps/centos7/openmpi-install/lib/libmpi.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 期望结果：
@@ -284,13 +282,13 @@ docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc '
 - `nvcc` 显示 `release 11.7`
 - `cmake` 显示 `3.26.0`
 - `conan` 能输出版本号
-- `mpicc` 显示 `Open MPI 4.1.6`
-- `mpicxx` 能解析到 C++ wrapper
-- `/usr/local/include/eigen3` 下能找到 `Eigen/Core`
-- `/opt/openmpi/lib` 下同时有静态库和共享库
 - `/usr/include/uuid/uuid.h` 和 `ccache` 在 base builder image 中可用
+- 在准备项目依赖前，base builder image 中不应直接存在 `mpicc`
 - `scripts/prepare-builder-deps.sh --platform centos7` 会填充 `./artifacts/deps/centos7`
 - `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` 存在
+- `./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core` 存在
+- `./artifacts/deps/centos7/openmpi-install/bin/mpicc` 存在
+- `./artifacts/deps/centos7/openmpi-install/lib/libmpi.so` 存在
 - `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` 存在
 - `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` 存在
 - `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` 存在

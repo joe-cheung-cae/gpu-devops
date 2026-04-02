@@ -28,9 +28,9 @@ cp .env.example .env
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform rocky8
 scripts/build-builder-image.sh --all-platforms
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null && ! command -v mpicc >/dev/null'
 scripts/prepare-builder-deps.sh --platform centos7
-docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./artifacts/deps/centos7/openmpi-install/bin/mpicc" && test -f "./artifacts/deps/centos7/openmpi-install/lib/libmpi.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -40,12 +40,13 @@ Expected:
 - The batch build covers `centos7`, `rocky8`, and `ubuntu2204`
 - The default resulting image matches `BUILDER_IMAGE`
 - If proxy settings are present, all builder platforms consume the same proxy input and `centos7` still completes its `yum` steps
-- Eigen3 `3.4.0` is installed under `/usr/local/include/eigen3`
-- OpenMPI 4.1.6 is available through `mpicc` / `mpicxx`
-- `/opt/openmpi/lib/libmpi.a` and `/opt/openmpi/lib/libmpi.so` both exist
 - `/usr/include/uuid/uuid.h` and `ccache` exist in the base builder image
+- `mpicc` is not present before the project-local dependency cache is prepared
 - `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
 - `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
+- `./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core` exists
+- `./artifacts/deps/centos7/openmpi-install/bin/mpicc` exists
+- `./artifacts/deps/centos7/openmpi-install/lib/libmpi.so` exists
 - `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
 - `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
 - `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists

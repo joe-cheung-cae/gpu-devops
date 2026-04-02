@@ -258,9 +258,7 @@ The image includes:
 - `cmake 3.26.0`
 - `ninja`
 - `gcc/g++`
-- `Eigen3 3.4.0`
-- `OpenMPI 4.1.6` built as static libraries with C/C++ wrappers
-- `Project Chrono`, `HDF5`, `h5engine-sph`, `h5engine-dem`, and `muparserx` are no longer preinstalled in the base image
+- `Project Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine-sph`, `h5engine-dem`, and `muparserx` are not preinstalled in the base image
 - prepare them into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
 - `git`
 - `gdb`
@@ -274,9 +272,9 @@ After build, verify tool versions:
 docker run --rm "${BUILDER_IMAGE}" nvcc --version
 docker run --rm "${BUILDER_IMAGE}" cmake --version
 docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'mpicc --showme:version && mpicxx --showme:command && test -f /opt/openmpi/lib/libmpi.a && test -e /opt/openmpi/lib/libmpi.so && test -f /usr/local/include/eigen3/Eigen/Core && test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null'
+docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null && ! command -v mpicc >/dev/null'
 scripts/prepare-builder-deps.sh --platform centos7
-docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./artifacts/deps/centos7/openmpi-install/bin/mpicc" && test -f "./artifacts/deps/centos7/openmpi-install/lib/libmpi.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
 ```
 
 Expected:
@@ -284,13 +282,13 @@ Expected:
 - `nvcc` reports `release 11.7`
 - `cmake` reports `3.26.0`
 - `conan` reports a valid version
-- `mpicc` reports `Open MPI 4.1.6`
-- `mpicxx` resolves to the C++ compiler wrapper
-- `Eigen/Core` exists under `/usr/local/include/eigen3`
-- OpenMPI installs both static and shared libraries under `/opt/openmpi/lib`
 - `uuid/uuid.h` and `ccache` exist in the base builder image
+- `mpicc` is not available before project dependencies are prepared
 - `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
 - `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
+- `./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core` exists
+- `./artifacts/deps/centos7/openmpi-install/bin/mpicc` exists
+- `./artifacts/deps/centos7/openmpi-install/lib/libmpi.so` exists
 - `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
 - `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
 - `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists

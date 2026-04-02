@@ -48,7 +48,7 @@ scripts/build-builder-image.sh --all-platforms
 
 `scripts/prepare-third-party-cache.sh` is optional. It prepares local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/` so Linux and Windows installs can reuse them offline. `scripts/prepare-chrono-source-cache.sh` stays available as a Chrono-only compatibility wrapper.
 
-The published builder images still keep the common CUDA/C++ toolchain baseline, including `Eigen3` and `OpenMPI`. The dependency-cache workflow can additionally prepare project-local copies of `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` into `CUDA_CXX_DEPS_ROOT/<platform>` with `scripts/prepare-builder-deps.sh` or `scripts/install-third-party.sh --host linux --platform <name>`.
+The published builder images keep only the generic CUDA/C++ toolchain baseline. Project dependencies such as `Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine`, and `muparserx` are prepared into `CUDA_CXX_DEPS_ROOT/<platform>` with `scripts/prepare-builder-deps.sh` or `scripts/install-third-party.sh --host linux --platform <name>`.
 
 ### Step 3: Prepare the Runner service image and offline bundle
 
