@@ -19,6 +19,7 @@ docker/cuda-builder
 docker/gitlab-runner
 scripts/build-builder-image.sh
 scripts/common
+scripts/common/docker-rootless-common.sh
 scripts/compose.sh
 scripts/export
 scripts/export-images.sh

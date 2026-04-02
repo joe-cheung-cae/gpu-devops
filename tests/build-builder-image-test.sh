@@ -32,6 +32,26 @@ assert_not_contains() {
   fi
 }
 
+assert_service_block_not_contains() {
+  local start_marker="$1"
+  local end_marker="$2"
+  local unexpected="$3"
+  local block
+
+  block="$(awk -v start="${start_marker}" -v end="${end_marker}" '
+    $0 == start {in_block=1; next}
+    in_block && $0 == end {exit}
+    in_block {print}
+  ' "${ROOT_DIR}/docker-compose.yml")"
+
+  if grep -Fq -- "${unexpected}" <<< "${block}"; then
+    echo "Did not expect to find: ${unexpected}" >&2
+    echo "In service block starting at: ${start_marker}" >&2
+    printf '%s\n' "${block}" >&2
+    fail "unexpected content present"
+  fi
+}
+
 run_with_mock_docker() {
   local env_file="$1"
   local log_file="$2"
@@ -135,6 +155,21 @@ assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'ins
 assert_not_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'install-muparserx.sh'
 assert_not_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'install-muparserx.sh'
 assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'install-muparserx.sh'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'cmake-3.26.0-linux-x86_64.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'cmake-3.26.0-linux-x86_64.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'cmake-3.26.0-linux-x86_64.tar.gz'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'wget -qO /tmp/cmake.sh'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'wget -qO /tmp/cmake.sh'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'wget -qO /tmp/cmake.sh'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'sh /tmp/cmake.sh --skip-license --prefix=/usr/local'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'sh /tmp/cmake.sh --skip-license --prefix=/usr/local'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'sh /tmp/cmake.sh --skip-license --prefix=/usr/local'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ARG CMAKE_VERSION=3.26.0'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ARG CMAKE_VERSION=3.26.0'
+assert_not_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'ARG CMAKE_VERSION=3.26.0'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_VERSION:=3.4.0'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'DEPS_ROOT:=${HOME}/deps'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/install-eigen3.sh" 'EIGEN3_INSTALL_PREFIX:=${DEPS_ROOT}/eigen3-install'
@@ -277,6 +312,30 @@ assert_contains "${ROOT_DIR}/docker-compose.yml" 'user: "${CUDA_CXX_RUN_UID}:${C
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'HOME: /tmp/cuda-cxx-home'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'CCACHE_DIR: /tmp/cuda-cxx-home/.ccache'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'mkdir -p "$$CCACHE_DIR"'
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export CHRONO_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export EIGEN3_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export HDF5_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export MUPARSERX_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export OPENMPI_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export H5ENGINE_SPH_ROOT='
+assert_service_block_not_contains "  cuda-cxx-centos7:" "  cuda-cxx-deps-centos7:" 'export H5ENGINE_DEM_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export CHRONO_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export EIGEN3_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export HDF5_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export MUPARSERX_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export OPENMPI_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export H5ENGINE_SPH_ROOT='
+assert_service_block_not_contains "  cuda-cxx-rocky8:" "  cuda-cxx-deps-rocky8:" 'export H5ENGINE_DEM_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export CHRONO_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export EIGEN3_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export HDF5_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export MUPARSERX_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export OPENMPI_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export H5ENGINE_SPH_ROOT='
+assert_service_block_not_contains "  cuda-cxx-ubuntu2204:" "  cuda-cxx-deps-ubuntu2204:" 'export H5ENGINE_DEM_ROOT='
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install'
+assert_contains "${ROOT_DIR}/docker-compose.yml" 'CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/bin'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-centos7'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-rocky8'
 assert_contains "${ROOT_DIR}/docker-compose.yml" 'cuda-cxx-deps-ubuntu2204'

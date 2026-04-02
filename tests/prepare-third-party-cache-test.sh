@@ -82,6 +82,7 @@ CHRONO_ARCHIVE="${TMP_DIR}/chrono-source.tar.gz"
 EIGEN_ARCHIVE="${TMP_DIR}/eigen-3.4.0.tar.gz"
 OPENMPI_ARCHIVE="${TMP_DIR}/openmpi-4.1.6.tar.gz"
 MUPARSERX_ARCHIVE="${TMP_DIR}/muparserx-source.tar.gz"
+CMAKE_ARCHIVE="${TMP_DIR}/cmake-3.26.0-linux-x86_64.tar.gz"
 
 PATH="${MOCK_BIN}:${PATH}" \
 CHRONO_GIT_URL="${CHRONO_REPO}" \
@@ -94,12 +95,14 @@ MUPARSERX_CACHE_DIR="${TMP_DIR}/muparserx-cache" \
 MUPARSERX_ARCHIVE_OUTPUT="${MUPARSERX_ARCHIVE}" \
 EIGEN3_ARCHIVE_OUTPUT="${EIGEN_ARCHIVE}" \
 OPENMPI_ARCHIVE_OUTPUT="${OPENMPI_ARCHIVE}" \
+CMAKE_ARCHIVE_OUTPUT="${CMAKE_ARCHIVE}" \
   "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" --deps chrono,eigen3,openmpi,muparserx > "${TMP_DIR}/stdout.log"
 
 assert_file_exists "${CHRONO_ARCHIVE}"
 assert_file_exists "${EIGEN_ARCHIVE}"
 assert_file_exists "${OPENMPI_ARCHIVE}"
 assert_file_exists "${MUPARSERX_ARCHIVE}"
+assert_file_exists "${CMAKE_ARCHIVE}"
 
 if ! tar -tzf "${CHRONO_ARCHIVE}" | grep -q '\.chrono-source-ref$'; then
   fail "chrono archive should contain .chrono-source-ref"

@@ -520,13 +520,13 @@ CentOS 7 can satisfy the current CUDA 11.7 + CMake 3.26 platform target, but it 
 If future requirements need newer Python, OpenSSL, or Conan ecosystems, CentOS 7 will become increasingly expensive to maintain.
 ```
 
-### 11.2 Build hangs while downloading CMake
+### 11.2 Build hangs while extracting the CMake cache
 
-This repository downloads the CMake installer from GitHub Releases. If it hangs, check:
+This repository installs CMake from a locally cached tarball under `docker/cuda-builder/deps/`. If the builder image build fails here, check:
 
-- whether the build container can reach GitHub
-- whether your proxy only listens on `127.0.0.1`
-- whether `scripts/build-builder-image.sh` is up to date and includes proxy propagation plus `--network host` fallback
+- whether `docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz` exists in the build context
+- whether `scripts/prepare-third-party-cache.sh` has refreshed the CMake tarball
+- whether `scripts/build-builder-image.sh` is up to date and still points at the local Docker build context
 
 ### 11.3 Container says GPU is not available
 

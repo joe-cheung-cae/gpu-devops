@@ -24,16 +24,9 @@ services:
       - -lc
       - >
         mkdir -p "$$CCACHE_DIR" &&
-        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
-        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
-        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
-        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
-        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
-        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
-        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph/build/h5Engine:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -93,16 +86,9 @@ services:
       - -lc
       - >
         mkdir -p "$$CCACHE_DIR" &&
-        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
-        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
-        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
-        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
-        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
-        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
-        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph/build/h5Engine:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"
@@ -162,16 +148,9 @@ services:
       - -lc
       - >
         mkdir -p "$$CCACHE_DIR" &&
-        export CHRONO_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install" &&
-        export EIGEN3_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install" &&
-        export HDF5_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install" &&
-        export MUPARSERX_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install" &&
-        export OPENMPI_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install" &&
-        export H5ENGINE_SPH_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph" &&
-        export H5ENGINE_DEM_ROOT="$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem" &&
-        export CMAKE_PREFIX_PATH="$$CHRONO_ROOT:$$EIGEN3_ROOT:$$HDF5_ROOT:$$MUPARSERX_ROOT:$$OPENMPI_ROOT$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
-        export PATH="$$OPENMPI_ROOT/bin:$${PATH}" &&
-        export LD_LIBRARY_PATH="$$CHRONO_ROOT/lib:$$HDF5_ROOT/lib:$$MUPARSERX_ROOT/lib:$$OPENMPI_ROOT/lib:$$H5ENGINE_SPH_ROOT/build/h5Engine:$$H5ENGINE_DEM_ROOT/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
+        export CMAKE_PREFIX_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/eigen3-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install$${CMAKE_PREFIX_PATH:+:$$CMAKE_PREFIX_PATH}" &&
+        export PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/bin:$${PATH}" &&
+        export LD_LIBRARY_PATH="$$CUDA_CXX_PLATFORM_DEPS_ROOT/chrono-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/hdf5-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/muparserx-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/openmpi-install/lib:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-sph/build/h5Engine:$$CUDA_CXX_PLATFORM_DEPS_ROOT/h5engine-dem/build/h5Engine$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" &&
         rm -f "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeCache.txt" &&
         rm -rf "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM/CMakeFiles" &&
         cmake -S "$$CUDA_CXX_PROJECT_DIR" -B "$$CUDA_CXX_BUILD_ROOT/$$BUILD_PLATFORM"

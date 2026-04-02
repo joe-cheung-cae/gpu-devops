@@ -15,6 +15,11 @@ CHRONO_GIT_REF="${CHRONO_GIT_REF:-3eb56218b}"
 CHRONO_CACHE_DIR="${CHRONO_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/chrono-cache}"
 CHRONO_ARCHIVE_OUTPUT="${CHRONO_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/chrono-source.tar.gz}"
 
+CMAKE_VERSION="${CMAKE_VERSION:-3.26.0}"
+CMAKE_CACHE_DIR="${CMAKE_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/cmake-cache}"
+CMAKE_ARCHIVE_OUTPUT="${CMAKE_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
+CMAKE_DOWNLOAD_URL="${CMAKE_DOWNLOAD_URL:-https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz}"
+
 EIGEN3_VERSION="${EIGEN3_VERSION:-3.4.0}"
 EIGEN3_CACHE_DIR="${EIGEN3_CACHE_DIR:-${ROOT_DIR}/docker/cuda-builder/deps/eigen3-cache}"
 EIGEN3_ARCHIVE_OUTPUT="${EIGEN3_ARCHIVE_OUTPUT:-${ROOT_DIR}/docker/cuda-builder/deps/eigen-${EIGEN3_VERSION}.tar.gz}"
@@ -155,6 +160,11 @@ prepare_cache_chrono() {
   prepare_git_archive "${CHRONO_GIT_URL}" "${CHRONO_GIT_REF}" "${CHRONO_CACHE_DIR}" "${CHRONO_ARCHIVE_OUTPUT}" ".chrono-source-ref"
 }
 
+prepare_cache_cmake() {
+  mkdir -p "${CMAKE_CACHE_DIR}"
+  download_file "${CMAKE_DOWNLOAD_URL}" "${CMAKE_ARCHIVE_OUTPUT}"
+}
+
 prepare_cache_eigen3() {
   mkdir -p "${EIGEN3_CACHE_DIR}"
   download_file "${EIGEN3_DOWNLOAD_URL}" "${EIGEN3_ARCHIVE_OUTPUT}"
@@ -181,6 +191,8 @@ prepare_cache_muparserx() {
 RESOLVED_DEPS_CSV="$(third_party_resolve_dep_order "${DEPS_CSV}" linux)"
 IFS=',' read -r -a DEPS <<< "${RESOLVED_DEPS_CSV}"
 
+prepare_cache_cmake
+
 for dep in "${DEPS[@]}"; do
   cache_handler="$(third_party_cache_command "${dep}")"
   "${cache_handler}"
@@ -193,4 +205,4 @@ if [[ -n "${MSMPI_REDIST_URL}" ]]; then
   download_file "${MSMPI_REDIST_URL}" "${MSMPI_REDIST_ARCHIVE_OUTPUT}"
 fi
 
-printf 'Prepared third-party archives: %s\n' "$(IFS=,; printf '%s' "${DEPS[*]}")"
+printf 'Prepared third-party archives: cmake,%s\n' "$(IFS=,; printf '%s' "${DEPS[*]}")"

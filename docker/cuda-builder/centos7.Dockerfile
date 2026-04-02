@@ -1,7 +1,6 @@
 FROM nvidia/cuda:11.7.1-devel-centos7
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG CMAKE_VERSION=3.26.0
 ARG http_proxy
 ARG https_proxy
 ARG HTTP_PROXY
@@ -27,8 +26,8 @@ RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
       make \
       perl \
       rsync \
+      tar \
       unzip \
-      wget \
       zlib-devel \
       which && \
     yum clean all && \
@@ -52,9 +51,9 @@ ENV LD_LIBRARY_PATH="/opt/rh/devtoolset-11/root/usr/lib64:${LD_LIBRARY_PATH}"
 RUN ln -sf /opt/rh/rh-python38/root/usr/bin/python3 /usr/local/bin/python3 && \
     ln -sf /opt/rh/rh-python38/root/usr/bin/pip3 /usr/local/bin/pip3
 
-RUN wget -qO /tmp/cmake.sh "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh" && \
-    sh /tmp/cmake.sh --skip-license --prefix=/usr/local && \
-    rm -f /tmp/cmake.sh
+COPY docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
+RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
+    rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 
 RUN python3 -m pip install --no-cache-dir \
       conan \
