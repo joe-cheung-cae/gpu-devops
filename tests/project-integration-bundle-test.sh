@@ -136,6 +136,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/centos7.Dockerfile"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
       assert_file_exists "${test_dir}/assets/docs/offline-env-configuration.md"
+      assert_file_exists "${test_dir}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
@@ -161,6 +162,7 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
       assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${test_dir}/assets/docs/offline-env-configuration.md"
+      assert_file_exists "${test_dir}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
       assert_not_exists "${test_dir}/images"
       ;;
   esac
@@ -210,6 +212,7 @@ write_import_bundle() {
     cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
     cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
     cp "${ROOT_DIR}/docs/offline-env-configuration.md" "${bundle_root}/assets/docs/offline-env-configuration.md"
+    cp "${ROOT_DIR}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md" "${bundle_root}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
     cp "${ROOT_DIR}/scripts/compose.sh" "${bundle_root}/assets/scripts/compose.sh"
     cp "${ROOT_DIR}/scripts/export-images.sh" "${bundle_root}/assets/scripts/export-images.sh"
     cp "${ROOT_DIR}/scripts/export/images.sh" "${bundle_root}/assets/scripts/export/images.sh"

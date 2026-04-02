@@ -35,6 +35,7 @@ scripts/runner-compose.sh
 scripts/verify-host.sh
 docs/operations.md
 docs/offline-env-configuration.md
+docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md
 docs/tutorial.en.md
 docs/tutorial.zh-CN.md
 EOF

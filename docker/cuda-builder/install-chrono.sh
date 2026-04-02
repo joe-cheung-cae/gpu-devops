@@ -68,10 +68,11 @@ import os
 from pathlib import Path
 
 cmake_path = Path(os.environ["CHRONO_CMAKELISTS"])
-needle = 'target_link_libraries(ChronoEngine -static-libgcc -static-libstdc++)'
 text = cmake_path.read_text()
+needle = 'target_link_libraries(ChronoEngine -static-libgcc -static-libstdc++)'
+insert_after = 'target_link_libraries(ChronoEngine ${OPENMP_LIBRARIES} ${CH_SOCKET_LIB})'
+
 if needle not in text:
-    insert_after = 'target_link_libraries(ChronoEngine ${OPENMP_LIBRARIES} ${CH_SOCKET_LIB})'
     if insert_after not in text:
         raise SystemExit(f"Missing anchor in {cmake_path}")
     text = text.replace(insert_after, f"{insert_after}\n{needle}", 1)
