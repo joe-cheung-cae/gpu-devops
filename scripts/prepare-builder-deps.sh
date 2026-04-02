@@ -81,6 +81,7 @@ HOST_PROJECT_DIR="$(normalize_host_path "${ENV_BASE_DIR}" "${HOST_PROJECT_DIR_VA
 CUDA_CXX_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT:-./artifacts/deps}"
 RUN_UID="${CUDA_CXX_RUN_UID:-$(id -u)}"
 RUN_GID="${CUDA_CXX_RUN_GID:-$(id -g)}"
+CONTAINER_HOME="/tmp/cuda-cxx-home"
 
 if [[ "${CUDA_CXX_DEPS_ROOT}" = /* ]]; then
   HOST_DEPS_ROOT="${CUDA_CXX_DEPS_ROOT}"
@@ -114,6 +115,7 @@ done
 
 COMMAND_STRING="$(printf '%s && ' "${COMMANDS[@]}")"
 COMMAND_STRING="${COMMAND_STRING% && }"
+COMMAND_STRING="mkdir -p '${CONTAINER_HOME}/.ccache' && ${COMMAND_STRING}"
 
 progress_step "Preparing builder dependency cache"
 docker run --rm \
@@ -125,6 +127,8 @@ docker run --rm \
   -e "BUILD_PLATFORM=${PLATFORM}" \
   -e "CUDA_CXX_DEPS_ROOT=${CUDA_CXX_DEPS_ROOT}" \
   -e "DEPS_ROOT=${CONTAINER_PLATFORM_DEPS_ROOT}" \
+  -e "HOME=${CONTAINER_HOME}" \
+  -e "CCACHE_DIR=${CONTAINER_HOME}/.ccache" \
   -e "CHRONO_ARCHIVE=/toolkit/docker/cuda-builder/deps/chrono-source.tar.gz" \
   "${BUILDER_IMAGE}" \
   /bin/bash -lc "${COMMAND_STRING}"

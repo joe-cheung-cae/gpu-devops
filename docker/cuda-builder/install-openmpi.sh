@@ -3,14 +3,9 @@ set -euo pipefail
 
 : "${OPENMPI_VERSION:=4.1.6}"
 : "${DEPS_ROOT:=${HOME}/deps}"
-: "${OPENMPI_PREFIX:=}"
 : "${OPENMPI_INSTALL_PREFIX:=${DEPS_ROOT}/openmpi-install}"
 : "${OPENMPI_BUILD_PARALLEL:=${CHRONO_BUILD_PARALLEL:-6}}"
 : "${OPENMPI_ARCHIVE:=/tmp/deps/openmpi-4.1.6.tar.gz}"
-
-if [[ -n "${OPENMPI_PREFIX}" ]]; then
-  OPENMPI_INSTALL_PREFIX="${OPENMPI_PREFIX}"
-fi
 
 ARCHIVE="openmpi-${OPENMPI_VERSION}.tar.gz"
 SOURCE_DIR="$(dirname "${DEPS_ROOT}")/openmpi-${OPENMPI_VERSION}"
@@ -36,7 +31,7 @@ fi
 
 test -f "${ARCHIVE_PATH}"
 rm -rf "${SOURCE_DIR}"
-tar -xzf "${ARCHIVE_PATH}" -C "$(dirname "${SOURCE_DIR}")"
+tar --no-same-owner --no-same-permissions -xzf "${ARCHIVE_PATH}" -C "$(dirname "${SOURCE_DIR}")"
 cd "${SOURCE_DIR}"
 
 ./configure \

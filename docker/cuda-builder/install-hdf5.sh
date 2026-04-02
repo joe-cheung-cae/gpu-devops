@@ -8,7 +8,7 @@ set -euo pipefail
 
 ARCHIVE_PATH="${HDF5_ARCHIVE}"
 EXTRACT_ROOT="/tmp/CMake-hdf5-1.14.1-2"
-SOURCE_DIR="${EXTRACT_ROOT}/hdf5-1.14.1-2"
+SOURCE_DIR="${EXTRACT_ROOT}/CMake-hdf5-1.14.1-2/hdf5-1.14.1-2"
 VERSION_MARKER="${HDF5_INSTALL_PREFIX}/.hdf5-source-version"
 HDF5_SOURCE_VERSION="1.14.1-2"
 
@@ -28,7 +28,8 @@ if [[ -f "${VERSION_MARKER}" ]] && \
 fi
 
 rm -rf "${EXTRACT_ROOT}"
-tar -xzf "${ARCHIVE_PATH}" -C /tmp
+mkdir -p "${EXTRACT_ROOT}"
+tar --no-same-owner --no-same-permissions -xzf "${ARCHIVE_PATH}" -C "${EXTRACT_ROOT}" -m
 
 cd "${SOURCE_DIR}"
 ./configure --prefix="${HDF5_INSTALL_PREFIX}"

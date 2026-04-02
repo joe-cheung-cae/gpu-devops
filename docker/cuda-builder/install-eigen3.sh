@@ -36,7 +36,7 @@ fi
 
 test -f "${ARCHIVE_PATH}"
 rm -rf "${SOURCE_DIR}"
-tar -xzf "${ARCHIVE_PATH}" -C "$(dirname "${SOURCE_DIR}")"
+tar --no-same-owner --no-same-permissions -xzf "${ARCHIVE_PATH}" -C "$(dirname "${SOURCE_DIR}")" -m
 
 cmake -S "${SOURCE_DIR}" -B "${BUILD_DIR}" \
   -DCMAKE_BUILD_TYPE=Release \

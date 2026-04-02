@@ -47,7 +47,7 @@ build_package() {
 
   rm -rf "${package_dir}"
   mkdir -p "${H5ENGINE_OUTPUT_ROOT}"
-  tar -xzf "${archive_path}" -C "${H5ENGINE_OUTPUT_ROOT}"
+  tar --no-same-owner --no-same-permissions -xzf "${archive_path}" -C "${H5ENGINE_OUTPUT_ROOT}" -m
 
   test -d "${package_dir}"
   copy_hdf5_runtime "${package_dir}"
@@ -69,5 +69,5 @@ build_package() {
   printf '%s\n' "$(basename "${archive_path}")" > "${version_marker}"
 }
 
-build_package "h5engine-sph" "/tmp/$(basename "${H5ENGINE_SPH_ARCHIVE}")"
-build_package "h5engine-dem" "/tmp/$(basename "${H5ENGINE_DEM_ARCHIVE}")"
+build_package "h5engine-sph" "${H5ENGINE_SPH_ARCHIVE}"
+build_package "h5engine-dem" "${H5ENGINE_DEM_ARCHIVE}"
