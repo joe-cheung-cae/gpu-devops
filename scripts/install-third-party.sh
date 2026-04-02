@@ -153,15 +153,18 @@ install_windows_msmpi() {
 }
 
 install_windows_chrono() {
-  install_windows_cmake_dep "chrono" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz" "." "${WINDOWS_THIRD_PARTY_ROOT}/chrono-install" "-DBUILD_BENCHMARKING=OFF -DBUILD_DEMOS=OFF -DBUILD_TESTING=OFF -DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF"
+  local deps_root="$1"
+  install_windows_cmake_dep "chrono" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/chrono-source.tar.gz" "." "${deps_root}/chrono-install" "-DBUILD_BENCHMARKING=OFF -DBUILD_DEMOS=OFF -DBUILD_TESTING=OFF -DUSE_BULLET_DOUBLE=ON -DUSE_SIMD=OFF" "${deps_root}"
 }
 
 install_windows_hdf5() {
-  install_windows_cmake_dep "hdf5" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/CMake-hdf5-1.14.1-2.tar.gz" "CMake-hdf5-1.14.1-2/hdf5-1.14.1-2" "${WINDOWS_THIRD_PARTY_ROOT}/hdf5-install" ""
+  local deps_root="$1"
+  install_windows_cmake_dep "hdf5" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/CMake-hdf5-1.14.1-2.tar.gz" "CMake-hdf5-1.14.1-2/hdf5-1.14.1-2" "${deps_root}/hdf5-install" "" "${deps_root}"
 }
 
 install_windows_muparserx() {
-  install_windows_cmake_dep "muparserx" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/muparserx-source.tar.gz" "." "${WINDOWS_THIRD_PARTY_ROOT}/muparserx-install" ""
+  local deps_root="$1"
+  install_windows_cmake_dep "muparserx" "${WINDOWS_THIRD_PARTY_CACHE_ROOT}/muparserx-source.tar.gz" "." "${deps_root}/muparserx-install" "" "${deps_root}"
 }
 
 install_windows_h5engine() {
@@ -175,7 +178,8 @@ install_windows_cmake_dep() {
   local source_subdir="$3"
   local install_prefix="$4"
   local cmake_args="$5"
-  local source_root="${WINDOWS_THIRD_PARTY_ROOT}/${dep_name}-src"
+  local deps_root="$6"
+  local source_root="${deps_root}/${dep_name}-src"
   extract_archive "${source_archive}" "${source_root}"
   run_msvc_command "cmake -S \"${source_root}/${source_subdir}\" -B \"${source_root}/build\" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=\"${install_prefix}\" ${cmake_args} && cmake --build \"${source_root}/build\" --parallel 6 && cmake --install \"${source_root}/build\""
 }
@@ -190,11 +194,7 @@ run_windows_install() {
   for dep in "${deps[@]}"; do
     dep="${dep//[[:space:]]/}"
     install_handler="$(third_party_windows_install_function "${dep}")"
-    if [[ "${install_handler}" == "install_windows_eigen3" ]] || [[ "${install_handler}" == "install_windows_msmpi" ]]; then
-      "${install_handler}" "${deps_root}"
-    else
-      "${install_handler}"
-    fi
+    "${install_handler}" "${deps_root}"
   done
 }
 
