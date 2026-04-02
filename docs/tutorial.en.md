@@ -1,20 +1,20 @@
-# GitLab GPU Runner Tutorial
+# GitLab GPU Shell Runner Tutorial
 
-This document is written for two audiences:
+This tutorial is for:
 
-- Platform operators who build the CUDA image, deploy GitLab Runner, and register shared runners
-- Project developers who consume the shared runner platform from their own `.gitlab-ci.yml`
+- Platform operators who build the CUDA images and register the shell runners
+- Project developers who consume the shared platform from `.gitlab-ci.yml`
 
-The current repository targets a single Docker host with NVIDIA GPUs and shared usage across multiple CUDA/CMake projects.
+The repository targets a single Docker host with NVIDIA GPUs. Jobs run through
+the GitLab shell executor and call `compose.sh` to build inside the builder
+images.
 
 ## 1. What the platform provides
 
-The platform includes:
-
-- A CUDA builder image family: `cuda11.7-cmake3.26-{centos7|rocky8|ubuntu2204}`
-- Docker-based GitLab Runner deployment assets
-- A default GPU runner pool and a multi-GPU runner pool
-- Host verification, self-check documentation, and example pipelines
+- CUDA builder image family: `cuda11.7-cmake3.26-{centos7|rocky8|ubuntu2204}`
+- Shell runner registration workflow
+- Offline image export/import and portable operator toolkit
+- Example CI pipeline and CUDA/CMake smoke project
 
 Default tag policy:
 
@@ -26,9 +26,9 @@ Default tag policy:
 ## 2. Repository layout
 
 - `docker/cuda-builder/`: standard CUDA builder image definition
-- `runner/`: runner config template and registration script
+- `runner/`: shell runner registration script
 - `scripts/`: image build, compose wrapper, and host verification scripts
-- `scripts/export/`, `scripts/import/`, `scripts/common/`: internal grouping for bundle-related script implementations
+- `scripts/export/`, `scripts/import/`, `scripts/common/`: bundle internals
 - `examples/`: minimal CUDA/CMake example and GitLab CI example
 - `docs/`: operations, contract, and validation documents
 
@@ -40,12 +40,9 @@ Before deployment, the host should provide:
 2. Docker Compose plugin, or standalone `docker-compose`
 3. NVIDIA driver
 4. NVIDIA Container Toolkit with `nvidia` runtime available to Docker
-5. Network access to:
-   - container registries
-   - CentOS Vault, Rocky Linux mirrors, Ubuntu mirrors, or internal mirrors
-   - GitHub Releases
+5. Network access to container registries and base image mirrors
 
-Run the host verification script first:
+Verify the host:
 
 ```bash
 scripts/verify-host.sh
@@ -58,7 +55,7 @@ Expected results:
 - `nvidia-smi` prints GPU information
 - `docker info` exposes the `nvidia` runtime
 
-## 3.1 Supported builder platforms
+## 4. Supported builder platforms
 
 The builder family currently supports:
 
@@ -66,52 +63,42 @@ The builder family currently supports:
 - `rocky8` -> `nvidia/cuda:11.7.1-devel-rockylinux8`
 - `ubuntu2204` -> `nvidia/cuda:11.7.1-devel-ubuntu22.04`
 
-Platform-specific notes:
+Platform notes:
 
-- `centos7` remains available for compatibility, but it is end-of-life and rewrites YUM repositories to `vault.centos.org`
-- `centos7` uses `rh-python38` and keeps `urllib3<2` for OpenSSL compatibility
-- `centos7` accepts the same proxy build arguments as the other platforms, but only uses them to generate a temporary `yum.conf` proxy during package install
-- all three platforms install Eigen3 `3.4.0` from source to `/usr/local`
-- all three platforms keep the base image limited to the common CUDA/C++ toolchain, UUID headers, and `ccache`
-- Chrono, HDF5, h5engine, and muparserx are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
-- the same dependency-cache flow can also stage project-local `Eigen3` and `OpenMPI` copies for offline or Windows/MSVC handoff
-- `rocky8` and `ubuntu2204` use newer system Python packages and avoid the CentOS 7 compatibility pin
+- `centos7` remains available for compatibility and uses `vault.centos.org`
+- `centos7` keeps `urllib3<2` for OpenSSL compatibility
+- all platforms keep the base image limited to the common CUDA/C++ toolchain
+- project dependencies are prepared later into `${CUDA_CXX_DEPS_ROOT}/<platform>`
 
-## 4. Configure environment variables
+## 5. Configure environment variables
 
-Create a local `.env` file:
+Create `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Then update the main fields:
+Update the main fields:
 
 - `GITLAB_URL`: GitLab base URL
-- `BUILDER_IMAGE_FAMILY`: image family prefix used for all platform variants
-- `BUILDER_DEFAULT_PLATFORM`: platform tag used by `BUILDER_IMAGE` and the runner default image
-- `BUILDER_PLATFORMS`: comma-separated list of supported build variants
 - `RUNNER_REGISTRATION_TOKEN`: runner registration token
-- `RUNNER_DOCKER_IMAGE`: default image used by the runner
-- `RUNNER_SERVICE_IMAGE`: image used by the GitLab Runner service container
-- `RUNNER_SERVICE_SOURCE_IMAGE`: upstream source consumed by `scripts/prepare-runner-service-image.sh`
-- `RUNNER_SERVICE_IMAGE_PREPARE_MODE`: `retag` or `build` for preparing `RUNNER_SERVICE_IMAGE`
-- `RUNNER_TLS_CA_FILE`: optional PEM-encoded CA certificate path for self-signed GitLab HTTPS endpoints; source files may use `.pem` or `.crt`
-- `RUNNER_CONTAINER_NAME`: long-running container name used by `runner-compose.yml`
-- `RUNNER_REGISTRATION_CONTAINER_NAME`: temporary container name used by `runner/register-runner.sh`
-- `BUILDER_IMAGE`: standard builder image tag
+- `RUNNER_SHELL_USER`: Linux user that executes shell runner jobs
+- `RUNNER_TLS_CA_FILE`: optional PEM-encoded CA certificate path
+- `BUILDER_IMAGE_FAMILY`: image family prefix used for platform variants
+- `BUILDER_DEFAULT_PLATFORM`: default Linux platform
+- `BUILDER_PLATFORMS`: comma-separated list of build variants
+- `BUILDER_IMAGE`: default builder tag
 - `IMAGE_ARCHIVE_PATH`: offline image archive path
-- `RUNNER_GPU_CONCURRENCY`: concurrency for the default GPU pool
-- `RUNNER_MULTI_GPU_CONCURRENCY`: concurrency for the multi-GPU pool
+- `RUNNER_GPU_CONCURRENCY` and `RUNNER_MULTI_GPU_CONCURRENCY`
 
 Recommended practice:
 
-- Keep `RUNNER_DOCKER_IMAGE` and `BUILDER_IMAGE` aligned
-- Replace the example registry with your internal registry
+- Replace example registries with your internal registry
 - Use explicit immutable tags instead of `latest`
-- If GitLab HTTPS uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` before running `runner/register-runner.sh`
+- Set `RUNNER_TLS_CA_FILE` before runner registration if GitLab uses a
+  self-signed certificate
 
-## 5. Build the standard CUDA builder image
+## 6. Build the standard CUDA builder image
 
 Run:
 
@@ -122,90 +109,41 @@ scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 ```
 
-`scripts/prepare-third-party-cache.sh` is optional. Run it when you rebuild builder images frequently or need offline dependency media. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh` remains available as the Chrono-only compatibility wrapper.
+`scripts/prepare-third-party-cache.sh` is optional. It stages local archives
+for `chrono`, `eigen3`, `openmpi`, and `muparserx`. `scripts/prepare-chrono-source-cache.sh`
+remains as a Chrono-only compatibility wrapper.
 
-The script will:
-
-- Read `BUILDER_IMAGE` from `.env`
-- Build the platform Dockerfile under `docker/cuda-builder/`
-- Use `--platform <name>` to build one non-default target
-- Use `--all-platforms` to build every platform listed in `BUILDER_PLATFORMS`
-- Reuse Docker daemon proxy settings when available
-- Automatically switch to `--network host` when the proxy points to `127.0.0.1` or `localhost`
-- Pass the same proxy inputs to every builder platform; `centos7` then maps that input to `yum` internally
-
-If the destination host is air-gapped, also run:
+Project dependencies such as Chrono, Eigen3, OpenMPI, HDF5, h5engine, and
+muparserx are prepared later into `CUDA_CXX_DEPS_ROOT/<platform>` with:
 
 ```bash
-scripts/prepare-runner-service-image.sh
+scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
+```
+
+## 7. Offline image export and import
+
+On a connected host:
+
+```bash
 scripts/export-images.sh
 ```
 
-`scripts/prepare-runner-service-image.sh` prepares `RUNNER_SERVICE_IMAGE` in an online environment before export. By default it pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point instead, run:
+The export writes `${IMAGE_ARCHIVE_PATH}` plus a sibling `.sha256`. Import on
+the offline host with:
 
 ```bash
-scripts/prepare-runner-service-image.sh --mode build
+scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"
 ```
 
-The final Runner service tag exported into the offline archive is controlled by `RUNNER_SERVICE_IMAGE` in your active `.env`, not by `RUNNER_SERVICE_SOURCE_IMAGE`. Keep those two values distinct if you want the offline host to consume an internal tag such as `tf-particles/devops/gitlab-runner:alpine-v16.10.1`.
-
-Then `scripts/export-images.sh` exports all builder tags derived from `BUILDER_IMAGE_FAMILY` and `BUILDER_PLATFORMS`, plus `RUNNER_DOCKER_IMAGE` and `RUNNER_SERVICE_IMAGE`, into the archive configured by `IMAGE_ARCHIVE_PATH`. If you only need part of that set, you can export just the Runner service image or just the builder image matrix:
-
-```bash
-scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
-scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
-scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
-```
-
-After copying the chosen archive to the target host, run:
-
-```bash
-scripts/import-images.sh
-```
-
-to load the deployment images in one step.
-
-The export also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Use `--skip-hash-check` only if you intentionally want to bypass integrity checking.
-
-An offline host can only run `scripts/runner-compose.sh up -d` after `RUNNER_SERVICE_IMAGE` has been imported into the local Docker daemon. `runner-compose.yml` only consumes that image; it does not build it on the offline host.
-
-For a complete connected-host to offline-host workflow, use this order:
-
-1. Connected host:
-   - `cp .env.example .env`
-   - fill `GITLAB_URL`, `RUNNER_REGISTRATION_TOKEN`, and image names
-   - `scripts/verify-host.sh`
-   - `scripts/build-builder-image.sh --all-platforms`
-   - `scripts/prepare-runner-service-image.sh`
-   - `scripts/export-images.sh`
-2. Copy `artifacts/offline-images.tar.gz` and `artifacts/offline-images.tar.gz.sha256` to the offline host.
-3. Offline host:
-   - `scripts/import-images.sh --input artifacts/offline-images.tar.gz`
-   - `scripts/prepare-builder-deps.sh --platform centos7`
-   - `scripts/runner-compose.sh up -d`
-   - `runner/register-runner.sh gpu`
-   - optional: `runner/register-runner.sh multi`
-   - `scripts/compose.sh run --rm cuda-cxx-centos7`
-
-If `GITLAB_URL` uses HTTPS with a self-signed certificate, place the PEM-encoded CA certificate on disk first and set `RUNNER_TLS_CA_FILE`, for example:
-
-```bash
-mkdir -p certs
-cp /path/to/gitlab-ca.crt certs/gitlab-ca.crt
-echo 'RUNNER_TLS_CA_FILE=certs/gitlab-ca.crt' >> .env
-runner/register-runner.sh multi
-```
-
-`runner/register-runner.sh` copies that CA into `runner/config/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration container automatically.
-
-If the offline host keeps a full checkout of this repository, export and import the operator toolkit first:
+If the offline host does not keep a repository checkout, export the operator
+toolkit and unpack it on the target host:
 
 ```bash
 scripts/export-project-bundle.sh --mode assets --output artifacts/project-operator-toolkit.tar.gz
-scripts/import-project-bundle.sh --mode assets --input artifacts/project-operator-toolkit.tar.gz --target-dir /path/to/project
 ```
 
-If the offline host does not keep a repository checkout, export the same toolkit archive and unpack it manually:
+Then:
 
 ```bash
 mkdir -p /path/to/project/.gpu-devops
@@ -214,277 +152,66 @@ tar -xzf artifacts/project-operator-toolkit.tar.gz -C "${tmpdir}"
 cp -R "${tmpdir}/assets/." /path/to/project/.gpu-devops/
 ```
 
-Then fill `.gpu-devops/.env` according to [offline-env-configuration.md](offline-env-configuration.md), and continue from `/path/to/project/.gpu-devops/`:
+Fill `.gpu-devops/.env` according to [offline-env-configuration.md](offline-env-configuration.md),
+then continue from `/path/to/project/.gpu-devops/`:
 
 ```bash
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
-.gpu-devops/scripts/runner-compose.sh up -d
-.gpu-devops/runner/register-runner.sh gpu
+.gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
 .gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
-If another project outside this repository needs the same images and integration assets, run:
+If another project needs the same images and integration assets, use:
 
 ```bash
 scripts/export-project-bundle.sh
 scripts/import-project-bundle.sh --target-dir /path/to/other/project
 ```
 
-The imported files land in `/path/to/other/project/.gpu-devops/` by default.
+## 8. Register shell runners
 
-The importer also generates `/path/to/other/project/.gpu-devops/.env`, which makes the copied `compose.sh` use the target project root as `HOST_PROJECT_DIR`, keeps `CUDA_CXX_PROJECT_DIR=.`, and pre-populates both `CUDA_CXX_BUILD_ROOT` and `CUDA_CXX_INSTALL_ROOT`.
-
-That imported `.gpu-devops/` directory is now a reusable operator toolkit. Besides the local build wrappers, it also includes image import/export, Runner service image preparation, builder Dockerfiles plus bundled deps, and Runner registration assets.
-
-If you only need one side of that bundle flow, use `--mode`:
+Register the standard GPU pool:
 
 ```bash
-scripts/export-project-bundle.sh --mode images
-scripts/import-project-bundle.sh --mode images --input artifacts/project-integration-bundle.tar.gz
-
-scripts/export-project-bundle.sh --mode assets
-scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/project
+runner/register-shell-runner.sh gpu
 ```
 
-Each exported project bundle also produces a sibling `.sha256` file. The importer verifies that file by default before unpacking, and in `all` or `images` mode it also verifies the nested `images/offline-images.tar.gz`. Use `--skip-hash-check` only when you explicitly need to bypass those checks.
-
-For a complete offline `.env` reference, including Docker executor, shell runner, and self-signed GitLab HTTPS scenarios, see [offline-env-configuration.md](offline-env-configuration.md).
-
-The image includes:
-
-- `nvcc`
-- `cmake 3.26.0`
-- `ninja`
-- `gcc/g++`
-- `Project Chrono`, `Eigen3`, `OpenMPI`, `HDF5`, `h5engine-sph`, `h5engine-dem`, and `muparserx` are not preinstalled in the base image
-- prepare them into `${CUDA_CXX_DEPS_ROOT}/<platform>` with `scripts/prepare-builder-deps.sh`
-- `git`
-- `gdb`
-- `python3`
-- `pip`
-- `conan`
-
-After build, verify tool versions:
+Register the multi-GPU pool:
 
 ```bash
-docker run --rm "${BUILDER_IMAGE}" nvcc --version
-docker run --rm "${BUILDER_IMAGE}" cmake --version
-docker run --rm "${BUILDER_IMAGE}" conan --version
-docker run --rm "${BUILDER_IMAGE}" sh -lc 'test -f /usr/include/uuid/uuid.h && command -v ccache >/dev/null && ! command -v mpicc >/dev/null'
-scripts/prepare-builder-deps.sh --platform centos7
-docker run --rm -v "${PWD}:/workspace" -w /workspace "${BUILDER_IMAGE}" sh -lc 'test -f "./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so" && test -f "./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core" && test -x "./artifacts/deps/centos7/openmpi-install/bin/mpicc" && test -f "./artifacts/deps/centos7/openmpi-install/lib/libmpi.so" && test -f "./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so" && test -f "./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so" && test -f "./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so" && find "./artifacts/deps/centos7/muparserx-install/lib" -maxdepth 1 -name "libmuparserx.so*" | grep -q .'
+runner/register-shell-runner.sh multi
 ```
 
-Expected:
+The shell-runner path runs jobs as `gitlab-runner` (or `RUNNER_SHELL_USER`) and
+expects that user to access Docker and `docker compose`.
 
-- `nvcc` reports `release 11.7`
-- `cmake` reports `3.26.0`
-- `conan` reports a valid version
-- `uuid/uuid.h` and `ccache` exist in the base builder image
-- `mpicc` is not available before project dependencies are prepared
-- `scripts/prepare-builder-deps.sh --platform centos7` fills `./artifacts/deps/centos7`
-- `./artifacts/deps/centos7/chrono-install/lib/libChronoEngine.so` exists
-- `./artifacts/deps/centos7/eigen3-install/include/eigen3/Eigen/Core` exists
-- `./artifacts/deps/centos7/openmpi-install/bin/mpicc` exists
-- `./artifacts/deps/centos7/openmpi-install/lib/libmpi.so` exists
-- `./artifacts/deps/centos7/hdf5-install/lib/libhdf5.so` exists
-- `./artifacts/deps/centos7/h5engine-sph/build/h5Engine/libh5Engine.so` exists
-- `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
-- `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` exists
-
-## 6. Start the GitLab Runner service
-
-Run:
-
-```bash
-scripts/runner-compose.sh up -d
-scripts/runner-compose.sh ps
-```
-
-The wrapper script automatically uses:
-
-- `docker compose`
-- or `docker-compose`
-
-The repository now has two Compose entry points:
-
-- `scripts/runner-compose.sh` for the GitLab Runner service in `runner-compose.yml`
-- `scripts/compose.sh` for local CUDA/C++ project builds in `docker-compose.yml`
+## 9. Local project build with Compose
 
 Example local builds:
 
 ```bash
+scripts/prepare-builder-deps.sh --platform centos7
+scripts/install-third-party.sh --host linux --platform centos7
 scripts/compose.sh run --rm cuda-cxx-centos7
 scripts/compose.sh up --abort-on-container-exit cuda-cxx-centos7 cuda-cxx-ubuntu2204
 ```
 
-The current host directory is mounted to `/workspace`. `CUDA_CXX_PROJECT_DIR` selects the source tree inside that workspace, and `CUDA_CXX_BUILD_ROOT` stores output per platform.
+`CUDA_CXX_PROJECT_DIR` selects the source subtree inside `/workspace`.
+`CUDA_CXX_BUILD_ROOT` and `CUDA_CXX_INSTALL_ROOT` store outputs per platform.
 
-For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and `CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example).
+For a ready-made `.env` example with custom `CUDA_CXX_CMAKE_ARGS` and
+`CUDA_CXX_BUILD_ARGS`, see [cuda-cxx.env.example](../examples/env/cuda-cxx.env.example).
 
-The main runner container image is `RUNNER_SERVICE_IMAGE`, which should already exist locally before you start `runner-compose.yml` on an offline host.
+## 10. CI usage
 
-You can inspect logs with:
+See the shell-runner example:
 
-```bash
-docker logs gitlab-runner
-```
+- [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml)
 
-Expected:
-
-- the container starts normally
-- the mounted config and cache directories are available
-- there are no obvious startup or mount errors
-
-## 7. Register shared runners
-
-The platform provides two runner pools.
-
-### 7.1 Default GPU pool
-
-For single-GPU build jobs:
-
-```bash
-runner/register-runner.sh gpu
-```
-
-Default tags:
-
-- `gpu`
-- `cuda`
-- `cuda-11`
-
-### 7.2 Multi-GPU pool
-
-For jobs that need more than one GPU visible:
-
-```bash
-runner/register-runner.sh multi
-```
-
-Default tags:
-
-- `gpu-multi`
-- `cuda`
-- `cuda-11`
-
-After registration, GitLab should show two shared runners:
-
-- one for standard GPU jobs
-- one for multi-GPU jobs
-
-### 7.3 Shell runner path for the Linux user `gitlab-runner`
-
-If your environment requires CI jobs to run as the Linux user `gitlab-runner` through a normal shell executor, use the separate shell registration script:
-
-```bash
-sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
-sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
-```
-
-This path keeps the same `gpu` and `gpu-multi` tag model, but the build happens by calling `.gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7` from the job instead of using GitLab's Docker executor.
-
-Operator prerequisites:
-
-- the `gitlab-runner` user must be able to run Docker and `docker compose`
-- the project checkout path must be accessible to `gitlab-runner`
-- the published builder images must already be available locally on the host
-
-## 8. How projects consume the shared platform
-
-Projects do not manage runners themselves. They only need to:
-
-1. reference the standard builder image
-2. use the correct runner tags
-3. run their own build commands
-
-Minimal example:
-
-```yaml
-default:
-  image: tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
-  tags:
-    - gpu
-    - cuda
-    - cuda-11
-```
-
-Change the image suffix to `rocky8` or `ubuntu2204` when your project needs one of the other published builder variants.
-
-Full example:
-
-- [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml)
-
-### 8.1 Single-GPU job example
-
-```yaml
-gpu-smoke:
-  stage: verify
-  tags:
-    - gpu
-    - cuda
-    - cuda-11
-  script:
-    - nvidia-smi
-    - nvcc --version
-    - cmake --version
-```
-
-### 8.2 Multi-GPU job example
-
-```yaml
-multi-gpu-smoke:
-  stage: verify
-  tags:
-    - gpu-multi
-    - cuda
-    - cuda-11
-  variables:
-    GPU_COUNT: "2"
-  script:
-    - echo "Requested GPU count: ${GPU_COUNT}"
-    - nvidia-smi
-```
-
-Important note:
-
-- In v1, multi-GPU scheduling is implemented through a separate runner pool, not exact GPU reservation by the GitLab scheduler
-- Project-specific dependencies should be installed in the project pipeline, or in a project-derived image built on top of the platform base image
-
-## 9. Minimal CUDA/CMake example
-
-The repository includes a minimal CUDA example:
-
-- [examples/cuda-smoke/CMakeLists.txt](../examples/cuda-smoke/CMakeLists.txt)
-- [examples/cuda-smoke/main.cu](../examples/cuda-smoke/main.cu)
-
-Inside CI, the build can run as:
-
-```bash
-cmake -S examples/cuda-smoke -B build -G Ninja
-cmake --build build
-```
-
-You can also test locally:
-
-```bash
-cmake -S examples/cuda-smoke -B /tmp/cuda-smoke-build -G "Unix Makefiles"
-cmake --build /tmp/cuda-smoke-build
-```
-
-## 10. Recommended rollout sequence
-
-Use this order for initial rollout:
-
-1. Run `scripts/verify-host.sh`
-2. Build and verify the builder image
-3. Start the `gitlab-runner` container
-4. Register the `gpu` runner
-5. Register the `gpu-multi` runner
-6. Run the sample CI config in a test project
-7. After the smoke pipeline is stable, allow business projects to adopt it
+The example uses `BUILD_PLATFORM=centos7` as the default Linux platform and
+invokes `.gpu-devops/scripts/compose.sh` inside each job.
 
 ## 11. Troubleshooting
 
@@ -495,207 +222,11 @@ Check:
 - Docker daemon registry configuration
 - proxy configuration
 - whether Docker daemon needs a restart
-- whether this command works:
+
+Try pulling the base images directly:
 
 ```bash
 docker pull nvidia/cuda:11.7.1-devel-centos7
 docker pull nvidia/cuda:11.7.1-devel-rockylinux8
 docker pull nvidia/cuda:11.7.1-devel-ubuntu22.04
 ```
-
-### 11.1.1 CentOS 7 note
-
-CentOS 7 is end-of-life, so the default `mirrorlist.centos.org` flow is no longer reliable. The current Dockerfile automatically rewrites the base YUM repositories to `vault.centos.org` during build.
-
-If your environment provides an internal YUM mirror, it is better to switch to that mirror later instead of depending on the public CentOS vault.
-
-### 11.1.2 CentOS 7 compatibility guidance
-
-CentOS 7 can satisfy the current CUDA 11.7 + CMake 3.26 platform target, but it is not a good long-term evolution baseline. You should decide explicitly in a later platform iteration:
-
-- whether CentOS 7 compatibility still matters
-- whether to migrate to Rocky Linux or AlmaLinux
-- whether to migrate to a supported Ubuntu LTS base
-
-If future requirements need newer Python, OpenSSL, or Conan ecosystems, CentOS 7 will become increasingly expensive to maintain.
-```
-
-### 11.2 Build hangs while extracting the CMake cache
-
-This repository installs CMake from a locally cached tarball under `docker/cuda-builder/deps/`. If the builder image build fails here, check:
-
-- whether `docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz` exists in the build context
-- whether `scripts/prepare-third-party-cache.sh` has refreshed the CMake tarball
-- whether `scripts/build-builder-image.sh` is up to date and still points at the local Docker build context
-
-### 11.3 Container says GPU is not available
-
-If you only run:
-
-```bash
-docker run --rm "${BUILDER_IMAGE}" nvcc --version
-```
-
-the warning about missing NVIDIA driver is expected, because that command does not enable GPU runtime.
-
-To validate GPU visibility, run a real GPU test in CI:
-
-```bash
-nvidia-smi
-```
-
-or test manually:
-
-```bash
-docker run --rm --gpus all "${BUILDER_IMAGE}" nvidia-smi
-```
-
-### 11.4 Runner is registered but jobs do not start
-
-Check:
-
-- job tags exactly match runner tags
-- the runner is shared
-- `RUNNER_RUN_UNTAGGED` behavior matches your policy
-- the project is allowed to use shared runners
-
-### 11.5 `scripts/verify-host.sh` stops at the NVIDIA Container Toolkit runtime check
-
-If `scripts/verify-host.sh` stops at:
-
-```text
-[4/5] Checking NVIDIA Container Toolkit runtime
-```
-
-or if this command:
-
-```bash
-docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
-```
-
-fails with:
-
-```text
-could not select device driver "" with capabilities: [[gpu]]
-```
-
-the problem is usually not the driver itself. It usually means Docker has not been wired to `nvidia-container-toolkit` yet. For this repository, that is not optional because:
-
-- `scripts/verify-host.sh` expects `docker info` to expose the `nvidia` runtime
-- `runner/register-runner.sh` registers the runner with `--docker-runtime nvidia`
-- `runner/config.template.toml` also sets `runtime = "nvidia"`
-
-Check:
-
-```bash
-docker info --format '{{json .Runtimes}}'
-command -v nvidia-ctk
-command -v nvidia-container-cli
-```
-
-If the `nvidia` runtime is missing, install `nvidia-container-toolkit` and run:
-
-```bash
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-```
-
-Then verify again:
-
-```bash
-docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
-scripts/verify-host.sh
-```
-
-### 11.6 Offline `nvidia-container-toolkit` install shows an `_apt` permission warning
-
-If you install local `.deb` files like this:
-
-```bash
-sudo apt install -y ./*.deb
-```
-
-and see a message like:
-
-```text
-Download is performed unsandboxed as root ... couldn't be accessed by user '_apt'
-```
-
-that is usually only a directory permission warning. It does not automatically mean the install failed. The real failures to watch for are:
-
-- `Unable to correct problems`
-- `unmet dependencies`
-- `dpkg returned an error code`
-
-The safer approach is to place the offline packages in a directory readable by `_apt`, for example:
-
-```bash
-mkdir -p /tmp/offline-nvidia-toolkit
-cp ~/offline-nvidia-toolkit/*.deb /tmp/offline-nvidia-toolkit/
-chmod 755 /tmp/offline-nvidia-toolkit
-chmod 644 /tmp/offline-nvidia-toolkit/*.deb
-cd /tmp/offline-nvidia-toolkit
-sudo apt install -y ./*.deb
-```
-
-### 11.7 The online host is Ubuntu 22.04 but the offline host is Ubuntu 20.04
-
-The most reliable approach is not to mix `ubuntu2004` packages directly on the `ubuntu2204` host. Instead, run an `ubuntu:20.04` container on the online machine and collect the offline `.deb` packages there.
-
-On the connected host:
-
-```bash
-mkdir -p ~/offline-nvidia-toolkit-ubuntu2004
-docker run --rm -it \
-  -v ~/offline-nvidia-toolkit-ubuntu2004:/out \
-  ubuntu:20.04 bash
-```
-
-Inside that container:
-
-```bash
-apt-get update
-apt-get install -y curl gnupg ca-certificates
-
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
-  gpg --dearmor --yes -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-  > /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-apt-get update
-apt-get install --download-only -y nvidia-container-toolkit
-cp /var/cache/apt/archives/*.deb /out/
-```
-
-Back on the online host, package the collected files:
-
-```bash
-
-### 11.8 Runner registration fails with `x509: certificate signed by unknown authority`
-
-If `runner/register-runner.sh gpu` or `runner/register-runner.sh multi` fails with:
-
-```text
-x509: certificate signed by unknown authority
-```
-
-the registration container does not trust the GitLab HTTPS certificate yet. Set `RUNNER_TLS_CA_FILE` in `.env` to a PEM-encoded CA certificate file that contains the GitLab CA certificate, then rerun the registration command. The source file may use either a `.pem` or `.crt` extension. The script copies that CA into `runner/config/certs/` and mounts it into the registration container as `/etc/gitlab-runner/certs/<gitlab-host>.crt`.
-cd ~/offline-nvidia-toolkit-ubuntu2004
-tar -czf nvidia-container-toolkit-ubuntu2004-offline.tar.gz ./*.deb
-```
-
-Copy that archive to the Ubuntu 20.04 offline host, install the `.deb` packages there, then continue with:
-
-```bash
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu20.04 nvidia-smi
-```
-
-## 12. Reference documents
-
-- [docs/operations.md](operations.md)
-- [docs/self-check.md](self-check.md)
-- [docs/platform-contract.md](platform-contract.md)

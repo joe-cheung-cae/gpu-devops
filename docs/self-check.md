@@ -52,21 +52,7 @@ Expected:
 - `./artifacts/deps/centos7/h5engine-dem/build/h5Engine/libh5Engine.so` exists
 - `./artifacts/deps/centos7/muparserx-install/lib/libmuparserx.so*` exists
 
-## 3. Start Runner service
-
-Run:
-
-```bash
-scripts/runner-compose.sh up -d
-scripts/runner-compose.sh ps
-```
-
-Expected:
-
-- `gitlab-runner` container is up
-- Health status becomes healthy
-
-## 3.1 Validate local project build Compose
+## 3. Validate local project build Compose
 
 Run:
 
@@ -82,13 +68,13 @@ Expected:
 - The prepared dependency cache under `${CUDA_CXX_DEPS_ROOT}/centos7` is reused
 - Build output is written under `${CUDA_CXX_BUILD_ROOT}/centos7`
 
-## 4. Register Runner entries
+## 4. Register shell runner entries
 
 Run:
 
 ```bash
-runner/register-runner.sh gpu
-runner/register-runner.sh multi
+runner/register-shell-runner.sh gpu
+runner/register-shell-runner.sh multi
 ```
 
 Expected:
@@ -98,7 +84,7 @@ Expected:
 
 ## 5. Validate pipeline contract
 
-Use [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml) in a test project.
+Use [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml) in a test project.
 
 Expected:
 

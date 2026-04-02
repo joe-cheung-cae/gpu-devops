@@ -19,9 +19,7 @@ scripts/prepare-third-party-cache.sh
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
-scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
-scripts/runner-compose.sh up -d
 ```
 
 `scripts/prepare-third-party-cache.sh` is optional but recommended for offline preparation. It stages local archives for `chrono`, `eigen3`, `openmpi`, and `muparserx` under `docker/cuda-builder/deps/`. `Eigen3` and `OpenMPI` now use the same project-local dependency path as the other third-party packages, and `scripts/prepare-chrono-source-cache.sh` remains as a Chrono-only compatibility wrapper.
@@ -46,16 +44,14 @@ For a complete online-to-offline deployment workflow, use this order:
    - fill `GITLAB_URL`, `RUNNER_REGISTRATION_TOKEN`, and published image names
    - `scripts/verify-host.sh`
    - `scripts/build-builder-image.sh --all-platforms`
-   - `scripts/prepare-runner-service-image.sh`
    - `scripts/export-images.sh`
 2. Transfer `IMAGE_ARCHIVE_PATH` and `${IMAGE_ARCHIVE_PATH}.sha256` to the offline host.
 3. Offline host:
    - `scripts/import-images.sh --input "${IMAGE_ARCHIVE_PATH}"`
    - `scripts/prepare-builder-deps.sh --platform centos7`
    - `scripts/install-third-party.sh --host linux --platform centos7`
-   - `scripts/runner-compose.sh up -d`
-   - `runner/register-runner.sh gpu`
-   - optional: `runner/register-runner.sh multi`
+   - `runner/register-shell-runner.sh gpu`
+   - optional: `runner/register-shell-runner.sh multi`
    - `scripts/compose.sh run --rm cuda-cxx-centos7`
 
 If the offline host keeps a full checkout of this repository, export the operator toolkit on the online host:
@@ -97,35 +93,24 @@ Then continue from `/path/to/project/.gpu-devops/`:
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
-.gpu-devops/scripts/runner-compose.sh up -d
-.gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
 .gpu-devops/scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
-`scripts/prepare-runner-service-image.sh` gives `RUNNER_SERVICE_IMAGE` a controlled online preparation step before export. Its default `retag` mode pulls `RUNNER_SERVICE_SOURCE_IMAGE` and retags it to `RUNNER_SERVICE_IMAGE`. If you want a repo-local build entry point for later customization, run:
-
-```bash
-scripts/prepare-runner-service-image.sh --mode build
-```
-
-If your GitLab HTTPS endpoint uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` in `.env` before running `runner/register-runner.sh`. The registration script copies that PEM file into `runner/config/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration container automatically.
+If your GitLab HTTPS endpoint uses a self-signed certificate, set `RUNNER_TLS_CA_FILE` in `.env` before running `runner/register-shell-runner.sh`. The registration script copies that PEM file into `~/.gitlab-runner/certs/<gitlab-host>.crt` and passes `--tls-ca-file` to the registration command automatically.
 
 `scripts/export-images.sh` also writes `${IMAGE_ARCHIVE_PATH}.sha256`. `scripts/import-images.sh` verifies that hash by default before loading the archive. Add `--skip-hash-check` only when you intentionally want to bypass integrity checking.
 
 When you do not need the full image set, `scripts/export-images.sh` also supports:
 
 ```bash
-scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
 scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
-Use `--only-runner-service` to refresh just `RUNNER_SERVICE_IMAGE` on an offline host that already has the builder images. Use `--only-build-images` when you want only the builder image matrix and do not need the Runner images in that archive. Add `--platform <name>` when you want a single builder tag such as `centos7`.
+Use `--only-build-images` when you want only the builder image matrix. Add `--platform <name>` when you want a single builder tag such as `centos7`.
 
 These image-only scripts share the same image export/import implementation as the project bundle scripts. The main difference is that they produce and consume the plain offline image archive directly.
-
-On an offline host, `scripts/runner-compose.sh up -d` assumes `RUNNER_SERVICE_IMAGE` is already present locally because `runner-compose.yml` only runs the service image and does not build it.
 
 To move the same images and integration assets into another project directory outside this repository, run:
 
@@ -141,9 +126,8 @@ The importer also generates `/path/to/other/project/.gpu-devops/.env` so the cop
 The imported `.gpu-devops/` directory now behaves as a functional operator toolkit, not just a minimal project integration stub. It includes:
 
 - image import/export scripts
-- Runner service image preparation
 - builder image build scripts plus `docker/cuda-builder/`
-- Runner registration assets under `runner/`
+- shell-runner registration assets under `runner/`
 - the existing Compose wrappers and docs
 
 The project bundle scripts also support partial flows:
@@ -160,23 +144,23 @@ scripts/import-project-bundle.sh --mode assets --target-dir /path/to/other/proje
 
 Each exported project bundle also produces a sibling `.sha256` file, and the importer verifies it by default before unpacking. In `all` and `images` mode, the nested image archive is verified as well. Use `--skip-hash-check` only if you need to bypass those checks deliberately.
 
-For a field-by-field explanation of offline `.env` values, including Docker executor, shell runner, and self-signed GitLab HTTPS setup, see [offline-env-configuration.md](offline-env-configuration.md).
+For a field-by-field explanation of offline `.env` values, including shell runner and self-signed GitLab HTTPS setup, see [offline-env-configuration.md](offline-env-configuration.md).
 
-## Runner registration
+## Shell runner registration
 
 Register the standard GPU pool:
 
 ```bash
-runner/register-runner.sh gpu
+runner/register-shell-runner.sh gpu
 ```
 
 Register the multi-GPU pool:
 
 ```bash
-runner/register-runner.sh multi
+runner/register-shell-runner.sh multi
 ```
 
-Both registrations append to `runner/config/config.toml`.
+Both registrations append to `~/.gitlab-runner/config.toml`.
 
 ## Local project build
 
@@ -206,11 +190,10 @@ Proxy handling is aligned across `centos7`, `rocky8`, and `ubuntu2204`: the buil
 ## Upgrade path
 
 1. Build and publish a new builder image tag.
-2. Prepare and publish the updated `RUNNER_SERVICE_IMAGE` with `scripts/prepare-runner-service-image.sh` if the Runner service image source or target changes.
-3. Update `BUILDER_IMAGE_FAMILY`, `BUILDER_DEFAULT_PLATFORM`, `BUILDER_PLATFORMS`, `RUNNER_DOCKER_IMAGE`, `RUNNER_SERVICE_IMAGE`, and `BUILDER_IMAGE` in `.env` if the platform matrix or published image names change.
-4. Re-export the offline image bundle if air-gapped hosts depend on it.
-5. Restart the Runner service.
-6. Validate the smoke pipeline in a test project.
+2. Update `BUILDER_IMAGE_FAMILY`, `BUILDER_DEFAULT_PLATFORM`, `BUILDER_PLATFORMS`, and `BUILDER_IMAGE` in `.env` if the platform matrix or published image names change.
+3. Re-export the offline image bundle if air-gapped hosts depend on it.
+4. Re-run the shell runner registration if tags or host policy changed.
+5. Validate the smoke pipeline in a test project using the shell-runner CI example.
 
 ## Rollback
 

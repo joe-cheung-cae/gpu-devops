@@ -96,8 +96,6 @@ bundle_type=project_integration
 bundle_mode=${MODE}
 builder_image_family=${BUILDER_IMAGE_FAMILY:-}
 builder_platforms=${BUILDER_PLATFORMS:-}
-runner_docker_image=${RUNNER_DOCKER_IMAGE:-}
-runner_service_image=${RUNNER_SERVICE_IMAGE:-}
 assets_root=$( [[ "${MODE}" == "all" || "${MODE}" == "assets" ]] && printf 'assets' )
 images_archive=$( [[ "${MODE}" == "all" || "${MODE}" == "images" ]] && printf 'images/offline-images.tar.gz' )
 EOF

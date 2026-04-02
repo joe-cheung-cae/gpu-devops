@@ -58,12 +58,10 @@ assert_equals() {
 write_export_env() {
   local env_path="$1"
 
-  cat > "${env_path}" <<'EOF'
+cat > "${env_path}" <<'EOF'
 BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
 BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
-RUNNER_DOCKER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
-RUNNER_SERVICE_IMAGE=registry.local/devops/gitlab-runner:alpine-v16.10.1
 PROJECT_BUNDLE_PATH=artifacts/project-integration-bundle.tar.gz
 EOF
 }
@@ -113,8 +111,6 @@ run_export_test() {
     all)
       assert_file_exists "${test_dir}/assets/.env.example"
       assert_file_exists "${test_dir}/assets/docker-compose.yml"
-      assert_file_exists "${test_dir}/assets/runner-compose.yml"
-      assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/compose.sh"
       assert_file_exists "${test_dir}/assets/scripts/common/env.sh"
@@ -127,16 +123,12 @@ run_export_test() {
       assert_file_exists "${test_dir}/assets/scripts/image-bundle-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/install-third-party.sh"
-      assert_file_exists "${test_dir}/assets/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
       assert_file_exists "${test_dir}/assets/scripts/build-builder-image.sh"
       assert_file_exists "${test_dir}/assets/scripts/verify-host.sh"
-      assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
-      assert_file_exists "${test_dir}/assets/runner/config.template.toml"
-      assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/centos7.Dockerfile"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${test_dir}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
@@ -145,28 +137,25 @@ run_export_test() {
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
-      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
       ;;
     images)
       assert_file_exists "${test_dir}/images/offline-images.tar.gz"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.images.txt"
       assert_file_exists "${test_dir}/images/offline-images.tar.gz.sha256"
       assert_not_exists "${test_dir}/assets"
-      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204 registry.local/devops/gitlab-runner:alpine-v16.10.1"
+      assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
       ;;
     assets)
       assert_file_exists "${test_dir}/assets/.env.example"
       assert_file_exists "${test_dir}/assets/docker-compose.yml"
-      assert_file_exists "${test_dir}/assets/runner-compose.yml"
       assert_file_exists "${test_dir}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${test_dir}/assets/scripts/progress-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/import-images.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${test_dir}/assets/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${test_dir}/assets/scripts/prepare-builder-deps.sh"
-      assert_file_exists "${test_dir}/assets/runner/register-runner.sh"
       assert_file_exists "${test_dir}/assets/runner/register-shell-runner.sh"
-      assert_file_exists "${test_dir}/assets/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${test_dir}/assets/docs/offline-env-configuration.md"
       assert_file_exists "${test_dir}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
       assert_not_exists "${test_dir}/images"
@@ -210,12 +199,9 @@ write_import_bundle() {
       "${bundle_root}/assets/scripts/export" \
       "${bundle_root}/assets/scripts/import" \
       "${bundle_root}/assets/runner" \
-      "${bundle_root}/assets/docker/gitlab-runner" \
       "${bundle_root}/assets/docker/cuda-builder/deps"
     cp "${ROOT_DIR}/docker-compose.yml" "${bundle_root}/assets/docker-compose.yml"
-    cp "${ROOT_DIR}/runner-compose.yml" "${bundle_root}/assets/runner-compose.yml"
     cp "${ROOT_DIR}/.env.example" "${bundle_root}/assets/.env.example"
-    cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-runner.yml"
     cp "${ROOT_DIR}/examples/gitlab-ci/shared-gpu-shell-runner.yml" "${bundle_root}/assets/examples/gitlab-ci/shared-gpu-shell-runner.yml"
     cp "${ROOT_DIR}/docs/offline-env-configuration.md" "${bundle_root}/assets/docs/offline-env-configuration.md"
     cp "${ROOT_DIR}/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md" "${bundle_root}/assets/docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md"
@@ -235,22 +221,17 @@ write_import_bundle() {
     cp "${ROOT_DIR}/scripts/common/third-party-registry.sh" "${bundle_root}/assets/scripts/common/third-party-registry.sh"
     cp "${ROOT_DIR}/scripts/common/project-bundle.sh" "${bundle_root}/assets/scripts/common/project-bundle.sh"
     cp "${ROOT_DIR}/scripts/common/progress.sh" "${bundle_root}/assets/scripts/common/progress.sh"
-    cp "${ROOT_DIR}/scripts/prepare-runner-service-image.sh" "${bundle_root}/assets/scripts/prepare-runner-service-image.sh"
     cp "${ROOT_DIR}/scripts/prepare-chrono-source-cache.sh" "${bundle_root}/assets/scripts/prepare-chrono-source-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-third-party-cache.sh" "${bundle_root}/assets/scripts/prepare-third-party-cache.sh"
     cp "${ROOT_DIR}/scripts/prepare-builder-deps.sh" "${bundle_root}/assets/scripts/prepare-builder-deps.sh"
     cp "${ROOT_DIR}/scripts/build-builder-image.sh" "${bundle_root}/assets/scripts/build-builder-image.sh"
     cp "${ROOT_DIR}/scripts/verify-host.sh" "${bundle_root}/assets/scripts/verify-host.sh"
-    cp "${ROOT_DIR}/scripts/runner-compose.sh" "${bundle_root}/assets/scripts/runner-compose.sh"
     cp "${ROOT_DIR}/scripts/progress-common.sh" "${bundle_root}/assets/scripts/progress-common.sh"
-    cp "${ROOT_DIR}/runner/register-runner.sh" "${bundle_root}/assets/runner/register-runner.sh"
     cp "${ROOT_DIR}/runner/register-shell-runner.sh" "${bundle_root}/assets/runner/register-shell-runner.sh"
-    cp "${ROOT_DIR}/runner/config.template.toml" "${bundle_root}/assets/runner/config.template.toml"
-    cp "${ROOT_DIR}/docker/gitlab-runner/Dockerfile" "${bundle_root}/assets/docker/gitlab-runner/Dockerfile"
     cp "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" "${bundle_root}/assets/docker/cuda-builder/centos7.Dockerfile"
     cp "${ROOT_DIR}/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
     cp "${ROOT_DIR}/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz" "${bundle_root}/assets/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
-    chmod +x "${bundle_root}/assets/scripts/"*.sh "${bundle_root}/assets/runner/register-runner.sh"
+    chmod +x "${bundle_root}/assets/scripts/"*.sh
   fi
 }
 
@@ -318,7 +299,6 @@ run_import_test() {
     all)
       assert_contains "${test_dir}/logs/docker.log" "load"
       assert_file_exists "${target_dir}/.gpu-devops/docker-compose.yml"
-      assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/examples/gitlab-ci/shared-gpu-shell-runner.yml"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/compose.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/env.sh"
@@ -331,16 +311,12 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/image-bundle-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/common/docker-rootless-common.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/build-builder-image.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/verify-host.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/runner/config.template.toml"
-      assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/centos7.Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/CMake-hdf5-1.14.1-2.tar.gz"
@@ -365,21 +341,13 @@ run_import_test() {
       "${target_dir}/.gpu-devops/scripts/import-images.sh" --help > "${test_dir}/import-images-help.log"
       "${target_dir}/.gpu-devops/scripts/export-images.sh" --help > "${test_dir}/export-images-help.log"
       "${target_dir}/.gpu-devops/scripts/build-builder-image.sh" --help > "${test_dir}/build-builder-help.log"
-      "${target_dir}/.gpu-devops/scripts/prepare-runner-service-image.sh" --help > "${test_dir}/prepare-runner-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-chrono-source-cache.sh" --help > "${test_dir}/prepare-chrono-help.log"
       "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh" --help > "${test_dir}/prepare-builder-deps-help.log"
-      set +e
-      "${target_dir}/.gpu-devops/runner/register-runner.sh" invalid > "${test_dir}/register-runner-help.log" 2>&1
-      local register_status=$?
-      set -e
-      assert_equals "1" "${register_status}"
       assert_contains "${test_dir}/import-images-help.log" "Usage: scripts/import-images.sh"
       assert_contains "${test_dir}/export-images-help.log" "Usage: scripts/export-images.sh"
       assert_contains "${test_dir}/build-builder-help.log" "Usage: scripts/build-builder-image.sh"
-      assert_contains "${test_dir}/prepare-runner-help.log" "Usage: scripts/prepare-runner-service-image.sh"
       assert_contains "${test_dir}/prepare-chrono-help.log" "Usage: scripts/prepare-chrono-source-cache.sh"
       assert_contains "${test_dir}/prepare-builder-deps-help.log" "Usage: scripts/prepare-builder-deps.sh"
-      assert_contains "${test_dir}/register-runner-help.log" "Set GITLAB_URL in .env"
       ;;
     images)
       assert_contains "${test_dir}/logs/docker.log" "load"
@@ -397,9 +365,7 @@ run_import_test() {
       assert_file_exists "${target_dir}/.gpu-devops/scripts/install-third-party.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-third-party-cache.sh"
       assert_file_exists "${target_dir}/.gpu-devops/scripts/prepare-builder-deps.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/runner/register-runner.sh"
       assert_file_exists "${target_dir}/.gpu-devops/runner/register-shell-runner.sh"
-      assert_file_exists "${target_dir}/.gpu-devops/docker/gitlab-runner/Dockerfile"
       assert_file_exists "${target_dir}/.gpu-devops/docker/cuda-builder/deps/cmake-3.26.0-linux-x86_64.tar.gz"
       assert_file_exists "${target_dir}/.gpu-devops/docs/offline-env-configuration.md"
       assert_file_exists "${target_dir}/.gpu-devops/.env"

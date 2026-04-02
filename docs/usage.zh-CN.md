@@ -22,8 +22,8 @@ scripts/verify-host.sh
 - `RUNNER_REGISTRATION_TOKEN`
 - `BUILDER_IMAGE_FAMILY`
 - `BUILDER_IMAGE`
-- `RUNNER_DOCKER_IMAGE`
 - 如果 GitLab HTTPS 使用自签名证书，还要设置 `RUNNER_TLS_CA_FILE`
+- 如果 Runner 用户不是 `gitlab-runner`，还要设置 `RUNNER_SHELL_USER`
 
 ### 步骤 2：构建 builder 镜像
 
@@ -50,12 +50,11 @@ scripts/build-builder-image.sh --all-platforms
 
 当前发布的 builder image 只保留通用 CUDA/C++ 工具链基线。`Chrono`、`Eigen3`、`OpenMPI`、`HDF5`、`h5engine`、`muparserx` 都需要通过依赖缓存流程准备到 `CUDA_CXX_DEPS_ROOT/<platform>`，对应入口是 `scripts/prepare-builder-deps.sh` 或 `scripts/install-third-party.sh --host linux --platform <name>`。
 
-### 步骤 3：准备 Runner 服务镜像并导出离线包
+### 步骤 3：导出 builder 镜像离线包与 operator toolkit
 
-在联网环境中，先准备 Runner 服务镜像，再导出部署镜像：
+在联网环境中，导出 builder 镜像：
 
 ```bash
-scripts/prepare-runner-service-image.sh
 scripts/export-images.sh
 ```
 
@@ -68,12 +67,11 @@ scripts/export-images.sh
 按需导出示例：
 
 ```bash
-scripts/export-images.sh --only-runner-service --output artifacts/offline-runner-service.tar.gz
 scripts/export-images.sh --only-build-images --output artifacts/offline-build-images.tar.gz
 scripts/export-images.sh --only-build-images --platform centos7 --output artifacts/offline-build-images-centos7.tar.gz
 ```
 
-`--only-runner-service` 只导出 `RUNNER_SERVICE_IMAGE`。`--only-build-images` 只导出 builder image 矩阵。如果只想导出单个平台，例如 `centos7`，可以再加 `--platform <name>`。
+`--only-build-images` 只导出 builder image 矩阵。如果只想导出单个平台，例如 `centos7`，可以再加 `--platform <name>`。
 
 如果离线机器上不保留完整仓库代码，建议同时导出 operator toolkit：
 
@@ -110,47 +108,29 @@ scripts/import-images.sh --input artifacts/offline-images.tar.gz
 .gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
 .gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
 .gpu-devops/scripts/install-third-party.sh --host linux --platform centos7
-.gpu-devops/scripts/runner-compose.sh up -d
-.gpu-devops/runner/register-runner.sh gpu
 .gpu-devops/runner/register-shell-runner.sh gpu
 ```
 
 如果导入或解压了 toolkit，后续命令请在 `/path/to/project/.gpu-devops/` 目录下执行。
 
-### 步骤 5：启动 Runner 服务
-
-```bash
-scripts/runner-compose.sh up -d
-scripts/runner-compose.sh ps
-```
-
-预期结果是 `gitlab-runner` 容器正常启动并保持运行。
-
-### 步骤 6：在 GitLab 中注册 Runner
+### 步骤 5：在 GitLab 中注册 shell runner
 
 注册默认单卡 Runner 池：
 
 ```bash
-runner/register-runner.sh gpu
+sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
 ```
 
 注册多卡 Runner 池：
 
 ```bash
-runner/register-runner.sh multi
+sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
 ```
 
 默认标签如下：
 
 - 单卡池：`gpu`、`cuda`、`cuda-11`
 - 多卡池：`gpu-multi`、`cuda`、`cuda-11`
-
-如果你的环境要求 CI job 作为 Linux 用户 `gitlab-runner` 通过普通 shell executor 运行，则应注册 shell-runner 路径：
-
-```bash
-sudo -u gitlab-runner -H runner/register-shell-runner.sh gpu
-sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
-```
 
 这条路径要求：
 
@@ -166,9 +146,7 @@ sudo -u gitlab-runner -H runner/register-shell-runner.sh multi
 scripts/compose.sh run --rm cuda-cxx-centos7
 ```
 
-然后把 [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml) 放到一个测试项目里，确认 `gpu-smoke`、`cuda-cmake-build` 和 `multi-gpu-smoke` 都能成功执行。
-
-如果使用 shell-runner 路径，则从 [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml) 开始。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。Windows 一侧通过 `scripts/install-third-party.sh --host windows` 安装依赖，并在 Windows 上使用 `MS-MPI` 而不是 `OpenMPI`。这个默认值来自 CI 示例，不来自 `.env`。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
+然后把 [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml) 放到一个测试项目里，确认 `gpu-smoke`、`cuda-cmake-build` 和 `multi-gpu-smoke` 都能成功执行。它在同一个 pipeline 里同时保留 Linux 和 Windows job，并把 `BUILD_PLATFORM=centos7` 作为默认的 Linux compose 构建平台。Windows 一侧通过 `scripts/install-third-party.sh --host windows` 安装依赖，并在 Windows 上使用 `MS-MPI` 而不是 `OpenMPI`。这个默认值来自 CI 示例，不来自 `.env`。`rocky8` 和 `ubuntu2204` 仍然是受支持的 Linux 备选值。
 
 ## 2. 研发工程师使用流程
 
@@ -214,9 +192,9 @@ Linux builder image 现在也内置了 `uuid/uuid.h` 对应的开发头文件和
 - `-DCMAKE_C_COMPILER_LAUNCHER=ccache`
 - `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`
 
-### 方式 B：在 `.gitlab-ci.yml` 中使用共享 Runner
+### 方式 B：在 `.gitlab-ci.yml` 中使用 shell runner
 
-可以直接参考 [examples/gitlab-ci/shared-gpu-runner.yml](../examples/gitlab-ci/shared-gpu-runner.yml)。
+可以直接参考 [examples/gitlab-ci/shared-gpu-shell-runner.yml](../examples/gitlab-ci/shared-gpu-shell-runner.yml)。
 
 如果同一个项目还需要 Linux 物理机编译或 Windows 编译，可以继续参考混合 Runner 组织说明：[gitlab-ci-multi-environment.md](gitlab-ci-multi-environment.md)。
 

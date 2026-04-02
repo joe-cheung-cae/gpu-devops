@@ -91,4 +91,31 @@ assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "这并不等同于把 Docker 
 assert_contains "${ROOT_DIR}/docs/usage.en.md" "offline-env-configuration.md"
 assert_contains "${ROOT_DIR}/docs/usage.zh-CN.md" "offline-env-configuration.md"
 
+disallowed_refs=(
+  "runner-compose.yml"
+  "scripts/runner-compose.sh"
+  "scripts/prepare-runner-service-image.sh"
+  "runner/register-runner.sh"
+  "docker/gitlab-runner"
+  "RUNNER_DOCKER_IMAGE"
+  "RUNNER_SERVICE_IMAGE"
+  "RUNNER_SERVICE_SOURCE_IMAGE"
+  "RUNNER_SERVICE_IMAGE_PREPARE_MODE"
+  "RUNNER_CONTAINER_NAME"
+  "RUNNER_REGISTRATION_CONTAINER_NAME"
+  "shared-gpu-runner.yml"
+)
+
+for pattern in "${disallowed_refs[@]}"; do
+  if rg -n --fixed-strings "${pattern}" \
+    --glob '!tests/shell-runner-doc-test.sh' \
+    "${ROOT_DIR}/README.md" \
+    "${ROOT_DIR}/docs" \
+    "${ROOT_DIR}/examples" \
+    "${ROOT_DIR}/tests" \
+    "${ROOT_DIR}/.env.example" >/dev/null; then
+    fail "Docker runner reference should not appear: ${pattern}"
+  fi
+done
+
 echo "shell runner doc tests passed"

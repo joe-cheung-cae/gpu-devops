@@ -9,14 +9,9 @@ project_bundle_assets() {
   cat <<'EOF'
 .env.example
 docker-compose.yml
-runner-compose.yml
-examples/gitlab-ci/shared-gpu-runner.yml
 examples/gitlab-ci/shared-gpu-shell-runner.yml
-runner/register-runner.sh
 runner/register-shell-runner.sh
-runner/config.template.toml
 docker/cuda-builder
-docker/gitlab-runner
 scripts/build-builder-image.sh
 scripts/common
 scripts/common/docker-rootless-common.sh
@@ -31,10 +26,8 @@ scripts/import
 scripts/import-images.sh
 scripts/import-project-bundle.sh
 scripts/install-third-party.sh
-scripts/prepare-runner-service-image.sh
 scripts/prepare-third-party-cache.sh
 scripts/progress-common.sh
-scripts/runner-compose.sh
 scripts/verify-host.sh
 docs/operations.md
 docs/offline-env-configuration.md

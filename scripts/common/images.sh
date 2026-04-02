@@ -107,13 +107,6 @@ collect_bundle_images() {
     fi
   done < <(collect_build_images)
 
-  for image in "${RUNNER_DOCKER_IMAGE}" "${RUNNER_SERVICE_IMAGE}"; do
-    [[ -n "${image}" ]] || continue
-    if [[ -z "${seen["${image}"]+x}" ]]; then
-      printf '%s\n' "${image}"
-      seen["${image}"]=1
-    fi
-  done
 }
 
 ensure_bundle_images_available() {

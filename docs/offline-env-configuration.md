@@ -38,8 +38,6 @@ CUDA_CXX_BUILD_ARGS=
 ```env
 GITLAB_URL=https://gitlab.example.internal
 RUNNER_REGISTRATION_TOKEN=replace-me
-RUNNER_DOCKER_IMAGE=tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
-RUNNER_SERVICE_IMAGE=tf-particles/devops/gitlab-runner:alpine-v16.10.1
 ```
 
 如需自签名 HTTPS GitLab，还要补：
@@ -50,40 +48,9 @@ RUNNER_TLS_CA_FILE=certs/gitlab-ca.crt
 
 要求：
 
-- `RUNNER_SERVICE_IMAGE` 必须和离线导入到本地 Docker 的 tag 完全一致
-- `RUNNER_DOCKER_IMAGE` 必须指向已经导入的 builder image，默认推荐 `centos7`
 - `RUNNER_TLS_CA_FILE` 指向 PEM 编码 CA 文件，源文件扩展名可以是 `.pem` 或 `.crt`
 
-## 3. Docker executor 离线部署
-
-推荐 `.env` 额外保留：
-
-```env
-BUILDER_IMAGE_FAMILY=tf-particles/devops/cuda-builder:cuda11.7-cmake3.26
-BUILDER_DEFAULT_PLATFORM=centos7
-BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
-RUNNER_CONTAINER_NAME=gitlab-runner-devops-docker
-RUNNER_REGISTRATION_CONTAINER_NAME=gitlab-runner-devops-register
-RUNNER_TAG_LIST=gpu,cuda,cuda-11
-RUNNER_MULTI_TAG_LIST=gpu-multi,cuda,cuda-11
-```
-
-离线部署顺序：
-
-```bash
-.gpu-devops/scripts/import-images.sh --input /path/to/offline-images.tar.gz
-.gpu-devops/scripts/prepare-builder-deps.sh --platform centos7
-.gpu-devops/scripts/runner-compose.sh up -d
-.gpu-devops/runner/register-runner.sh gpu
-```
-
-如果要多卡池：
-
-```bash
-.gpu-devops/runner/register-runner.sh multi
-```
-
-## 4. shell runner 离线部署
+## 3. shell runner 离线部署
 
 shell runner 路径适用于：GitLab job 作为 Linux 用户 `gitlab-runner` 通过普通 shell executor 运行，但 build/test/deploy 仍通过 `.gpu-devops/scripts/compose.sh` 在 builder image 中完成。
 
@@ -113,10 +80,10 @@ shell-runner 示例中：
 - Linux build/test/deploy 会复用：
   - `${CUDA_CXX_DEPS_ROOT}/${BUILD_PLATFORM}`
   - `${CUDA_CXX_BUILD_ROOT}/${BUILD_PLATFORM}`
-  - `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`
+- `${CUDA_CXX_INSTALL_ROOT}/${BUILD_PLATFORM}`
 - Windows job 与 Linux job 并行存在，但不依赖 `BUILD_PLATFORM`
 
-## 5. 离线 rootless Docker 准备
+## 4. 离线 rootless Docker 准备
 
 从当前版本开始，Linux 上的项目侧入口 `scripts/compose.sh` 和 `scripts/prepare-builder-deps.sh` 默认要求 rootless Docker。离线主机如果还没有完成 rootless Docker 准备，这两个入口会直接失败；只有在迁移旧环境时才建议临时设置 `CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1` 继续运行。
 
@@ -152,7 +119,7 @@ export CUDA_CXX_ALLOW_ROOTFUL_DOCKER=1
 
 这个变量只建议用于兼容旧环境，不应作为长期默认配置。
 
-## 6. 推荐的离线 `.env` 最小示例
+## 5. 推荐的离线 `.env` 最小示例
 
 下面这份 `.gpu-devops/.env` 可以作为离线外部项目的推荐起点：
 
@@ -164,9 +131,7 @@ RUNNER_TLS_CA_FILE=certs/gitlab-ca.crt
 BUILDER_IMAGE_FAMILY=tf-particles/devops/cuda-builder:cuda11.7-cmake3.26
 BUILDER_DEFAULT_PLATFORM=centos7
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
-
-RUNNER_DOCKER_IMAGE=tf-particles/devops/cuda-builder:cuda11.7-cmake3.26-centos7
-RUNNER_SERVICE_IMAGE=tf-particles/devops/gitlab-runner:alpine-v16.10.1
+RUNNER_SHELL_USER=gitlab-runner
 
 HOST_PROJECT_DIR=/path/to/project
 CUDA_CXX_PROJECT_DIR=.

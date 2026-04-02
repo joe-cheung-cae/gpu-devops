@@ -5,7 +5,7 @@ This repository packages a shared GitLab GPU runner platform for CUDA/CMake work
 
 - `docker/cuda-builder/`: platform-specific builder Dockerfiles such as `centos7.Dockerfile` and `ubuntu2204.Dockerfile`
 - `scripts/`: operational Bash entry points for host verification, image export/import, and Compose wrappers
-- `runner/`: Runner registration script and config template
+- `runner/`: shell runner registration script and helper assets
 - `tests/`: Bash test scripts for build, bundle, and runtime checks
 - `examples/`: sample CUDA smoke project, `.env` examples, and GitLab CI snippets
 - `docs/`: operator docs, self-checks, and implementation plans
@@ -18,7 +18,7 @@ This repository packages a shared GitLab GPU runner platform for CUDA/CMake work
 - `bash -n scripts/*.sh runner/*.sh tests/*.sh`: syntax-check Bash changes before review
 - `scripts/verify-host.sh`: confirm Docker, Compose, NVIDIA driver, and toolkit prerequisites
 - `scripts/build-builder-image.sh --platform ubuntu2204`: build one builder image locally
-- `scripts/runner-compose.sh up -d`: start the GitLab Runner service defined in `runner-compose.yml`
+- `runner/register-shell-runner.sh`: register the GitLab shell runner on a host
 
 ## Coding Style & Naming Conventions
 Use Bash with `#!/usr/bin/env bash` and `set -euo pipefail`. Follow the existing script style: simple functions, quoted expansions, and uppercase environment variable names such as `BUILDER_IMAGE_FAMILY`. Use kebab-case for script names like `export-project-bundle.sh`, and keep Dockerfile names aligned to supported platforms: `<platform>.Dockerfile`. Preserve ShellCheck-friendly patterns such as explicit `SC1091` comments when sourcing `.env`.
@@ -30,4 +30,4 @@ Add or update a Bash test in `tests/` for behavior changes. Name test files afte
 Recent commits use concise, imperative subjects such as `Improve environment file examples and comments` and `Add portable project integration bundle`. Keep commit titles short, specific, and capitalized; use a `docs:` prefix only when the change is documentation-only. PRs should describe the operator impact, list verification commands you ran, and include updated docs or examples when behavior or configuration changes.
 
 ## Security & Configuration Tips
-Do not commit populated `.env` files, registration tokens, or generated archives under `artifacts/`. Pin published builder images to immutable tags instead of `latest`, and use `runner/config.template.toml` only as a template, not as an authoritative runtime config.
+Do not commit populated `.env` files, registration tokens, or generated archives under `artifacts/`. Pin published builder images to immutable tags instead of `latest`.

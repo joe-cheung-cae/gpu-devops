@@ -14,7 +14,6 @@ source "${ROOT_DIR}/scripts/common/progress.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
-ONLY_RUNNER_SERVICE=false
 ONLY_BUILD_IMAGES=false
 SELECTED_PLATFORM=""
 
@@ -41,10 +40,6 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_OVERRIDE="${2:?Missing value for --output}"
       shift 2
       ;;
-    --only-runner-service)
-      ONLY_RUNNER_SERVICE=true
-      shift
-      ;;
     --only-build-images)
       ONLY_BUILD_IMAGES=true
       shift
@@ -56,10 +51,10 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<'EOF'
 Usage: scripts/export-images.sh [--env-file PATH] [--output PATH]
-                                 [--only-runner-service | --only-build-images]
+                                 [--only-build-images]
                                  [--platform NAME]
 
-Exports the configured builder/runner images into a compressed offline bundle.
+Exports the configured builder images into a compressed offline bundle.
 Use --platform only with --only-build-images to export one builder platform.
 EOF
       exit 0
@@ -77,11 +72,6 @@ progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
 
-if [[ "${ONLY_RUNNER_SERVICE}" == "true" && "${ONLY_BUILD_IMAGES}" == "true" ]]; then
-  echo "Use at most one of: --only-runner-service, --only-build-images" >&2
-  exit 1
-fi
-
 if [[ -n "${SELECTED_PLATFORM}" ]] && [[ "${ONLY_BUILD_IMAGES}" != "true" ]]; then
   echo "--platform is supported only together with --only-build-images" >&2
   exit 1
@@ -94,9 +84,7 @@ else
 fi
 
 progress_step "Collecting image list"
-if [[ "${ONLY_RUNNER_SERVICE}" == "true" ]]; then
-  IMAGES=("${RUNNER_SERVICE_IMAGE}")
-elif [[ "${ONLY_BUILD_IMAGES}" == "true" ]]; then
+if [[ "${ONLY_BUILD_IMAGES}" == "true" ]]; then
   if [[ -n "${SELECTED_PLATFORM}" ]]; then
     mapfile -t IMAGES < <(collect_build_images_for_platform "${SELECTED_PLATFORM}")
   else

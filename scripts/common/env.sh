@@ -17,18 +17,6 @@ load_image_bundle_env() {
   # shellcheck disable=SC1090
   source "${env_file}"
 
-  if [[ -z "${RUNNER_SERVICE_IMAGE:-}" ]]; then
-    RUNNER_SERVICE_IMAGE="gitlab/gitlab-runner:alpine-v16.10.1"
-  fi
-
-  if [[ -z "${RUNNER_SERVICE_SOURCE_IMAGE:-}" ]]; then
-    RUNNER_SERVICE_SOURCE_IMAGE="gitlab/gitlab-runner:alpine-v16.10.1"
-  fi
-
-  if [[ -z "${RUNNER_SERVICE_IMAGE_PREPARE_MODE:-}" ]]; then
-    RUNNER_SERVICE_IMAGE_PREPARE_MODE="retag"
-  fi
-
   if [[ -z "${BUILDER_DEFAULT_PLATFORM:-}" ]]; then
     BUILDER_DEFAULT_PLATFORM="centos7"
   fi
@@ -60,9 +48,6 @@ require_export_image_bundle_env() {
     BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
   fi
 
-  if [[ -z "${RUNNER_DOCKER_IMAGE:-}" ]]; then
-    RUNNER_DOCKER_IMAGE="${BUILDER_IMAGE}"
-  fi
 }
 
 resolve_bundle_path() {
