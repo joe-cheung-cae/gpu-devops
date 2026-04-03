@@ -21,6 +21,7 @@ builder_platform_supported() {
 
 builder_image_for_platform() {
   local platform="$1"
+  local cuda_version="${BUILDER_CUDA_VERSION:-11.7.1}"
 
   if ! builder_platform_supported "${platform}"; then
     echo "Unsupported platform: ${platform}" >&2
@@ -33,11 +34,11 @@ builder_image_for_platform() {
   fi
 
   if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
-    printf '%s-%s\n' "$(builder_default_image_family "${BUILDER_CUDA_VERSION:-11.7.1}")" "${platform}"
+    printf '%s:%s-%s\n' "$(builder_default_image_family)" "${platform}" "${cuda_version}"
     return 0
   fi
 
-  printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
+  printf '%s:%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}" "${cuda_version}"
 }
 
 builder_export_images() {
@@ -54,14 +55,14 @@ builder_export_images() {
   if [[ -n "${BUILDER_IMAGE_FAMILY:-}" ]]; then
     IFS=',' read -r -a platforms <<< "${BUILDER_PLATFORMS}"
     for platform in "${platforms[@]}"; do
-      printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
+      printf '%s:%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}" "${BUILDER_CUDA_VERSION:-11.7.1}"
     done
     return 0
   fi
 
   IFS=',' read -r -a platforms <<< "${BUILDER_PLATFORMS}"
   for platform in "${platforms[@]}"; do
-    printf '%s-%s\n' "$(builder_default_image_family "${BUILDER_CUDA_VERSION:-11.7.1}")" "${platform}"
+    printf '%s:%s-%s\n' "$(builder_default_image_family)" "${platform}" "${BUILDER_CUDA_VERSION:-11.7.1}"
   done
   return 0
 }
@@ -73,7 +74,7 @@ builder_export_image_for_platform() {
   if [[ -n "${BUILDER_IMAGE_EXPORTS:-}" ]]; then
     while IFS= read -r image; do
       [[ -n "${image}" ]] || continue
-      if [[ "${image}" == *"-${platform}" ]]; then
+      if [[ "${image}" == *":${platform}-"* ]]; then
         printf '%s\n' "${image}"
         return 0
       fi

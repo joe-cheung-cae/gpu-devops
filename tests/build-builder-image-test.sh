@@ -54,7 +54,7 @@ EOF
 }
 
 DEFAULT_CUDA_VERSION="11.7.1"
-DEFAULT_IMAGE_FAMILY="tf-particles/devops/cuda-builder:cuda${DEFAULT_CUDA_VERSION}-cmake3.26"
+DEFAULT_IMAGE_FAMILY="tf-particles/devops/cuda-builder"
 
 ENV_FILE="${TMP_DIR}/.env"
 cat > "${ENV_FILE}" <<'EOF'
@@ -67,7 +67,7 @@ default_log="${TMP_DIR}/default.log"
 default_stdout="${TMP_DIR}/default.stdout"
 run_with_mock_docker "${ENV_FILE}" "${default_log}" "${default_stdout}"
 assert_contains "${default_log}" "--build-arg CUDA_VERSION=11.7.1"
-assert_contains "${default_log}" "-t ${DEFAULT_IMAGE_FAMILY}-centos7"
+assert_contains "${default_log}" "-t ${DEFAULT_IMAGE_FAMILY}:centos7-11.7.1"
 assert_contains "${default_log}" "-f ${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile"
 assert_contains "${default_stdout}" "[1/5] Loading environment"
 assert_contains "${default_stdout}" "[2/5] Resolving target platforms"
@@ -79,7 +79,7 @@ override_log="${TMP_DIR}/override.log"
 override_stdout="${TMP_DIR}/override.stdout"
 run_with_mock_docker "${ENV_FILE}" "${override_log}" "${override_stdout}" --platform ubuntu2204 --cuda-version 12.4.1
 assert_contains "${override_log}" "--build-arg CUDA_VERSION=12.4.1"
-assert_contains "${override_log}" "-t tf-particles/devops/cuda-builder:cuda12.4.1-cmake3.26-ubuntu2204"
+assert_contains "${override_log}" "-t tf-particles/devops/cuda-builder:ubuntu2204-12.4.1"
 assert_contains "${override_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 assert_contains "${override_stdout}" "[4/5] Building platform image ubuntu2204"
 
@@ -87,7 +87,7 @@ ubuntu_log="${TMP_DIR}/ubuntu.log"
 ubuntu_stdout="${TMP_DIR}/ubuntu.stdout"
 run_with_mock_docker "${ENV_FILE}" "${ubuntu_log}" "${ubuntu_stdout}" --platform ubuntu2204
 assert_contains "${ubuntu_log}" "--build-arg CUDA_VERSION=11.7.1"
-assert_contains "${ubuntu_log}" "-t ${DEFAULT_IMAGE_FAMILY}-ubuntu2204"
+assert_contains "${ubuntu_log}" "-t ${DEFAULT_IMAGE_FAMILY}:ubuntu2204-11.7.1"
 assert_contains "${ubuntu_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 assert_contains "${ubuntu_stdout}" "[4/5] Building platform image ubuntu2204"
 
@@ -95,11 +95,11 @@ all_log="${TMP_DIR}/all.log"
 all_stdout="${TMP_DIR}/all.stdout"
 run_with_mock_docker "${ENV_FILE}" "${all_log}" "${all_stdout}" --all-platforms
 assert_contains "${all_log}" "--build-arg CUDA_VERSION=11.7.1"
-assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}-centos7"
+assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}:centos7-11.7.1"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile"
-assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}-rocky8"
+assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}:rocky8-11.7.1"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile"
-assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}-ubuntu2204"
+assert_contains "${all_log}" "-t ${DEFAULT_IMAGE_FAMILY}:ubuntu2204-11.7.1"
 assert_contains "${all_log}" "-f ${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile"
 assert_contains "${all_stdout}" "[4/5] Building platform image centos7"
 assert_contains "${all_stdout}" "[4/5] Building platform image rocky8"
@@ -113,10 +113,10 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'tar -xzf /t
 assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
 
 assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_CUDA_VERSION='
+assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_IMAGE_FAMILY='
+assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_IMAGE='
 assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_DEFAULT_PLATFORM='
 assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_PLATFORMS='
-assert_not_contains "${ROOT_DIR}/.env.example" 'BUILDER_IMAGE_FAMILY='
-assert_not_contains "${ROOT_DIR}/.env.example" 'BUILDER_IMAGE='
 assert_not_contains "${ROOT_DIR}/.env.example" 'CUDA_CXX_PROJECT_DIR='
 assert_not_contains "${ROOT_DIR}/.env.example" 'IMAGE_ARCHIVE_PATH='
 assert_not_contains "${ROOT_DIR}/.env.example" 'RUNNER_'
@@ -124,6 +124,6 @@ assert_not_contains "${ROOT_DIR}/.env.example" 'RUNNER_'
 assert_contains "${ROOT_DIR}/README.md" 'CUDA Builder Images'
 assert_contains "${ROOT_DIR}/README.md" 'scripts/export/images.sh'
 assert_contains "${ROOT_DIR}/README.md" 'scripts/install-offline-tools.sh'
-assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'cuda11.7.1-cmake3.26'
+assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'tf-particles/devops/cuda-builder:centos7-11.7.1'
 assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'BUILDER_CUDA_VERSION'
 assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz'

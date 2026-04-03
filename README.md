@@ -33,6 +33,7 @@ scripts/install-offline-tools.sh --prefix /opt/gpu-devops
 ```
 
 Set `BUILDER_CUDA_VERSION` in `.env` to change the default CUDA version without passing `--cuda-version` on every build.
+Image tags now use the rule `tf-particles/devops/cuda-builder:${platform}-${BUILDER_CUDA_VERSION}`.
 
 The offline installer copies the minimal runtime tree into the requested prefix:
 - `bin/` wrapper commands
@@ -43,8 +44,6 @@ The offline installer copies the minimal runtime tree into the requested prefix:
 - `README.md` and `docs/`
 
 The Docker build context includes `third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz`.
-
-Image tags include the CUDA patch version, for example `cuda11.7.1-cmake3.26-centos7`.
 
 - [docs/platform-contract.md](docs/platform-contract.md)
 - [docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md](docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md)

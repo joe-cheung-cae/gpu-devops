@@ -81,9 +81,9 @@ EOF
   assert_file_exists "${test_dir}/bundle.tar.gz"
   assert_file_exists "${test_dir}/bundle.tar.gz.images.txt"
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
-  assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
-  assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
-  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-rocky8 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
+assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
+assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
+assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1 tf-particles/devops/cuda-builder:rocky8-11.7.1 tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
 }
 
 run_export_single_platform_test() {
@@ -128,10 +128,10 @@ EOF
     --output "${test_dir}/bundle.tar.gz" \
     --platform centos7 > "${test_dir}/stdout.log"
 
-  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-rocky8"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
-  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-11.7.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:centos7-11.7.1"
 }
 
 run_import_test() {

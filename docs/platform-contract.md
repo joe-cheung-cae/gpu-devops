@@ -2,14 +2,14 @@
 
 ## Builder family
 
-- Builder image family defaults to `cuda${BUILDER_CUDA_VERSION}-cmake3.26`
+- Builder image family defaults to `tf-particles/devops/cuda-builder`
 - The default CUDA version is `11.7.1`
 - Supported platform keys:
   - `centos7` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-centos7`
   - `rocky8` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-rockylinux8`
   - `ubuntu2204` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-ubuntu22.04`
-- The public image tags are derived as `${BUILDER_IMAGE_FAMILY}-${platform}`
-- Example tag: `cuda11.7.1-cmake3.26-centos7`
+- The public image tags are derived as `${BUILDER_IMAGE_FAMILY}:${platform}-${BUILDER_CUDA_VERSION}`
+- Example tag: `tf-particles/devops/cuda-builder:centos7-11.7.1`
 
 ## Baseline
 
@@ -36,5 +36,5 @@
   - `docker/cuda-builder/` Dockerfiles
   - `third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz`
   - `.env` and `.env.example`
-  - `README.md` and `docs/`
+- `README.md` and `docs/`
 - Installed commands resolve their defaults from the prefix tree, not the source checkout

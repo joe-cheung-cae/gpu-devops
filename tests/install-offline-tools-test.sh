@@ -79,14 +79,14 @@ assert_contains "${PREFIX}/.env" 'BUILDER_CUDA_VERSION=11.7.1'
   TEST_LOG_FILE="${TMP_DIR}/build.log" PATH="${MOCK_BIN}:${PREFIX}/bin:${PATH}" build-builder-image.sh --platform ubuntu2204 > "${TMP_DIR}/build.stdout"
 )
 assert_contains "${TMP_DIR}/build.log" "-f ${PREFIX}/docker/cuda-builder/ubuntu2204.Dockerfile"
-assert_contains "${TMP_DIR}/build.log" "-t tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
+assert_contains "${TMP_DIR}/build.log" "-t tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
 assert_contains "${TMP_DIR}/build.log" "--build-arg CUDA_VERSION=11.7.1"
 
 (
   cd "${TMP_DIR}"
   TEST_LOG_FILE="${TMP_DIR}/export.log" PATH="${MOCK_BIN}:${PREFIX}/bin:${PATH}" export-images.sh > "${TMP_DIR}/export.stdout"
 )
-assert_contains "${TMP_DIR}/export.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-rocky8 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
+assert_contains "${TMP_DIR}/export.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1 tf-particles/devops/cuda-builder:rocky8-11.7.1 tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz.images.txt"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz.sha256"

@@ -6,8 +6,13 @@ fi
 SCRIPT_COMMON_ENV_LOADED=1
 
 builder_default_image_family() {
-  local cuda_version="${1:-${BUILDER_CUDA_VERSION:-11.7.1}}"
-  printf 'tf-particles/devops/cuda-builder:cuda%s-cmake3.26\n' "${cuda_version}"
+  printf '%s\n' "${BUILDER_IMAGE_FAMILY:-tf-particles/devops/cuda-builder}"
+}
+
+builder_default_image() {
+  local platform="${1:-${BUILDER_DEFAULT_PLATFORM:-centos7}}"
+  local cuda_version="${2:-${BUILDER_CUDA_VERSION:-11.7.1}}"
+  printf '%s:%s-%s\n' "$(builder_default_image_family)" "${platform}" "${cuda_version}"
 }
 
 load_image_bundle_env() {
@@ -35,11 +40,11 @@ load_image_bundle_env() {
   fi
 
   if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
-    BUILDER_IMAGE_FAMILY="$(builder_default_image_family "${BUILDER_CUDA_VERSION}")"
+    BUILDER_IMAGE_FAMILY="tf-particles/devops/cuda-builder"
   fi
 
   if [[ -z "${BUILDER_IMAGE:-}" ]]; then
-    BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
+    BUILDER_IMAGE="$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${BUILDER_CUDA_VERSION}")"
   fi
 
   if [[ -z "${IMAGE_ARCHIVE_PATH:-}" ]]; then
@@ -53,8 +58,8 @@ load_image_bundle_env() {
 
 require_export_image_bundle_env() {
   : "${BUILDER_CUDA_VERSION:=11.7.1}"
-  : "${BUILDER_IMAGE_FAMILY:=$(builder_default_image_family "${BUILDER_CUDA_VERSION}")}"
-  : "${BUILDER_IMAGE:=${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}}"
+  : "${BUILDER_IMAGE_FAMILY:=tf-particles/devops/cuda-builder}"
+  : "${BUILDER_IMAGE:=$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${BUILDER_CUDA_VERSION}")}"
 }
 
 resolve_bundle_path() {
