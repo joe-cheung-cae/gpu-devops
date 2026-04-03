@@ -32,6 +32,11 @@ builder_image_for_platform() {
     return 0
   fi
 
+  if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
+    printf '%s-%s\n' "$(builder_default_image_family "${BUILDER_CUDA_VERSION:-11.7.1}")" "${platform}"
+    return 0
+  fi
+
   printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
 }
 
@@ -53,6 +58,12 @@ builder_export_images() {
     done
     return 0
   fi
+
+  IFS=',' read -r -a platforms <<< "${BUILDER_PLATFORMS}"
+  for platform in "${platforms[@]}"; do
+    printf '%s-%s\n' "$(builder_default_image_family "${BUILDER_CUDA_VERSION:-11.7.1}")" "${platform}"
+  done
+  return 0
 
   printf '%s\n' "${BUILDER_IMAGE}"
 }

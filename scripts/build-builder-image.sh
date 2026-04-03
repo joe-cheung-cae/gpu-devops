@@ -5,7 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
 SELECTED_PLATFORM=""
 BUILD_ALL=0
+CUDA_VERSION_OVERRIDE=""
 
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/env.sh"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/common/images.sh"
 # shellcheck disable=SC1091
 source "${ROOT_DIR}/scripts/common/progress.sh"
 
@@ -23,9 +28,13 @@ while [[ $# -gt 0 ]]; do
       BUILD_ALL=1
       shift
       ;;
+    --cuda-version)
+      CUDA_VERSION_OVERRIDE="${2:?Missing value for --cuda-version}"
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
-Usage: scripts/build-builder-image.sh [--env-file PATH] [--platform NAME | --all-platforms]
+Usage: scripts/build-builder-image.sh [--env-file PATH] [--platform NAME | --all-platforms] [--cuda-version VERSION]
 
 Build one builder image for the default or selected platform, or all supported platforms.
 EOF
@@ -41,22 +50,21 @@ done
 progress_init 5
 progress_step "Loading environment"
 
-if [[ -f "${ENV_FILE}" ]]; then
-  # shellcheck disable=SC1091
-  source "${ENV_FILE}"
-fi
+load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 
-DEFAULT_PLATFORM="${BUILDER_DEFAULT_PLATFORM:-centos7}"
-BUILDER_PLATFORMS="${BUILDER_PLATFORMS:-centos7,rocky8,ubuntu2204}"
-BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE_FAMILY:-}"
+ORIGINAL_CUDA_VERSION="${BUILDER_CUDA_VERSION}"
+if [[ -n "${CUDA_VERSION_OVERRIDE}" ]]; then
+  BUILDER_CUDA_VERSION="${CUDA_VERSION_OVERRIDE}"
+  ORIGINAL_TAG_SUFFIX="cuda${ORIGINAL_CUDA_VERSION}-cmake3.26"
+  NEW_TAG_SUFFIX="cuda${BUILDER_CUDA_VERSION}-cmake3.26"
 
-if [[ -z "${BUILDER_IMAGE_FAMILY}" ]] && [[ -n "${BUILDER_IMAGE:-}" ]]; then
-  BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE%-${DEFAULT_PLATFORM}}"
-fi
+  if [[ "${BUILDER_IMAGE_FAMILY}" == *"${ORIGINAL_TAG_SUFFIX}"* ]]; then
+    BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE_FAMILY//${ORIGINAL_TAG_SUFFIX}/${NEW_TAG_SUFFIX}}"
+  fi
 
-if [[ -z "${BUILDER_IMAGE_FAMILY}" ]] && [[ -z "${BUILDER_IMAGE:-}" ]]; then
-  echo "Set BUILDER_IMAGE_FAMILY or BUILDER_IMAGE in .env before building." >&2
-  exit 1
+  if [[ "${BUILDER_IMAGE}" == *"${ORIGINAL_TAG_SUFFIX}"* ]]; then
+    BUILDER_IMAGE="${BUILDER_IMAGE//${ORIGINAL_TAG_SUFFIX}/${NEW_TAG_SUFFIX}}"
+  fi
 fi
 
 progress_step "Resolving target platforms"
@@ -97,15 +105,6 @@ platform_is_supported() {
   return 1
 }
 
-image_for_platform() {
-  local platform="$1"
-  if [[ "${platform}" == "${DEFAULT_PLATFORM}" ]] && [[ -n "${BUILDER_IMAGE:-}" ]]; then
-    printf '%s\n' "${BUILDER_IMAGE}"
-    return 0
-  fi
-  printf '%s-%s\n' "${BUILDER_IMAGE_FAMILY}" "${platform}"
-}
-
 build_platform() {
   local platform="$1"
   local image dockerfile
@@ -115,7 +114,7 @@ build_platform() {
     exit 1
   fi
 
-  image="$(image_for_platform "${platform}")"
+  image="$(builder_image_for_platform "${platform}")"
   dockerfile="${ROOT_DIR}/docker/cuda-builder/${platform}.Dockerfile"
 
   if [[ ! -f "${dockerfile}" ]]; then
@@ -126,6 +125,7 @@ build_platform() {
   progress_note "[4/5] Building platform image ${platform}"
   docker build \
     "${NETWORK_ARGS[@]}" \
+    --build-arg "CUDA_VERSION=${BUILDER_CUDA_VERSION}" \
     ${HTTP_PROXY_VALUE:+--build-arg "http_proxy=${HTTP_PROXY_VALUE}"} \
     ${HTTPS_PROXY_VALUE:+--build-arg "https_proxy=${HTTPS_PROXY_VALUE}"} \
     ${HTTP_PROXY_VALUE:+--build-arg "HTTP_PROXY=${HTTP_PROXY_VALUE}"} \
@@ -149,7 +149,7 @@ if [[ "${BUILD_ALL}" -eq 1 ]]; then
 fi
 
 if [[ -z "${SELECTED_PLATFORM}" ]]; then
-  SELECTED_PLATFORM="${DEFAULT_PLATFORM}"
+  SELECTED_PLATFORM="${BUILDER_DEFAULT_PLATFORM}"
 fi
 
 build_platform "${SELECTED_PLATFORM}"

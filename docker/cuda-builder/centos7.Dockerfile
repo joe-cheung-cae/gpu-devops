@@ -1,4 +1,5 @@
-FROM nvidia/cuda:11.7.1-devel-centos7
+ARG CUDA_VERSION=11.7.1
+FROM nvidia/cuda:${CUDA_VERSION}-devel-centos7
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG http_proxy
@@ -7,6 +8,7 @@ ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG no_proxy
 ARG NO_PROXY
+ARG PIP_DEFAULT_TIMEOUT=120
 
 RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
     if [ -n "${YUM_PROXY}" ]; then echo "proxy=${YUM_PROXY}" >> /etc/yum.conf; fi && \
@@ -55,7 +57,7 @@ COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 
-RUN python3 -m pip install --no-cache-dir \
+RUN PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT}" python3 -m pip install --no-cache-dir \
       conan \
       ninja \
       'urllib3<2'

@@ -2,12 +2,14 @@
 
 ## Builder family
 
-- Builder image family: `cuda11.7-cmake3.26`
+- Builder image family defaults to `cuda${BUILDER_CUDA_VERSION}-cmake3.26`
+- The default CUDA version is `11.7.1`
 - Supported platform keys:
-  - `centos7` -> `nvidia/cuda:11.7.1-devel-centos7`
-  - `rocky8` -> `nvidia/cuda:11.7.1-devel-rockylinux8`
-  - `ubuntu2204` -> `nvidia/cuda:11.7.1-devel-ubuntu22.04`
+  - `centos7` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-centos7`
+  - `rocky8` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-rockylinux8`
+  - `ubuntu2204` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-ubuntu22.04`
 - The public image tags are derived as `${BUILDER_IMAGE_FAMILY}-${platform}`
+- Example tag: `cuda11.7.1-cmake3.26-centos7`
 
 ## Baseline
 

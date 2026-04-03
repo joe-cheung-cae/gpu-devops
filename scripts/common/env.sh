@@ -5,6 +5,11 @@ if [[ -n "${SCRIPT_COMMON_ENV_LOADED:-}" ]]; then
 fi
 SCRIPT_COMMON_ENV_LOADED=1
 
+builder_default_image_family() {
+  local cuda_version="${1:-${BUILDER_CUDA_VERSION:-11.7.1}}"
+  printf 'tf-particles/devops/cuda-builder:cuda%s-cmake3.26\n' "${cuda_version}"
+}
+
 load_image_bundle_env() {
   local root_dir="$1"
   local env_file="$2"
@@ -17,12 +22,24 @@ load_image_bundle_env() {
   # shellcheck disable=SC1090
   source "${env_file}"
 
+  if [[ -z "${BUILDER_CUDA_VERSION:-}" ]]; then
+    BUILDER_CUDA_VERSION="11.7.1"
+  fi
+
   if [[ -z "${BUILDER_DEFAULT_PLATFORM:-}" ]]; then
     BUILDER_DEFAULT_PLATFORM="centos7"
   fi
 
   if [[ -z "${BUILDER_PLATFORMS:-}" ]]; then
     BUILDER_PLATFORMS="centos7,rocky8,ubuntu2204"
+  fi
+
+  if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
+    BUILDER_IMAGE_FAMILY="$(builder_default_image_family "${BUILDER_CUDA_VERSION}")"
+  fi
+
+  if [[ -z "${BUILDER_IMAGE:-}" ]]; then
+    BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
   fi
 
   if [[ -z "${IMAGE_ARCHIVE_PATH:-}" ]]; then
@@ -35,18 +52,9 @@ load_image_bundle_env() {
 }
 
 require_export_image_bundle_env() {
-  if [[ -z "${BUILDER_IMAGE:-}" ]] && [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then
-    echo "Set BUILDER_IMAGE or BUILDER_IMAGE_FAMILY in .env" >&2
-    exit 1
-  fi
-
-  if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]] && [[ -n "${BUILDER_IMAGE:-}" ]]; then
-    BUILDER_IMAGE_FAMILY="${BUILDER_IMAGE%-${BUILDER_DEFAULT_PLATFORM}}"
-  fi
-
-  if [[ -z "${BUILDER_IMAGE:-}" ]] && [[ -n "${BUILDER_IMAGE_FAMILY:-}" ]]; then
-    BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
-  fi
+  : "${BUILDER_CUDA_VERSION:=11.7.1}"
+  : "${BUILDER_IMAGE_FAMILY:=$(builder_default_image_family "${BUILDER_CUDA_VERSION}")}"
+  : "${BUILDER_IMAGE:=${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}}"
 }
 
 resolve_bundle_path() {

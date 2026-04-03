@@ -45,9 +45,8 @@ run_export_test() {
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
   cat > "${test_dir}/.env" <<'EOF'
-BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
+BUILDER_CUDA_VERSION=11.7.1
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
-BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
 EOF
 
@@ -84,7 +83,7 @@ EOF
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
   assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
   assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
-  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8 registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-rocky8 tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
 }
 
 run_export_single_platform_test() {
@@ -92,10 +91,9 @@ run_export_single_platform_test() {
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
   cat > "${test_dir}/.env" <<'EOF'
-BUILDER_IMAGE_FAMILY=registry.local/devops/cuda-builder:cuda11.7-cmake3.26
+BUILDER_CUDA_VERSION=11.7.1
 BUILDER_PLATFORMS=centos7,rocky8,ubuntu2204
 BUILDER_DEFAULT_PLATFORM=centos7
-BUILDER_IMAGE=registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7
 IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
 EOF
 
@@ -131,10 +129,10 @@ EOF
     --only-build-images \
     --platform centos7 > "${test_dir}/stdout.log"
 
-  assert_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
-  assert_not_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-rocky8"
-  assert_not_contains "${test_dir}/logs/docker.log" "save registry.local/devops/cuda-builder:cuda11.7-cmake3.26-ubuntu2204"
-  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "registry.local/devops/cuda-builder:cuda11.7-cmake3.26-centos7"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-rocky8"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-ubuntu2204"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7"
 }
 
 run_import_test() {
