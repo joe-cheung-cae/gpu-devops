@@ -26,4 +26,3 @@
 
 - `scripts/export/images.sh` exports the configured builder images into a compressed archive
 - `scripts/import/images.sh` loads a previously exported archive into the local Docker daemon
-- `--only-build-images` limits export to the builder image matrix

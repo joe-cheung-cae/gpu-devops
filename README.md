@@ -23,8 +23,7 @@ scripts/build-builder-image.sh --platform ubuntu2204
 scripts/build-builder-image.sh --all-platforms
 scripts/build-builder-image.sh --platform ubuntu2204 --cuda-version 12.4.1
 scripts/export/images.sh
-scripts/export/images.sh --only-build-images
-scripts/export/images.sh --only-build-images --platform centos7
+scripts/export/images.sh --platform centos7
 scripts/import/images.sh --input artifacts/offline-images.tar.gz
 ```
 

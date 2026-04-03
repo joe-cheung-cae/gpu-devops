@@ -126,7 +126,6 @@ EOF
   "${ROOT_DIR}/scripts/export/images.sh" \
     --env-file "${test_dir}/.env" \
     --output "${test_dir}/bundle.tar.gz" \
-    --only-build-images \
     --platform centos7 > "${test_dir}/stdout.log"
 
   assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:cuda11.7.1-cmake3.26-centos7"

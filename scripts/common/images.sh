@@ -64,8 +64,6 @@ builder_export_images() {
     printf '%s-%s\n' "$(builder_default_image_family "${BUILDER_CUDA_VERSION:-11.7.1}")" "${platform}"
   done
   return 0
-
-  printf '%s\n' "${BUILDER_IMAGE}"
 }
 
 builder_export_image_for_platform() {
@@ -104,19 +102,6 @@ collect_build_images() {
 collect_build_images_for_platform() {
   local platform="$1"
   builder_export_image_for_platform "${platform}"
-}
-
-collect_bundle_images() {
-  local image
-  declare -A seen=()
-
-  while IFS= read -r image; do
-    [[ -n "${image}" ]] || continue
-    if [[ -z "${seen["${image}"]+x}" ]]; then
-      printf '%s\n' "${image}"
-      seen["${image}"]=1
-    fi
-  done < <(collect_build_images)
 }
 
 ensure_bundle_images_available() {

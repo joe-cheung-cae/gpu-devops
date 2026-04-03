@@ -14,7 +14,6 @@ source "${ROOT_DIR}/scripts/common/progress.sh"
 
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
-ONLY_BUILD_IMAGES=false
 SELECTED_PLATFORM=""
 
 timestamp_now() {
@@ -40,10 +39,6 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_OVERRIDE="${2:?Missing value for --output}"
       shift 2
       ;;
-    --only-build-images)
-      ONLY_BUILD_IMAGES=true
-      shift
-      ;;
     --platform)
       SELECTED_PLATFORM="${2:?Missing value for --platform}"
       shift 2
@@ -51,11 +46,10 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<'EOF'
 Usage: scripts/export/images.sh [--env-file PATH] [--output PATH]
-                                 [--only-build-images]
                                  [--platform NAME]
 
 Exports the configured builder images into a compressed offline bundle.
-Use --platform only with --only-build-images to export one builder platform.
+Use --platform to export one builder platform instead of the full matrix.
 EOF
       exit 0
       ;;
@@ -72,11 +66,6 @@ progress_step "Loading environment"
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
 
-if [[ -n "${SELECTED_PLATFORM}" ]] && [[ "${ONLY_BUILD_IMAGES}" != "true" ]]; then
-  echo "--platform is supported only together with --only-build-images" >&2
-  exit 1
-fi
-
 if [[ -n "${OUTPUT_OVERRIDE}" ]]; then
   ARCHIVE_PATH="$(resolve_bundle_path "${ROOT_DIR}" "${OUTPUT_OVERRIDE}")"
 else
@@ -84,14 +73,10 @@ else
 fi
 
 progress_step "Collecting image list"
-if [[ "${ONLY_BUILD_IMAGES}" == "true" ]]; then
-  if [[ -n "${SELECTED_PLATFORM}" ]]; then
-    mapfile -t IMAGES < <(collect_build_images_for_platform "${SELECTED_PLATFORM}")
-  else
-    mapfile -t IMAGES < <(collect_build_images)
-  fi
+if [[ -n "${SELECTED_PLATFORM}" ]]; then
+  mapfile -t IMAGES < <(collect_build_images_for_platform "${SELECTED_PLATFORM}")
 else
-  mapfile -t IMAGES < <(collect_bundle_images)
+  mapfile -t IMAGES < <(collect_build_images)
 fi
 
 progress_step "Ensuring images are available locally"
