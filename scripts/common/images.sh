@@ -106,7 +106,6 @@ collect_bundle_images() {
       seen["${image}"]=1
     fi
   done < <(collect_build_images)
-
 }
 
 ensure_bundle_images_available() {

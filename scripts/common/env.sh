@@ -47,7 +47,6 @@ require_export_image_bundle_env() {
   if [[ -z "${BUILDER_IMAGE:-}" ]] && [[ -n "${BUILDER_IMAGE_FAMILY:-}" ]]; then
     BUILDER_IMAGE="${BUILDER_IMAGE_FAMILY}-${BUILDER_DEFAULT_PLATFORM}"
   fi
-
 }
 
 resolve_bundle_path() {
