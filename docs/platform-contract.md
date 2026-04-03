@@ -19,3 +19,9 @@
 
 - `third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz` is copied into each image and unpacked into `/usr/local`
 - The Dockerfiles should continue to reference that archive directly from the build context
+
+## Image exchange
+
+- `scripts/export/images.sh` exports the configured builder images into a compressed archive
+- `scripts/import/images.sh` loads a previously exported archive into the local Docker daemon
+- `--only-build-images` limits export to the builder image matrix

@@ -1,15 +1,17 @@
 # CUDA Builder Images
 
-This repository keeps the CUDA/CMake builder image definitions and the minimal scripts and docs needed to build them.
+This repository keeps the CUDA/CMake builder image definitions and the scripts and docs needed to build and exchange them.
 
 ## What is kept
 
 - Builder Dockerfiles under `docker/cuda-builder/`
 - The image build entrypoint `scripts/build-builder-image.sh`
-- Shared progress helpers in `scripts/common/progress.sh`
-- The build image test in `tests/build-builder-image-test.sh`
+- Image export/import entrypoints under `scripts/export/` and `scripts/import/`
+- Shared progress and image helper scripts under `scripts/common/`
+- The build image tests under `tests/`
 - The image configuration example in `.env.example`
 - The builder image contract in `docs/platform-contract.md`
+- The rootless Docker deployment guide in `docs/ubuntu20-rootless-docker-compose-nvidia-offline-guide.md`
 
 ## Supported images
 
