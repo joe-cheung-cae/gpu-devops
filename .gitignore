@@ -18,3 +18,5 @@ artifacts/cuda-cxx-build/
 .worktrees/
 .offline-project/
 *.log
+
+third_party/cache/
