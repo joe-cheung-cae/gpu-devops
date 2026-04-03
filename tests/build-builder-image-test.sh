@@ -123,6 +123,7 @@ assert_not_contains "${ROOT_DIR}/.env.example" 'RUNNER_'
 
 assert_contains "${ROOT_DIR}/README.md" 'CUDA Builder Images'
 assert_contains "${ROOT_DIR}/README.md" 'scripts/export/images.sh'
+assert_contains "${ROOT_DIR}/README.md" 'scripts/install-offline-tools.sh'
 assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'cuda11.7.1-cmake3.26'
 assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'BUILDER_CUDA_VERSION'
 assert_contains "${ROOT_DIR}/docs/platform-contract.md" 'third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz'

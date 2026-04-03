@@ -12,9 +12,11 @@ This repository packages CUDA/CMake builder images plus image export/import tool
 ## Build, Test, and Development Commands
 - `bash tests/build-builder-image-test.sh`: verifies builder image selection and Dockerfile resolution
 - `bash tests/offline-image-bundle-test.sh`: checks offline image export/import behavior with mocked Docker
+- `bash tests/install-offline-tools-test.sh`: checks prefix installation and installed wrapper commands
 - `bash -n scripts/*.sh scripts/common/*.sh tests/*.sh`: syntax-check Bash changes before review
 - `scripts/build-builder-image.sh --platform ubuntu2204`: build one builder image locally
-- `scripts/export/images.sh --only-build-images`: export the builder image matrix
+- `scripts/export/images.sh --platform centos7`: export a single builder image platform
+- `scripts/install-offline-tools.sh --prefix /opt/gpu-devops`: install a self-contained offline tool tree
 - `scripts/import/images.sh --input artifacts/offline-images.tar.gz`: load a previously exported builder image archive
 
 ## Coding Style & Naming Conventions

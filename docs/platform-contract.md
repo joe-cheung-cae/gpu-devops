@@ -26,3 +26,15 @@
 
 - `scripts/export/images.sh` exports the configured builder images into a compressed archive
 - `scripts/import/images.sh` loads a previously exported archive into the local Docker daemon
+
+## Offline install layout
+
+- `scripts/install-offline-tools.sh --prefix /opt/gpu-devops` installs a self-contained tree
+- The installed tree includes:
+  - `bin/` wrapper commands
+  - `scripts/` entrypoints and shared helpers
+  - `docker/cuda-builder/` Dockerfiles
+  - `third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz`
+  - `.env` and `.env.example`
+  - `README.md` and `docs/`
+- Installed commands resolve their defaults from the prefix tree, not the source checkout
