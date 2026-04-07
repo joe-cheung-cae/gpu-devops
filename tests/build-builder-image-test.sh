@@ -32,6 +32,17 @@ assert_not_contains() {
   fi
 }
 
+assert_archive_contains() {
+  local archive="$1"
+  local expected="$2"
+  if ! tar -tzf "${archive}" | grep -Fx -- "${expected}" >/dev/null; then
+    echo "Expected archive to contain: ${expected}" >&2
+    echo "Archive: ${archive}" >&2
+    tar -tzf "${archive}" | sed -n '1,40p' >&2 || true
+    fail "archive missing expected content"
+  fi
+}
+
 run_with_mock_docker() {
   local env_file="$1"
   local log_file="$2"
@@ -111,6 +122,12 @@ assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'third_p
 assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
 assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ENV PATH="/opt/rh/devtoolset-11/root/usr/bin:${PATH}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/centos7.Dockerfile" 'ENV PATH="/usr/local/bin:${PATH}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ENV PATH="/opt/rh/gcc-toolset-11/root/usr/bin:${PATH}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/rocky8.Dockerfile" 'ENV PATH="/usr/local/bin:${PATH}"'
+assert_contains "${ROOT_DIR}/docker/cuda-builder/ubuntu2204.Dockerfile" 'ENV PATH="/usr/local/bin:${PATH}"'
+assert_archive_contains "${ROOT_DIR}/third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz" 'cmake-3.26.0-linux-x86_64/bin/cmake'
 
 assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_CUDA_VERSION='
 assert_contains "${ROOT_DIR}/.env.example" 'BUILDER_IMAGE_FAMILY='

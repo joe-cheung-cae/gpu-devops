@@ -57,6 +57,8 @@ COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \
     rm -f /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz
 
+ENV PATH="/usr/local/bin:${PATH}"
+
 RUN PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT}" python3 -m pip install --no-cache-dir \
       conan \
       ninja \
