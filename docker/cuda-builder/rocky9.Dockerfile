@@ -12,24 +12,37 @@ ARG PIP_DEFAULT_TIMEOUT=120
 
 RUN dnf install -y epel-release && \
     dnf install -y \
+      autoconf \
+      automake \
+      bison \
+      bzip2 \
       ca-certificates \
       ccache \
       curl \
+      file \
+      flex \
       gcc-toolset-11-binutils \
       gcc-toolset-11-gcc \
       gcc-toolset-11-gcc-c++ \
       gcc \
       gcc-c++ \
+      gcc-gfortran \
       gdb \
       git \
+      gzip \
+      libtool \
       libuuid-devel \
       make \
+      m4 \
+      patch \
       perl \
+      pkgconf-pkg-config \
       python3 \
       python3-pip \
       rsync \
       tar \
       unzip \
+      xz \
       zlib-devel \
       which && \
     dnf clean all && \

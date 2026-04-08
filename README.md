@@ -1,6 +1,6 @@
 # CUDA Builder Images
 
-This repository contains the CUDA/CMake builder images plus the minimal scripts and docs used to build and exchange them.
+This repository contains CUDA builder images plus the scripts and docs used to build and exchange source-build capable offline environments.
 
 ## Keeps
 
@@ -39,6 +39,7 @@ Set `BUILDER_CUDA_VERSION` in `.env` to change the default CUDA version without 
 Image tags now use the rule `tf-particles/devops/cuda-builder:${platform}-${BUILDER_CUDA_VERSION}`.
 The default platform in `.env.example` is `ubuntu2404`, while `centos7` remains available as a compatibility image.
 Use `scripts/export/images.sh --platform <name>` to export one builder platform instead of the full matrix.
+The builder baseline includes CUDA/C++, CMake, Conan/Ninja, and autotools-class source-build tooling for upstream projects such as Open MPI, HDF5, NCCL, and AMGX.
 
 The offline installer copies the minimal runtime tree into the requested prefix:
 - `bin/` wrapper commands

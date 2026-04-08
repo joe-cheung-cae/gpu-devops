@@ -17,7 +17,7 @@
 ## Baseline
 
 - All builder images provide a common CUDA/C++ toolchain baseline
-- The baseline includes `cmake`, `conan`, `ninja`, `ccache`, `git`, `gdb`, `python3`, compilers, and UUID development headers
+- The baseline includes `cmake`, `conan`, `ninja`, `ccache`, `git`, `gdb`, `python3`, compilers, UUID development headers, and source-build tools such as `autoconf`, `automake`, `libtool`, `pkg-config`, `flex`, `bison`, `patch`, and archive helpers
 - The images do not bundle project-specific third-party dependencies
 
 ## Vendored build asset

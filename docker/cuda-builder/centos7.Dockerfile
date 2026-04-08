@@ -16,20 +16,34 @@ RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
     sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
     yum install -y epel-release && \
     yum install -y \
+      autoconf \
+      automake \
+      bison \
+      bzip2 \
       ca-certificates \
       ccache \
       centos-release-scl \
       curl \
+      diffutils \
+      file \
+      flex \
       gcc \
       gcc-c++ \
+      gcc-gfortran \
       gdb \
       git \
+      gzip \
+      libtool \
       libuuid-devel \
       make \
+      m4 \
+      patch \
       perl \
+      pkgconfig \
       rsync \
       tar \
       unzip \
+      xz \
       zlib-devel \
       which && \
     yum clean all && \

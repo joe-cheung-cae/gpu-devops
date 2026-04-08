@@ -12,21 +12,34 @@ ARG PIP_DEFAULT_TIMEOUT=120
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+      autoconf \
+      automake \
+      bison \
+      bzip2 \
       ca-certificates \
       ccache \
       curl \
+      file \
+      flex \
       g++ \
       gcc \
+      gfortran \
       gdb \
       git \
+      gzip \
+      libtool \
       make \
+      m4 \
+      patch \
       perl \
+      pkg-config \
       python3 \
       python3-pip \
       rsync \
       tar \
       unzip \
       uuid-dev \
+      xz-utils \
       zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
