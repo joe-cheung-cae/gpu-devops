@@ -69,6 +69,8 @@ assert_file_exists "${PREFIX}/scripts/build-builder-image.sh"
 assert_file_exists "${PREFIX}/scripts/export/images.sh"
 assert_file_exists "${PREFIX}/scripts/import/images.sh"
 assert_file_exists "${PREFIX}/docker/cuda-builder/centos7.Dockerfile"
+assert_file_exists "${PREFIX}/docker/cuda-builder/rocky9.Dockerfile"
+assert_file_exists "${PREFIX}/docker/cuda-builder/ubuntu2404.Dockerfile"
 assert_file_exists "${PREFIX}/third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz"
 assert_file_exists "${PREFIX}/.env"
 assert_file_exists "${PREFIX}/.env.example"
@@ -86,10 +88,22 @@ assert_contains "${TMP_DIR}/build.log" "--build-arg CUDA_VERSION=11.7.1"
   cd "${TMP_DIR}"
   TEST_LOG_FILE="${TMP_DIR}/export.log" PATH="${MOCK_BIN}:${PREFIX}/bin:${PATH}" export-images.sh > "${TMP_DIR}/export.stdout"
 )
-assert_contains "${TMP_DIR}/export.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1 tf-particles/devops/cuda-builder:rocky8-11.7.1 tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
+assert_contains "${TMP_DIR}/export.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1 tf-particles/devops/cuda-builder:rocky8-11.7.1 tf-particles/devops/cuda-builder:rocky9-11.7.1 tf-particles/devops/cuda-builder:ubuntu2204-11.7.1 tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz.images.txt"
 assert_file_exists "${PREFIX}/artifacts/offline-images.tar.gz.sha256"
+
+(
+  cd "${TMP_DIR}"
+  TEST_LOG_FILE="${TMP_DIR}/export-rocky9.log" PATH="${MOCK_BIN}:${PREFIX}/bin:${PATH}" export-images.sh --platform rocky9 > "${TMP_DIR}/export-rocky9.stdout"
+)
+assert_contains "${TMP_DIR}/export-rocky9.log" "save tf-particles/devops/cuda-builder:rocky9-11.7.1"
+
+(
+  cd "${TMP_DIR}"
+  TEST_LOG_FILE="${TMP_DIR}/export-ubuntu2404.log" PATH="${MOCK_BIN}:${PREFIX}/bin:${PATH}" export-images.sh --platform ubuntu2404 > "${TMP_DIR}/export-ubuntu2404.stdout"
+)
+assert_contains "${TMP_DIR}/export-ubuntu2404.log" "save tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
 
 (
   cd "${TMP_DIR}"

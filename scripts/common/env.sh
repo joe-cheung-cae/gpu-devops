@@ -10,7 +10,7 @@ builder_default_image_family() {
 }
 
 builder_default_image() {
-  local platform="${1:-${BUILDER_DEFAULT_PLATFORM:-centos7}}"
+  local platform="${1:-${BUILDER_DEFAULT_PLATFORM:-ubuntu2404}}"
   local cuda_version="${2:-${BUILDER_CUDA_VERSION:-11.7.1}}"
   printf '%s:%s-%s\n' "$(builder_default_image_family)" "${platform}" "${cuda_version}"
 }
@@ -32,11 +32,11 @@ load_image_bundle_env() {
   fi
 
   if [[ -z "${BUILDER_DEFAULT_PLATFORM:-}" ]]; then
-    BUILDER_DEFAULT_PLATFORM="centos7"
+    BUILDER_DEFAULT_PLATFORM="ubuntu2404"
   fi
 
   if [[ -z "${BUILDER_PLATFORMS:-}" ]]; then
-    BUILDER_PLATFORMS="centos7,rocky8,ubuntu2204"
+    BUILDER_PLATFORMS="centos7,rocky8,rocky9,ubuntu2204,ubuntu2404"
   fi
 
   if [[ -z "${BUILDER_IMAGE_FAMILY:-}" ]]; then

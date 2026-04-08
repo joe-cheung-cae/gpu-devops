@@ -21,19 +21,24 @@ This repository contains the CUDA/CMake builder images plus the minimal scripts 
 cp .env.example .env
 scripts/build-builder-image.sh
 scripts/build-builder-image.sh --platform ubuntu2204
+scripts/build-builder-image.sh --platform ubuntu2404
 scripts/build-builder-image.sh --all-platforms
 scripts/build-builder-image.sh --platform ubuntu2204 --cuda-version 12.4.1
 scripts/export/images.sh
 scripts/export/images.sh --platform centos7
+scripts/export/images.sh --platform rocky9
 scripts/import/images.sh --input artifacts/offline-images.tar.gz
 scripts/install-offline-tools.sh --prefix /opt/gpu-devops
 /opt/gpu-devops/bin/build-builder-image.sh --platform ubuntu2204
 /opt/gpu-devops/bin/export-images.sh
+/opt/gpu-devops/bin/export-images.sh --platform ubuntu2404
 /opt/gpu-devops/bin/import-images.sh --input artifacts/offline-images.tar.gz
 ```
 
 Set `BUILDER_CUDA_VERSION` in `.env` to change the default CUDA version without passing `--cuda-version` on every build.
 Image tags now use the rule `tf-particles/devops/cuda-builder:${platform}-${BUILDER_CUDA_VERSION}`.
+The default platform in `.env.example` is `ubuntu2404`, while `centos7` remains available as a compatibility image.
+Use `scripts/export/images.sh --platform <name>` to export one builder platform instead of the full matrix.
 
 The offline installer copies the minimal runtime tree into the requested prefix:
 - `bin/` wrapper commands

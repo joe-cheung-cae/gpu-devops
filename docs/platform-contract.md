@@ -7,9 +7,12 @@
 - Supported platform keys:
   - `centos7` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-centos7`
   - `rocky8` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-rockylinux8`
+  - `rocky9` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-rockylinux9`
   - `ubuntu2204` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-ubuntu22.04`
+  - `ubuntu2404` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-ubuntu24.04`
 - The public image tags are derived as `${BUILDER_IMAGE_FAMILY}:${platform}-${BUILDER_CUDA_VERSION}`
-- Example tag: `tf-particles/devops/cuda-builder:centos7-11.7.1`
+- Default platform: `ubuntu2404`
+- Example tag: `tf-particles/devops/cuda-builder:ubuntu2404-11.7.1`
 
 ## Baseline
 
@@ -25,6 +28,7 @@
 ## Image exchange
 
 - `scripts/export/images.sh` exports the configured builder images into a compressed archive
+- `scripts/export/images.sh --platform <name>` exports one configured builder platform into a compressed archive
 - `scripts/import/images.sh` loads a previously exported archive into the local Docker daemon
 
 ## Offline install layout
