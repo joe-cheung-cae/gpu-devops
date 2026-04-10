@@ -36,8 +36,8 @@ assert_cmake_version() {
   assert_contains "${output}" "cmake version 3.26.0"
 }
 
-assert_cmake_version "tf-particles/devops/cuda-builder:centos7-11.7.1"
-assert_cmake_version "tf-particles/devops/cuda-builder:rocky8-11.7.1"
-assert_cmake_version "tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
+assert_cmake_version "tf-particles/devops/cuda-builder:centos7-12.4.0"
+assert_cmake_version "tf-particles/devops/cuda-builder:rocky8-12.9.1"
+assert_cmake_version "tf-particles/devops/cuda-builder:ubuntu2204-12.9.1"
 
 echo "cmake runtime tests passed"

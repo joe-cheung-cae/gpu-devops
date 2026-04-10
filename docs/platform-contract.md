@@ -3,7 +3,8 @@
 ## Builder family
 
 - Builder image family defaults to `tf-particles/devops/cuda-builder`
-- The default CUDA version is `11.7.1`
+- The default CUDA version is `12.9.1`
+- `BUILDER_PLATFORM_CUDA_VERSIONS` can pin per-platform CUDA tags when NVIDIA support windows diverge
 - Supported platform keys:
   - `centos7` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-centos7`
   - `rocky8` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-rockylinux8`
@@ -12,7 +13,13 @@
   - `ubuntu2404` -> `nvidia/cuda:${BUILDER_CUDA_VERSION}-devel-ubuntu24.04`
 - The public image tags are derived as `${BUILDER_IMAGE_FAMILY}:${platform}-${BUILDER_CUDA_VERSION}`
 - Default platform: `ubuntu2404`
-- Example tag: `tf-particles/devops/cuda-builder:ubuntu2404-11.7.1`
+- Example tag: `tf-particles/devops/cuda-builder:ubuntu2404-12.9.1`
+- Default mixed `12.x` matrix:
+  - `centos7` -> `12.4.0`
+  - `rocky8` -> `12.9.1`
+  - `rocky9` -> `12.9.1`
+  - `ubuntu2204` -> `12.9.1`
+  - `ubuntu2404` -> `12.9.1`
 
 ## Baseline
 
@@ -29,6 +36,7 @@
 
 - `scripts/export/images.sh` exports the configured builder images into a compressed archive
 - `scripts/export/images.sh --platform <name>` exports one configured builder platform into a compressed archive
+- `scripts/export/images.sh --cuda-version <version>` exports the configured platform matrix with an explicit CUDA version override
 - `scripts/import/images.sh` loads a previously exported archive into the local Docker daemon
 
 ## Offline install layout

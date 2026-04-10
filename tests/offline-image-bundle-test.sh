@@ -44,8 +44,9 @@ run_export_test() {
   local test_dir="${TMP_DIR}/export"
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
-  cat > "${test_dir}/.env" <<'EOF'
-BUILDER_CUDA_VERSION=11.7.1
+cat > "${test_dir}/.env" <<'EOF'
+BUILDER_CUDA_VERSION=12.9.1
+BUILDER_PLATFORM_CUDA_VERSIONS=centos7=12.4.0,rocky8=12.9.1,rocky9=12.9.1,ubuntu2204=12.9.1,ubuntu2404=12.9.1
 BUILDER_PLATFORMS=centos7,rocky8,rocky9,ubuntu2204,ubuntu2404
 IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
 EOF
@@ -83,15 +84,16 @@ EOF
   assert_file_exists "${test_dir}/bundle.tar.gz.sha256"
 assert_contains "${test_dir}/stdout.log" "[1/5] Loading environment"
 assert_contains "${test_dir}/stdout.log" "[5/5] Exported image bundle"
-assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1 tf-particles/devops/cuda-builder:rocky8-11.7.1 tf-particles/devops/cuda-builder:rocky9-11.7.1 tf-particles/devops/cuda-builder:ubuntu2204-11.7.1 tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
+assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-12.4.0 tf-particles/devops/cuda-builder:rocky8-12.9.1 tf-particles/devops/cuda-builder:rocky9-12.9.1 tf-particles/devops/cuda-builder:ubuntu2204-12.9.1 tf-particles/devops/cuda-builder:ubuntu2404-12.9.1"
 }
 
 run_export_single_platform_test() {
   local test_dir="${TMP_DIR}/export-single"
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
-  cat > "${test_dir}/.env" <<'EOF'
-BUILDER_CUDA_VERSION=11.7.1
+cat > "${test_dir}/.env" <<'EOF'
+BUILDER_CUDA_VERSION=12.9.1
+BUILDER_PLATFORM_CUDA_VERSIONS=centos7=12.4.0,rocky8=12.9.1,rocky9=12.9.1,ubuntu2204=12.9.1,ubuntu2404=12.9.1
 BUILDER_PLATFORMS=centos7,rocky8,rocky9,ubuntu2204,ubuntu2404
 BUILDER_DEFAULT_PLATFORM=ubuntu2404
 IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
@@ -128,20 +130,21 @@ EOF
     --output "${test_dir}/bundle.tar.gz" \
     --platform centos7 > "${test_dir}/stdout.log"
 
-  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
-  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:centos7-11.7.1"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-12.4.0"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-12.9.1"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:centos7-12.4.0"
 }
 
 run_export_rocky9_platform_test() {
   local test_dir="${TMP_DIR}/export-rocky9"
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
-  cat > "${test_dir}/.env" <<'EOF'
-BUILDER_CUDA_VERSION=11.7.1
+cat > "${test_dir}/.env" <<'EOF'
+BUILDER_CUDA_VERSION=12.9.1
+BUILDER_PLATFORM_CUDA_VERSIONS=centos7=12.4.0,rocky8=12.9.1,rocky9=12.9.1,ubuntu2204=12.9.1,ubuntu2404=12.9.1
 BUILDER_PLATFORMS=centos7,rocky8,rocky9,ubuntu2204,ubuntu2404
 BUILDER_DEFAULT_PLATFORM=ubuntu2404
 IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
@@ -178,16 +181,67 @@ EOF
     --output "${test_dir}/bundle.tar.gz" \
     --platform rocky9 > "${test_dir}/stdout.log"
 
-  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
-  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:rocky9-11.7.1"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-12.4.0"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-12.9.1"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:rocky9-12.9.1"
 }
 
 run_export_ubuntu2404_platform_test() {
   local test_dir="${TMP_DIR}/export-ubuntu2404"
+  mkdir -p "${test_dir}/bin" "${test_dir}/logs"
+
+cat > "${test_dir}/.env" <<'EOF'
+BUILDER_CUDA_VERSION=12.9.1
+BUILDER_PLATFORM_CUDA_VERSIONS=centos7=12.4.0,rocky8=12.9.1,rocky9=12.9.1,ubuntu2204=12.9.1,ubuntu2404=12.9.1
+BUILDER_PLATFORMS=centos7,rocky8,rocky9,ubuntu2204,ubuntu2404
+BUILDER_DEFAULT_PLATFORM=ubuntu2404
+IMAGE_ARCHIVE_PATH=artifacts/offline-images.tar.gz
+EOF
+
+  cat > "${test_dir}/bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+LOG_FILE="${TEST_LOG_FILE:?}"
+printf '%s\n' "$*" >> "${LOG_FILE}"
+case "${1:-}" in
+  image)
+    shift
+    if [[ "${1:-}" == "inspect" ]]; then
+      if [[ "${2:-}" == "--format" ]]; then
+        printf '123456789\n'
+      fi
+      exit 0
+    fi
+    ;;
+  save)
+    printf 'fake-image-data'
+    exit 0
+    ;;
+esac
+exit 0
+EOF
+  chmod +x "${test_dir}/bin/docker"
+
+  TEST_LOG_FILE="${test_dir}/logs/docker.log" \
+  PATH="${test_dir}/bin:${PATH}" \
+  "${ROOT_DIR}/scripts/export/images.sh" \
+    --env-file "${test_dir}/.env" \
+    --output "${test_dir}/bundle.tar.gz" \
+    --platform ubuntu2404 > "${test_dir}/stdout.log"
+
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-12.4.0"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-12.9.1"
+  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-12.9.1"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:ubuntu2404-12.9.1"
+}
+
+run_export_cuda_override_test() {
+  local test_dir="${TMP_DIR}/export-override"
   mkdir -p "${test_dir}/bin" "${test_dir}/logs"
 
   cat > "${test_dir}/.env" <<'EOF'
@@ -226,14 +280,10 @@ EOF
   "${ROOT_DIR}/scripts/export/images.sh" \
     --env-file "${test_dir}/.env" \
     --output "${test_dir}/bundle.tar.gz" \
-    --platform ubuntu2404 > "${test_dir}/stdout.log"
+    --cuda-version 12.4.1 > "${test_dir}/stdout.log"
 
-  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky8-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:rocky9-11.7.1"
-  assert_not_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:ubuntu2204-11.7.1"
-  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:ubuntu2404-11.7.1"
+  assert_contains "${test_dir}/logs/docker.log" "save tf-particles/devops/cuda-builder:centos7-12.4.1 tf-particles/devops/cuda-builder:rocky8-12.4.1 tf-particles/devops/cuda-builder:rocky9-12.4.1 tf-particles/devops/cuda-builder:ubuntu2204-12.4.1 tf-particles/devops/cuda-builder:ubuntu2404-12.4.1"
+  assert_contains "${test_dir}/bundle.tar.gz.images.txt" "tf-particles/devops/cuda-builder:ubuntu2404-12.4.1"
 }
 
 run_import_test() {
@@ -308,6 +358,7 @@ run_export_test
 run_export_single_platform_test
 run_export_rocky9_platform_test
 run_export_ubuntu2404_platform_test
+run_export_cuda_override_test
 run_import_test
 run_import_hash_failure_test
 

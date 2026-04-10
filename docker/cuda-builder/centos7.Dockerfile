@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.7.1
+ARG CUDA_VERSION=12.4.0
 FROM nvidia/cuda:${CUDA_VERSION}-devel-centos7
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -13,7 +13,7 @@ ARG PIP_DEFAULT_TIMEOUT=120
 RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
     if [ -n "${YUM_PROXY}" ]; then echo "proxy=${YUM_PROXY}" >> /etc/yum.conf; fi && \
     sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-Base.repo && \
-    sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=http://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org/centos/\$releasever|baseurl=https://vault.centos.org/7.9.2009|g' /etc/yum.repos.d/CentOS-Base.repo && \
     yum install -y epel-release && \
     yum install -y \
       autoconf \
@@ -50,8 +50,8 @@ RUN YUM_PROXY="${http_proxy:-${HTTP_PROXY}}" && \
     rm -rf /var/cache/yum
 
 RUN sed -i 's|^mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-SCLo-*.repo && \
-    sed -i 's|^#baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/rh/|baseurl=http://vault.centos.org/7.9.2009/sclo/\$basearch/rh/|g' /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo && \
-    sed -i 's|^# baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/sclo/|baseurl=http://vault.centos.org/7.9.2009/sclo/\$basearch/sclo/|g' /etc/yum.repos.d/CentOS-SCLo-scl.repo && \
+    sed -i 's|^#baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/rh/|baseurl=https://vault.centos.org/7.9.2009/sclo/\$basearch/rh/|g' /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo && \
+    sed -i 's|^# baseurl=http://mirror.centos.org/centos/7/sclo/\$basearch/sclo/|baseurl=https://vault.centos.org/7.9.2009/sclo/\$basearch/sclo/|g' /etc/yum.repos.d/CentOS-SCLo-scl.repo && \
     yum install -y \
       devtoolset-11-binutils \
       devtoolset-11-gcc \

@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.7.1
+ARG CUDA_VERSION=12.9.1
 FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -49,7 +49,7 @@ RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-co
 
 ENV PATH="/usr/local/bin:${PATH}"
 
-RUN PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT}" python3 -m pip install --no-cache-dir \
+RUN PIP_DEFAULT_TIMEOUT="${PIP_DEFAULT_TIMEOUT}" python3 -m pip install --break-system-packages --no-cache-dir \
       conan \
       ninja
 

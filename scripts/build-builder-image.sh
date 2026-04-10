@@ -55,6 +55,7 @@ load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 ORIGINAL_CUDA_VERSION="${BUILDER_CUDA_VERSION}"
 if [[ -n "${CUDA_VERSION_OVERRIDE}" ]]; then
   BUILDER_CUDA_VERSION="${CUDA_VERSION_OVERRIDE}"
+  BUILDER_PLATFORM_CUDA_VERSIONS=""
   ORIGINAL_DEFAULT_IMAGE="$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${ORIGINAL_CUDA_VERSION}")"
   NEW_DEFAULT_IMAGE="$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${BUILDER_CUDA_VERSION}")"
 
@@ -103,14 +104,15 @@ platform_is_supported() {
 
 build_platform() {
   local platform="$1"
-  local image dockerfile
+  local image dockerfile platform_cuda_version
 
   if ! platform_is_supported "${platform}"; then
     echo "Unsupported platform: ${platform}" >&2
     exit 1
   fi
 
-  image="$(builder_image_for_platform "${platform}")"
+  platform_cuda_version="$(builder_platform_cuda_version "${platform}")"
+  image="$(builder_image_for_platform "${platform}" "${platform_cuda_version}")"
   dockerfile="${ROOT_DIR}/docker/cuda-builder/${platform}.Dockerfile"
 
   if [[ ! -f "${dockerfile}" ]]; then
@@ -121,7 +123,7 @@ build_platform() {
   progress_note "[4/5] Building platform image ${platform}"
   docker build \
     "${NETWORK_ARGS[@]}" \
-    --build-arg "CUDA_VERSION=${BUILDER_CUDA_VERSION}" \
+    --build-arg "CUDA_VERSION=${platform_cuda_version}" \
     ${HTTP_PROXY_VALUE:+--build-arg "http_proxy=${HTTP_PROXY_VALUE}"} \
     ${HTTPS_PROXY_VALUE:+--build-arg "https_proxy=${HTTPS_PROXY_VALUE}"} \
     ${HTTP_PROXY_VALUE:+--build-arg "HTTP_PROXY=${HTTP_PROXY_VALUE}"} \
