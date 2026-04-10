@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.7.1
+ARG CUDA_VERSION=12.9.1
 FROM nvidia/cuda:${CUDA_VERSION}-devel-rockylinux8
 
 ARG DEBIAN_FRONTEND=noninteractive

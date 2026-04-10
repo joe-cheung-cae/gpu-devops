@@ -15,6 +15,7 @@ source "${ROOT_DIR}/scripts/common/progress.sh"
 ENV_FILE="${ROOT_DIR}/.env"
 OUTPUT_OVERRIDE=""
 SELECTED_PLATFORM=""
+CUDA_VERSION_OVERRIDE=""
 
 timestamp_now() {
   date '+%Y-%m-%d %H:%M:%S %z'
@@ -43,10 +44,14 @@ while [[ $# -gt 0 ]]; do
       SELECTED_PLATFORM="${2:?Missing value for --platform}"
       shift 2
       ;;
+    --cuda-version)
+      CUDA_VERSION_OVERRIDE="${2:?Missing value for --cuda-version}"
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: scripts/export/images.sh [--env-file PATH] [--output PATH]
-                                 [--platform NAME]
+                                 [--platform NAME] [--cuda-version VERSION]
 
 Exports the configured builder images into a compressed offline bundle.
 Use --platform to export one builder platform instead of the full matrix.
@@ -65,6 +70,18 @@ progress_step "Loading environment"
 
 load_image_bundle_env "${ROOT_DIR}" "${ENV_FILE}"
 require_export_image_bundle_env
+
+ORIGINAL_CUDA_VERSION="${BUILDER_CUDA_VERSION}"
+if [[ -n "${CUDA_VERSION_OVERRIDE}" ]]; then
+  BUILDER_CUDA_VERSION="${CUDA_VERSION_OVERRIDE}"
+  BUILDER_PLATFORM_CUDA_VERSIONS=""
+  ORIGINAL_DEFAULT_IMAGE="$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${ORIGINAL_CUDA_VERSION}")"
+  NEW_DEFAULT_IMAGE="$(builder_default_image "${BUILDER_DEFAULT_PLATFORM}" "${BUILDER_CUDA_VERSION}")"
+
+  if [[ "${BUILDER_IMAGE}" == "${ORIGINAL_DEFAULT_IMAGE}" ]]; then
+    BUILDER_IMAGE="${NEW_DEFAULT_IMAGE}"
+  fi
+fi
 
 if [[ -n "${OUTPUT_OVERRIDE}" ]]; then
   ARCHIVE_PATH="$(resolve_bundle_path "${ROOT_DIR}" "${OUTPUT_OVERRIDE}")"

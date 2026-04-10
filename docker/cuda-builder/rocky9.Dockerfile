@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=11.7.1
+ARG CUDA_VERSION=12.9.1
 FROM nvidia/cuda:${CUDA_VERSION}-devel-rockylinux9
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -18,12 +18,9 @@ RUN dnf install -y epel-release && \
       bzip2 \
       ca-certificates \
       ccache \
-      curl \
+      curl-minimal \
       file \
       flex \
-      gcc-toolset-11-binutils \
-      gcc-toolset-11-gcc \
-      gcc-toolset-11-gcc-c++ \
       gcc \
       gcc-c++ \
       gcc-gfortran \
@@ -47,9 +44,6 @@ RUN dnf install -y epel-release && \
       which && \
     dnf clean all && \
     rm -rf /var/cache/dnf
-
-ENV PATH="/opt/rh/gcc-toolset-11/root/usr/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/opt/rh/gcc-toolset-11/root/usr/lib64:${LD_LIBRARY_PATH}"
 
 COPY third_party/cache/cmake-3.26.0-linux-x86_64.tar.gz /tmp/deps/
 RUN tar -xzf /tmp/deps/cmake-3.26.0-linux-x86_64.tar.gz -C /usr/local --strip-components=1 && \

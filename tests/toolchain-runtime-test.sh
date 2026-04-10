@@ -89,7 +89,8 @@ EOF
   ' || fail "cuda cmake configure smoke test failed in ${image}"
 }
 
-BUILDER_CUDA_VERSION="11.7.1"
+BUILDER_CUDA_VERSION="12.9.1"
+BUILDER_PLATFORM_CUDA_VERSIONS="centos7=12.4.0,rocky8=12.9.1,rocky9=12.9.1,ubuntu2204=12.9.1,ubuntu2404=12.9.1"
 BUILDER_IMAGE_FAMILY="tf-particles/devops/cuda-builder"
 BUILDER_PLATFORMS="centos7,rocky8,rocky9,ubuntu2204,ubuntu2404"
 
@@ -101,7 +102,17 @@ fi
 IFS=',' read -r -a platforms <<< "${BUILDER_PLATFORMS}"
 
 for platform in "${platforms[@]}"; do
-  image="${BUILDER_IMAGE_FAMILY}:${platform}-${BUILDER_CUDA_VERSION}"
+  image_version="${BUILDER_CUDA_VERSION}"
+  if [[ -n "${BUILDER_PLATFORM_CUDA_VERSIONS}" ]]; then
+    IFS=',' read -r -a version_entries <<< "${BUILDER_PLATFORM_CUDA_VERSIONS}"
+    for version_entry in "${version_entries[@]}"; do
+      if [[ "${version_entry}" == "${platform}="* ]]; then
+        image_version="${version_entry#*=}"
+        break
+      fi
+    done
+  fi
+  image="${BUILDER_IMAGE_FAMILY}:${platform}-${image_version}"
   assert_toolchain_basics "${image}"
   assert_autotools_configure "${image}"
   assert_cmake_configure "${image}"
